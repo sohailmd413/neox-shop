@@ -80,10 +80,10 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
           </Field>
 
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Price ($)" required>
+            <Field label="Price (SAR)" required>
               <input type="number" step="0.01" value={form.price} onChange={set("price")} className={inputCls} />
             </Field>
-            <Field label="Compare-at price ($)">
+            <Field label="Compare-at price (SAR)">
               <input type="number" step="0.01" value={form.compare_at_price} onChange={set("compare_at_price")} className={inputCls} />
             </Field>
           </div>
