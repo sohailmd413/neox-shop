@@ -1,0 +1,40 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "entity",
+      "events": [
+        "create"
+      ],
+      "entity_name": "Order"
+    }
+  },
+  "description": "When an order is created, reduce the ordered quantity from each product's stock and mark out-of-stock when it hits zero.",
+  "name": "Decrement Order Stock",
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "decrement_order_stock",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "decrement_stock": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "decrementStock",
+            "args": {
+              "order_id": "${ .trigger.entity_id }"
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Reduce product stock",
+            "description": "Subtract ordered quantities from stock"
+          }
+        }
+      }
+    ]
+  }
+}
