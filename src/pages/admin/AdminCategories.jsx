@@ -1,0 +1,219 @@
+import React, { useState, useEffect } from "react";
+import { Plus, Trash2, Layers, Loader2 } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { slugify } from "@/lib/format";
+
+const blankRow = () => ({ name: "", image_url: "", sort_order: 0 });
+
+export default function AdminCategories() {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [single, setSingle] = useState(blankRow());
+  const [rows, setRows] = useState([blankRow(), blankRow()]);
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const c = await base44.entities.Category.list("sort_order", 200);
+      setCategories(c || []);
+    } catch {
+      toast({ title: "Could not load categories", variant: "destructive" });
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const addSingle = async (e) => {
+    e.preventDefault();
+    if (!single.name.trim()) {
+      toast({ title: "Category name is required", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    try {
+      await base44.entities.Category.create({
+        name: single.name.trim(),
+        slug: slugify(single.name),
+        image_url: single.image_url.trim(),
+        sort_order: Number(single.sort_order) || 0,
+      });
+      toast({ title: "Category added" });
+      setSingle(blankRow());
+      load();
+    } catch {
+      toast({ title: "Could not add category", variant: "destructive" });
+    }
+    setSaving(false);
+  };
+
+  const addBulk = async () => {
+    const valid = rows.filter((r) => r.name.trim());
+    if (valid.length === 0) {
+      toast({ title: "Add at least one category with a name", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    try {
+      await base44.entities.Category.bulkCreate(
+        valid.map((r) => ({
+          name: r.name.trim(),
+          slug: slugify(r.name),
+          image_url: r.image_url.trim(),
+          sort_order: Number(r.sort_order) || 0,
+        }))
+      );
+      toast({ title: `${valid.length} categories added` });
+      setRows([blankRow(), blankRow()]);
+      load();
+    } catch {
+      toast({ title: "Could not add categories", variant: "destructive" });
+    }
+    setSaving(false);
+  };
+
+  const remove = async (c) => {
+    if (!confirm(`Delete category "${c.name}"? Products in this category will keep their category label.`)) return;
+    try {
+      await base44.entities.Category.delete(c.id);
+      toast({ title: "Category deleted" });
+      load();
+    } catch {
+      toast({ title: "Could not delete", variant: "destructive" });
+    }
+  };
+
+  const updateRow = (i, field, value) =>
+    setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, [field]: value } : r)));
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Categories</h1>
+        <p className="text-sm text-muted-foreground">Stored in their own table. Add one or many at once.</p>
+      </div>
+
+      {/* Add single */}
+      <div className="rounded-2xl border border-border bg-background p-5">
+        <h2 className="text-base font-medium">Add a category</h2>
+        <form onSubmit={addSingle} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="c-name">Name</Label>
+            <Input id="c-name" value={single.name} onChange={(e) => setSingle({ ...single, name: e.target.value })} placeholder="e.g. Electronics" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="c-img">Image URL</Label>
+            <Input id="c-img" value={single.image_url} onChange={(e) => setSingle({ ...single, image_url: e.target.value })} placeholder="https://…" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="c-sort">Sort order</Label>
+            <Input id="c-sort" type="number" value={single.sort_order} onChange={(e) => setSingle({ ...single, sort_order: e.target.value })} />
+          </div>
+          <div className="flex items-end sm:col-span-2 lg:col-span-4">
+            <Button type="submit" disabled={saving} className="rounded-full">
+              <Plus className="mr-1.5 h-4 w-4" /> Add category
+            </Button>
+          </div>
+        </form>
+      </div>
+
+      {/* Add multiple */}
+      <div className="rounded-2xl border border-border bg-background p-5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-medium">Add multiple</h2>
+          <Button variant="outline" size="sm" onClick={() => setRows((rs) => [...rs, blankRow()])} disabled={saving}>
+            <Plus className="mr-1.5 h-4 w-4" /> Add row
+          </Button>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">Slug is generated automatically. Leave a row blank to skip it.</p>
+        <div className="mt-4 space-y-2">
+          {rows.map((r, i) => (
+            <div key={i} className="grid gap-2 sm:grid-cols-12">
+              <Input
+                className="sm:col-span-4"
+                placeholder="Name"
+                value={r.name}
+                onChange={(e) => updateRow(i, "name", e.target.value)}
+              />
+              <Input
+                className="sm:col-span-6"
+                placeholder="Image URL"
+                value={r.image_url}
+                onChange={(e) => updateRow(i, "image_url", e.target.value)}
+              />
+              <Input
+                className="sm:col-span-1"
+                type="number"
+                placeholder="Order"
+                value={r.sort_order}
+                onChange={(e) => updateRow(i, "sort_order", e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setRows((rs) => rs.filter((_, idx) => idx !== i))}
+                className="sm:col-span-1 rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                aria-label="Remove row"
+                disabled={rows.length === 1}
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+        <Button onClick={addBulk} disabled={saving} className="mt-4 rounded-full">
+          {saving ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Plus className="mr-1.5 h-4 w-4" />}
+          Add all categories
+        </Button>
+      </div>
+
+      {/* Existing */}
+      <div className="overflow-hidden rounded-2xl border border-border bg-background">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border text-left text-xs uppercase tracking-[0.1em] text-muted-foreground">
+              <th className="px-4 py-3 font-medium">Category</th>
+              <th className="px-4 py-3 font-medium">Slug</th>
+              <th className="px-4 py-3 font-medium">Sort</th>
+              <th className="px-4 py-3 text-right font-medium">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={4} className="px-4 py-10 text-center text-muted-foreground">Loading…</td></tr>
+            ) : categories.length === 0 ? (
+              <tr><td colSpan={4} className="px-4 py-10 text-center text-muted-foreground">No categories yet.</td></tr>
+            ) : categories.map((c) => (
+              <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/30">
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    {c.image_url ? (
+                      <img src={c.image_url} alt="" className="h-8 w-8 rounded-md object-cover" />
+                    ) : (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted">
+                        <Layers className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    )}
+                    <span className="font-medium">{c.name}</span>
+                  </div>
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">{c.slug}</td>
+                <td className="px-4 py-3 text-muted-foreground">{c.sort_order}</td>
+                <td className="px-4 py-3 text-right">
+                  <button onClick={() => remove(c)} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label="Delete">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

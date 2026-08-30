@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert } from "lucide-react";
+import { Link, NavLink, Outlet, Navigate } from "react-router-dom";
+import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
 const NAV = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard, end: true },
   { label: "Products", path: "/admin/products", icon: Package },
+  { label: "Categories", path: "/admin/categories", icon: Layers },
   { label: "Orders", path: "/admin/orders", icon: ClipboardList },
   { label: "Reviews", path: "/admin/reviews", icon: Star },
 ];
@@ -32,7 +33,11 @@ export default function AdminLayout() {
     );
   }
 
-  if (!user || user.role !== "admin") {
+  if (!user) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  if (user.role !== "admin") {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-5 text-center">
         <ShieldAlert className="h-10 w-10 text-muted-foreground" />
@@ -40,7 +45,10 @@ export default function AdminLayout() {
         <p className="max-w-sm text-sm text-muted-foreground">
           Only admin accounts can access this area. Contact your store administrator if you believe this is an error.
         </p>
-        <Link to="/" className="mt-2 inline-flex items-center gap-1.5 text-sm underline">
+        <Link to="/admin/login" className="mt-2 inline-flex items-center gap-1.5 text-sm underline">
+          Admin sign in
+        </Link>
+        <Link to="/" className="inline-flex items-center gap-1.5 text-sm underline">
           <ArrowLeft className="h-4 w-4" /> Back to store
         </Link>
       </div>

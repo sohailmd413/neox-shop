@@ -5,6 +5,7 @@ import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import AdminProductDialog from "@/components/admin/AdminProductDialog";
+import AdminBulkProductDialog from "@/components/admin/AdminBulkProductDialog";
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -13,6 +14,7 @@ export default function AdminProducts() {
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const { toast } = useToast();
 
   const load = async () => {
@@ -71,9 +73,14 @@ export default function AdminProducts() {
           <h1 className="text-2xl font-semibold tracking-tight">Products</h1>
           <p className="text-sm text-muted-foreground">{products.length} total</p>
         </div>
-        <Button onClick={() => { setEditing(null); setDialogOpen(true); }} className="rounded-full">
-          <Plus className="mr-1.5 h-4 w-4" /> Add product
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setBulkOpen(true)} className="rounded-full">
+            <Plus className="mr-1.5 h-4 w-4" /> Add multiple
+          </Button>
+          <Button onClick={() => { setEditing(null); setDialogOpen(true); }} className="rounded-full">
+            <Plus className="mr-1.5 h-4 w-4" /> Add product
+          </Button>
+        </div>
       </div>
 
       <div className="relative max-w-sm">
@@ -147,6 +154,14 @@ export default function AdminProducts() {
           categories={categories}
           onClose={() => { setDialogOpen(false); setEditing(null); }}
           onSave={handleSave}
+        />
+      )}
+
+      {bulkOpen && (
+        <AdminBulkProductDialog
+          categories={categories}
+          onClose={() => setBulkOpen(false)}
+          onDone={() => { setBulkOpen(false); load(); }}
         />
       )}
     </div>

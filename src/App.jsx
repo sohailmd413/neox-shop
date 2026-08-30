@@ -20,6 +20,12 @@ import AdminDashboard from '@/pages/admin/AdminDashboard';
 import AdminProducts from '@/pages/admin/AdminProducts';
 import AdminOrders from '@/pages/admin/AdminOrders';
 import AdminReviews from '@/pages/admin/AdminReviews';
+import AdminLogin from '@/pages/admin/AdminLogin';
+import AdminCategories from '@/pages/admin/AdminCategories';
+import Login from '@/pages/Login';
+import Register from '@/pages/Register';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
 // Add page imports here
 
 const AuthenticatedApp = () => {
@@ -50,6 +56,13 @@ const AuthenticatedApp = () => {
     <CartProvider>
       <WishlistProvider>
         <Routes>
+          {/* Auth */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          {/* Admin login (separate, admin-only) */}
+          <Route path="/admin/login" element={<AdminLogin />} />
           {/* Storefront */}
           <Route element={<StorefrontLayout />}>
             <Route path="/" element={<Home />} />
@@ -63,6 +76,7 @@ const AuthenticatedApp = () => {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="products" element={<AdminProducts />} />
+            <Route path="categories" element={<AdminCategories />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="reviews" element={<AdminReviews />} />
           </Route>
