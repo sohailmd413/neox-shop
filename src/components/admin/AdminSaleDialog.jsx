@@ -4,7 +4,7 @@ import { X, Percent, Clock } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-
+import { SelectNative } from "@/components/ui/select-native";
 const DURATIONS = [
   { label: "6 hours", ms: 6 * 3600000 },
   { label: "24 hours", ms: 24 * 3600000 },
@@ -94,15 +94,15 @@ export default function AdminSaleDialog({ products, onClose, onDone }) {
             <label className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
               Sale lasts for
             </label>
-            <select
+            <SelectNative
               value={durationIdx}
               onChange={(e) => setDurationIdx(Number(e.target.value))}
-              className="mt-2 h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-foreground/40"
+              className="mt-2 !h-11"
             >
               {DURATIONS.map((d, i) => (
                 <option key={d.label} value={i}>{d.label}</option>
               ))}
-            </select>
+            </SelectNative>
           </div>
         </div>
 

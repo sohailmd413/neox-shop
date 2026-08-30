@@ -6,6 +6,7 @@ import { base44 } from "@/api/base44Client";
 import ProductCard from "@/components/storefront/ProductCard";
 import { ProductGridSkeleton } from "@/components/storefront/Skeleton";
 import { Button } from "@/components/ui/button";
+import { SelectNative } from "@/components/ui/select-native";
 
 const SORT_OPTIONS = [
   { value: "featured", label: "Featured" },
@@ -131,15 +132,16 @@ export default function Catalog() {
               >
                 <SlidersHorizontal className="h-4 w-4" /> Filters
               </button>
-              <select
+              <SelectNative
+                rounded="full"
                 value={sort}
                 onChange={(e) => updateParam("sort", e.target.value === "featured" ? "" : e.target.value)}
-                className="rounded-full border border-border bg-background px-4 py-2 text-sm outline-none"
+                className="px-4 py-2"
               >
                 {SORT_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
-              </select>
+              </SelectNative>
             </div>
 
             {/* Desktop filters */}
@@ -161,15 +163,15 @@ export default function Catalog() {
               <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
                 Sort by
               </h3>
-              <select
+              <SelectNative
                 value={sort}
                 onChange={(e) => updateParam("sort", e.target.value === "featured" ? "" : e.target.value)}
-                className="mt-3 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/40"
+                className="mt-3"
               >
                 {SORT_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
-              </select>
+              </SelectNative>
             </div>
           </aside>
 

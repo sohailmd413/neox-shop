@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { slugify } from "@/lib/format";
+import { SelectNative } from "@/components/ui/select-native";
 import ImageUpload from "@/components/admin/ImageUpload";
 
 const blankRow = () => ({ name: "", image_url: "", sort_order: 0, parent_id: "" });
@@ -122,17 +123,17 @@ export default function AdminCategories() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="c-parent">Parent (optional)</Label>
-            <select
+            <SelectNative
               id="c-parent"
               value={single.parent_id}
               onChange={(e) => setSingle({ ...single, parent_id: e.target.value })}
-              className={parentSelectClass}
+              className="!h-9"
             >
               <option value="">— Top level —</option>
               {parents.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
-            </select>
+            </SelectNative>
           </div>
           <div className="space-y-1.5">
             <Label>Image</Label>
@@ -168,8 +169,8 @@ export default function AdminCategories() {
                 value={r.name}
                 onChange={(e) => updateRow(i, "name", e.target.value)}
               />
-              <select
-                className="sm:col-span-3 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus:border-foreground/40"
+              <SelectNative
+                className="sm:col-span-3 !py-1.5"
                 value={r.parent_id}
                 onChange={(e) => updateRow(i, "parent_id", e.target.value)}
               >
@@ -177,7 +178,7 @@ export default function AdminCategories() {
                 {parents.map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
-              </select>
+              </SelectNative>
               <div className="sm:col-span-4">
                 <ImageUpload value={r.image_url} onChange={(url) => updateRow(i, "image_url", url)} />
               </div>

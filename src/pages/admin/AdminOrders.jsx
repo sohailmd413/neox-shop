@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { SelectNative } from "@/components/ui/select-native";
 
 const STATUSES = ["pending", "paid", "packed", "shipped", "delivered", "cancelled", "refunded"];
 
@@ -57,15 +58,15 @@ export default function AdminOrders() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <select
+                  <SelectNative
                     value={o.status}
                     onChange={(e) => updateStatus(o.id, e.target.value)}
-                    className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm outline-none focus:border-foreground/40"
+                    className="!px-2.5 !py-1.5 text-sm"
                   >
                     {STATUSES.map((s) => (
                       <option key={s} value={s} className="capitalize">{s}</option>
                     ))}
-                  </select>
+                  </SelectNative>
                   <span className="text-sm font-semibold">{formatPrice(o.total)}</span>
                 </div>
               </div>

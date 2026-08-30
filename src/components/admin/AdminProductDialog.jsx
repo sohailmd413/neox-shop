@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SelectNative } from "@/components/ui/select-native";
 import ImageUpload from "@/components/admin/ImageUpload";
 
 const EMPTY = {
@@ -99,19 +100,19 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
 
           <div className="grid grid-cols-2 gap-4">
             <Field label="Category">
-              <select value={form.category} onChange={set("category")} className={inputCls}>
+              <SelectNative value={form.category} onChange={set("category")} className="mt-1.5">
                 <option value="">None</option>
                 {categories.map((c) => (
                   <option key={c.id} value={c.name}>{c.name}</option>
                 ))}
-              </select>
+              </SelectNative>
             </Field>
             <Field label="Status">
-              <select value={form.status} onChange={set("status")} className={inputCls}>
+              <SelectNative value={form.status} onChange={set("status")} className="mt-1.5">
                 <option value="active">Active</option>
                 <option value="draft">Draft</option>
                 <option value="archived">Archived</option>
-              </select>
+              </SelectNative>
             </Field>
           </div>
 

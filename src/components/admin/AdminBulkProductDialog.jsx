@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { slugify } from "@/lib/format";
+import { SelectNative } from "@/components/ui/select-native";
 import ImageUpload from "@/components/admin/ImageUpload";
 
 const blank = (categories) => ({
@@ -19,13 +20,9 @@ const blank = (categories) => ({
 });
 
 const SelectWrap = ({ value, onChange, children }) => (
-  <select
-    value={value}
-    onChange={onChange}
-    className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm outline-none focus:border-foreground/40"
-  >
+  <SelectNative value={value} onChange={onChange} className="!h-9 !px-2">
     {children}
-  </select>
+  </SelectNative>
 );
 
 export default function AdminBulkProductDialog({ categories, onClose, onDone }) {
