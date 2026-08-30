@@ -21,6 +21,7 @@ export default function Catalog() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [priceLimit, setPriceLimit] = useState(500);
 
   const q = searchParams.get("q") || "";
   const category = searchParams.get("category") || "";
@@ -42,6 +43,9 @@ export default function Catalog() {
     try {
       let result = await base44.entities.Product.filter({ status: "active" }, "-created_date", 200);
       let list = result || [];
+
+      const limit = list.reduce((m, p) => Math.max(m, Number(p.price) || 0), 0);
+      setPriceLimit(limit > 0 ? Math.ceil(limit) : 500);
 
       if (category) list = list.filter((p) => p.category === category);
       if (q) {
@@ -145,6 +149,7 @@ export default function Catalog() {
                 category={category}
                 onSale={onSale}
                 maxPrice={maxPrice}
+                priceLimit={priceLimit}
                 updateParam={updateParam}
                 clearFilters={clearFilters}
                 activeFilters={activeFilters}
@@ -212,6 +217,7 @@ export default function Catalog() {
               category={category}
               onSale={onSale}
               maxPrice={maxPrice}
+              priceLimit={priceLimit}
               updateParam={updateParam}
               clearFilters={clearFilters}
               activeFilters={activeFilters}
@@ -226,7 +232,8 @@ export default function Catalog() {
   );
 }
 
-function FilterPanel({ categories, category, onSale, maxPrice, updateParam, clearFilters, activeFilters }) {
+function FilterPanel({ categories, category, onSale, maxPrice, priceLimit, updateParam, clearFilters, activeFilters }) {
+  const step = priceLimit <= 100 ? 5 : priceLimit <= 1000 ? 10 : 50;
   return (
     <div className="space-y-6">
       <div>
@@ -277,10 +284,10 @@ function FilterPanel({ categories, category, onSale, maxPrice, updateParam, clea
         <input
           type="range"
           min="0"
-          max="500"
-          step="10"
-          value={maxPrice || 500}
-          onChange={(e) => updateParam("maxPrice", e.target.value === "500" ? "" : e.target.value)}
+          max={priceLimit}
+          step={step}
+          value={maxPrice || priceLimit}
+          onChange={(e) => updateParam("maxPrice", e.target.value === String(priceLimit) ? "" : e.target.value)}
           className="mt-3 w-full accent-foreground"
         />
         <p className="mt-1 text-xs text-muted-foreground">
