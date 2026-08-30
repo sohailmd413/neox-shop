@@ -6,7 +6,9 @@ import ImageUpload from "@/components/admin/ImageUpload";
 
 const EMPTY = {
   name: "",
+  name_ar: "",
   description: "",
+  description_ar: "",
   price: "",
   compare_at_price: "",
   stock: "",
@@ -50,7 +52,9 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
     setError("");
     const data = {
       name: form.name.trim(),
+      name_ar: form.name_ar?.trim() || "",
       description: form.description || "",
+      description_ar: form.description_ar || "",
       price: Number(form.price) || 0,
       compare_at_price: form.compare_at_price ? Number(form.compare_at_price) : null,
       stock: Number(form.stock) || 0,
@@ -76,8 +80,12 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
         </div>
 
         <form onSubmit={submit} className="space-y-4">
-          <Field label="Name" required>
+          <Field label="Name (English)" required>
             <input value={form.name} onChange={set("name")} className={inputCls} />
+          </Field>
+
+          <Field label="Name (Arabic)">
+            <input value={form.name_ar || ""} onChange={set("name_ar")} className={inputCls} dir="rtl" placeholder="الاسم بالعربية" />
           </Field>
 
           <div className="grid grid-cols-2 gap-4">
@@ -116,8 +124,12 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
             </Field>
           </div>
 
-          <Field label="Description">
+          <Field label="Description (English)">
             <textarea value={form.description} onChange={set("description")} rows={3} className={inputCls} />
+          </Field>
+
+          <Field label="Description (Arabic)">
+            <textarea value={form.description_ar || ""} onChange={set("description_ar")} rows={3} dir="rtl" className={inputCls} placeholder="الوصف بالعربية" />
           </Field>
 
           <div className="grid grid-cols-2 gap-4">

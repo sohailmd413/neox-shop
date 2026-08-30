@@ -5,6 +5,10 @@
     "name": {
       "type": "string"
     },
+    "name_ar": {
+      "type": "string",
+      "description": "Arabic display name shown when the site language is Arabic."
+    },
     "slug": {
       "type": "string"
     },

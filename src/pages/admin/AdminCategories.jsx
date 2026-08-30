@@ -9,7 +9,7 @@ import { slugify } from "@/lib/format";
 import { SelectNative } from "@/components/ui/select-native";
 import ImageUpload from "@/components/admin/ImageUpload";
 
-const blankRow = () => ({ name: "", image_url: "", sort_order: 0, parent_id: "" });
+const blankRow = () => ({ name: "", name_ar: "", image_url: "", sort_order: 0, parent_id: "" });
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState([]);
@@ -42,6 +42,7 @@ export default function AdminCategories() {
     try {
       await base44.entities.Category.create({
         name: single.name.trim(),
+        name_ar: single.name_ar?.trim() || "",
         slug: slugify(single.name),
         image_url: single.image_url.trim(),
         sort_order: Number(single.sort_order) || 0,
@@ -67,6 +68,7 @@ export default function AdminCategories() {
       await base44.entities.Category.bulkCreate(
         valid.map((r) => ({
           name: r.name.trim(),
+          name_ar: r.name_ar?.trim() || "",
           slug: slugify(r.name),
           image_url: r.image_url.trim(),
           sort_order: Number(r.sort_order) || 0,
@@ -116,10 +118,14 @@ export default function AdminCategories() {
       {/* Add single */}
       <div className="rounded-2xl border border-border bg-background p-5">
         <h2 className="text-base font-medium">Add a category</h2>
-        <form onSubmit={addSingle} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <form onSubmit={addSingle} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
           <div className="space-y-1.5 sm:col-span-2">
-            <Label htmlFor="c-name">Name</Label>
+            <Label htmlFor="c-name">Name (English)</Label>
             <Input id="c-name" value={single.name} onChange={(e) => setSingle({ ...single, name: e.target.value })} placeholder="e.g. Electronics" />
+          </div>
+          <div className="space-y-1.5 sm:col-span-1">
+            <Label htmlFor="c-name-ar">Name (Arabic)</Label>
+            <Input id="c-name-ar" dir="rtl" value={single.name_ar} onChange={(e) => setSingle({ ...single, name_ar: e.target.value })} placeholder="مثال: إلكترونيات" />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="c-parent">Parent (optional)</Label>
@@ -164,13 +170,20 @@ export default function AdminCategories() {
           {rows.map((r, i) => (
             <div key={i} className="grid gap-2 sm:grid-cols-12">
               <Input
-                className="sm:col-span-3"
-                placeholder="Name"
+                className="sm:col-span-2"
+                placeholder="Name (EN)"
                 value={r.name}
                 onChange={(e) => updateRow(i, "name", e.target.value)}
               />
+              <Input
+                className="sm:col-span-2"
+                dir="rtl"
+                placeholder="Name (AR)"
+                value={r.name_ar}
+                onChange={(e) => updateRow(i, "name_ar", e.target.value)}
+              />
               <SelectNative
-                className="sm:col-span-3 !py-1.5"
+                className="sm:col-span-2 !py-1.5"
                 value={r.parent_id}
                 onChange={(e) => updateRow(i, "parent_id", e.target.value)}
               >
@@ -213,6 +226,7 @@ export default function AdminCategories() {
           <thead>
             <tr className="border-b border-border text-left text-xs uppercase tracking-[0.1em] text-muted-foreground">
               <th className="px-4 py-3 font-medium">Category</th>
+              <th className="px-4 py-3 font-medium">Arabic</th>
               <th className="px-4 py-3 font-medium">Parent</th>
               <th className="px-4 py-3 font-medium">Slug</th>
               <th className="px-4 py-3 font-medium">Sort</th>
@@ -221,9 +235,9 @@ export default function AdminCategories() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">Loading…</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">Loading…</td></tr>
             ) : categories.length === 0 ? (
-              <tr><td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">No categories yet.</td></tr>
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">No categories yet.</td></tr>
             ) : ordered.map((c) => {
               const isSub = !!c.parent_id;
               return (
@@ -240,6 +254,7 @@ export default function AdminCategories() {
                       <span className="font-medium">{isSub ? "↳ " : ""}{c.name}</span>
                     </div>
                   </td>
+                  <td className="px-4 py-3 text-muted-foreground" dir="rtl">{c.name_ar || "—"}</td>
                   <td className="px-4 py-3 text-muted-foreground">{isSub ? nameOf(c.parent_id) || "—" : "—"}</td>
                   <td className="px-4 py-3 text-muted-foreground">{c.slug}</td>
                   <td className="px-4 py-3 text-muted-foreground">{c.sort_order}</td>

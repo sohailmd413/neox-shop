@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Image } from "@/components/ui/image";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, lf } from "@/lib/format";
+import { useLanguage } from "@/lib/i18n";
 
 export default function SearchBar({ placeholder = "Search products or categories…" }) {
   const [query, setQuery] = useState("");
@@ -13,6 +14,7 @@ export default function SearchBar({ placeholder = "Search products or categories
   const [categories, setCategories] = useState([]);
   const wrapRef = useRef(null);
   const navigate = useNavigate();
+  const { lang } = useLanguage();
 
   useEffect(() => {
     (async () => {
@@ -39,9 +41,16 @@ export default function SearchBar({ placeholder = "Search products or categories
   const suggestions = useMemo(() => {
     if (!term) return { products: [], categories: [] };
     const pMatches = products
-      .filter((p) => p.name?.toLowerCase().includes(term) || p.brand?.toLowerCase().includes(term))
+      .filter(
+        (p) =>
+          p.name?.toLowerCase().includes(term) ||
+          p.name_ar?.toLowerCase().includes(term) ||
+          p.brand?.toLowerCase().includes(term)
+      )
       .slice(0, 5);
-    const cMatches = categories.filter((c) => c.name?.toLowerCase().includes(term)).slice(0, 4);
+    const cMatches = categories
+      .filter((c) => c.name?.toLowerCase().includes(term) || c.name_ar?.toLowerCase().includes(term))
+      .slice(0, 4);
     return { products: pMatches, categories: cMatches };
   }, [term, products, categories]);
 
@@ -116,7 +125,7 @@ export default function SearchBar({ placeholder = "Search products or categories
                       ) : null}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-foreground">{p.name}</p>
+                      <p className="truncate text-sm font-medium text-foreground">{lf(p, "name", lang)}</p>
                       {p.brand && <p className="truncate text-xs text-muted-foreground">{p.brand}</p>}
                     </div>
                     <span className="shrink-0 text-sm font-semibold text-foreground">{formatPrice(p.price)}</span>
@@ -141,7 +150,7 @@ export default function SearchBar({ placeholder = "Search products or categories
                         <Image src={c.image_url} alt={c.name} fittingType="fill" className="h-full w-full" />
                       ) : null}
                     </div>
-                    <span className="truncate text-sm text-foreground">{c.name}</span>
+                    <span className="truncate text-sm text-foreground">{lf(c, "name", lang)}</span>
                   </button>
                 ))}
               </div>

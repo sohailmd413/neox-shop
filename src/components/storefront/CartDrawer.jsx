@@ -3,12 +3,14 @@ import { Link } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, ShoppingBag, Plus, Minus, Trash2 } from "lucide-react";
 import { useCart } from "@/lib/CartContext";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, lf } from "@/lib/format";
 import { Image } from "@/components/ui/image";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/i18n";
 
 export default function CartDrawer() {
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, subtotal, count } = useCart();
+  const { lang } = useLanguage();
 
   return (
     <AnimatePresence>
@@ -75,7 +77,7 @@ export default function CartDrawer() {
                               onClick={() => setIsOpen(false)}
                               className="line-clamp-2 text-sm font-medium hover:underline"
                             >
-                              {item.name}
+                              {lf(item, "name", lang) || item.name}
                             </Link>
                             <button
                               onClick={() => removeItem(item.productId)}

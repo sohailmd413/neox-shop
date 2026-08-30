@@ -33,6 +33,7 @@ export function CartProvider({ children }) {
         {
           productId: product.id,
           name: product.name,
+          name_ar: product.name_ar,
           price: product.price,
           image: product.images?.[0] || "",
           quantity: Math.min(quantity, maxStock),

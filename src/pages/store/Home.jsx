@@ -6,11 +6,14 @@ import { base44 } from "@/api/base44Client";
 import ProductCard from "@/components/storefront/ProductCard";
 import { ProductGridSkeleton } from "@/components/storefront/Skeleton";
 import { Image } from "@/components/ui/image";
+import { lf } from "@/lib/format";
+import { useLanguage } from "@/lib/i18n";
 
 export default function Home() {
   const [featured, setFeatured] = useState(null);
   const [newArrivals, setNewArrivals] = useState(null);
   const [categories, setCategories] = useState(null);
+  const { lang } = useLanguage();
 
   useEffect(() => {
     (async () => {
@@ -110,7 +113,7 @@ export default function Home() {
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-foreground/10 to-transparent" />
                   <span className="absolute bottom-4 left-4 text-base font-medium text-background">
-                    {cat.name}
+                    {lf(cat, "name", lang)}
                   </span>
                 </Link>
               </motion.div>

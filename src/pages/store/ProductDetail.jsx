@@ -4,16 +4,18 @@ import { motion } from "framer-motion";
 import { ShoppingBag, Star, Minus, Plus, ChevronRight, Truck, RefreshCw, ShieldCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useCart } from "@/lib/CartContext";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, lf } from "@/lib/format";
 import { Image } from "@/components/ui/image";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { useLanguage } from "@/lib/i18n";
 import ProductCard from "@/components/storefront/ProductCard";
 import SaleCountdown from "@/components/admin/SaleCountdown";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const { addItem, setIsOpen } = useCart();
+  const { lang } = useLanguage();
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -24,6 +26,7 @@ export default function ProductDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [canReview, setCanReview] = useState(false);
   const [reviewEligibleChecked, setReviewEligibleChecked] = useState(false);
+  const [categories, setCategories] = useState([]);
   const { toast } = useToast();
 
   const submitReview = async (e) => {
@@ -59,6 +62,10 @@ export default function ProductDetail() {
         const p = await base44.entities.Product.get(id);
         if (cancelled) return;
         setProduct(p);
+        try {
+          const cats = await base44.entities.Category.list("sort_order", 200);
+          if (!cancelled) setCategories(cats || []);
+        } catch {}
         if (p.category) {
           try {
             const rel = await base44.entities.Product.filter({ status: "active", category: p.category }, "-created_date", 5);
@@ -126,6 +133,12 @@ export default function ProductDetail() {
   const images = product.images?.length ? product.images : [];
   const onSale = product.compare_at_price && product.compare_at_price > product.price;
   const salePct = onSale ? Math.round((1 - product.price / product.compare_at_price) * 100) : 0;
+  const displayName = lf(product, "name", lang);
+  const displayDesc = lf(product, "description", lang) || (product.description || "");
+  const categoryName = (() => {
+    const c = categories.find((x) => x.name === product.category);
+    return c ? lf(c, "name", lang) : product.category;
+  })();
 
   const clampQty = (q) => Math.min(Math.max(q, 1), maxQty);
   const handleAdd = () => {
@@ -151,7 +164,7 @@ export default function ProductDetail() {
             <>
               <ChevronRight className="h-3 w-3" />
               <Link to={`/shop?category=${encodeURIComponent(product.category)}`} className="hover:text-foreground">
-                {product.category}
+                {categoryName}
               </Link>
             </>
           )}
@@ -212,7 +225,7 @@ export default function ProductDetail() {
               </p>
             )}
             <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-              {product.name}
+              {displayName}
             </h1>
 
             <div className="mt-4 flex items-center gap-3">
@@ -249,7 +262,7 @@ export default function ProductDetail() {
             )}
 
             <p className="mt-6 text-base leading-relaxed text-muted-foreground">
-              {product.description || "A considered piece, designed for everyday use and made to endure."}
+              {displayDesc || "A considered piece, designed for everyday use and made to endure."}
             </p>
 
             {/* Stock */}

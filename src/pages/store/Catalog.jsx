@@ -6,6 +6,8 @@ import { base44 } from "@/api/base44Client";
 import ProductCard from "@/components/storefront/ProductCard";
 import { ProductGridSkeleton } from "@/components/storefront/Skeleton";
 import { Button } from "@/components/ui/button";
+import { lf } from "@/lib/format";
+import { useLanguage } from "@/lib/i18n";
 import SortDropdown from "@/components/storefront/SortDropdown";
 import SearchBar from "@/components/storefront/SearchBar";
 
@@ -24,6 +26,7 @@ export default function Catalog() {
   const [loading, setLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [priceLimit, setPriceLimit] = useState(500);
+  const { lang } = useLanguage();
 
   const q = searchParams.get("q") || "";
   const category = searchParams.get("category") || "";
@@ -114,7 +117,11 @@ export default function Catalog() {
             transition={{ duration: 0.4 }}
             className="text-3xl font-semibold tracking-tight sm:text-4xl"
           >
-            {category || (q ? `Results for "${q}"` : "All products")}
+            {category
+              ? lf(categories.find((c) => c.name === category), "name", lang) || category
+              : q
+              ? `Results for "${q}"`
+              : "All products"}
           </motion.h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {loading ? "Loading…" : `${products?.length || 0} ${products?.length === 1 ? "item" : "items"}`}
@@ -232,6 +239,7 @@ export default function Catalog() {
 }
 
 function FilterPanel({ categories, category, onSale, maxPrice, priceLimit, updateParam, clearFilters, activeFilters }) {
+  const { lang } = useLanguage();
   const step = priceLimit <= 100 ? 5 : priceLimit <= 1000 ? 10 : 50;
   return (
     <div className="space-y-6">
@@ -254,7 +262,7 @@ function FilterPanel({ categories, category, onSale, maxPrice, priceLimit, updat
                 onClick={() => updateParam("category", c.name)}
                 className={`text-sm transition-colors ${category === c.name ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}
               >
-                {c.name}
+                {lf(c, "name", lang)}
               </button>
             </li>
           ))}

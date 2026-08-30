@@ -5,6 +5,10 @@
     "name": {
       "type": "string"
     },
+    "name_ar": {
+      "type": "string",
+      "description": "Arabic display name shown when the site language is Arabic."
+    },
     "slug": {
       "type": "string"
     },
@@ -14,8 +18,16 @@
     "description": {
       "type": "string"
     },
+    "description_ar": {
+      "type": "string",
+      "description": "Arabic long description shown on the product page in Arabic."
+    },
     "short_description": {
       "type": "string"
+    },
+    "short_description_ar": {
+      "type": "string",
+      "description": "Arabic short description."
     },
     "price": {
       "type": "number"

@@ -4,17 +4,20 @@ import { motion } from "framer-motion";
 import { ShoppingBag, Star, Heart } from "lucide-react";
 import { useCart } from "@/lib/CartContext";
 import { useWishlist } from "@/lib/WishlistContext";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, lf } from "@/lib/format";
 import { Image } from "@/components/ui/image";
+import { useLanguage } from "@/lib/i18n";
 import SaleCountdown from "@/components/admin/SaleCountdown";
 
 export default function ProductCard({ product, index = 0 }) {
   const { addItem } = useCart();
   const { toggleItem, isInWishlist } = useWishlist();
+  const { lang } = useLanguage();
   const outOfStock = product.stock <= 0;
   const wished = isInWishlist(product.id);
   const onSale = product.compare_at_price && product.compare_at_price > product.price;
   const salePct = onSale ? Math.round((1 - product.price / product.compare_at_price) * 100) : 0;
+  const display = lf(product, "name", lang);
 
   const toggleWish = (e) => {
     e.preventDefault();
@@ -86,7 +89,7 @@ export default function ProductCard({ product, index = 0 }) {
               {product.brand}
             </p>
           )}
-          <h3 className="line-clamp-1 text-sm font-medium text-foreground">{product.name}</h3>
+          <h3 className="line-clamp-1 text-sm font-medium text-foreground">{display}</h3>
           <div className="flex items-center gap-2">
             <span className={`text-sm font-semibold ${outOfStock ? "select-none text-transparent blur-[3px]" : ""}`}>{formatPrice(product.price)}</span>
             {product.compare_at_price && product.compare_at_price > product.price && (
