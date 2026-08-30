@@ -2,6 +2,9 @@
   "name": "Order",
   "type": "object",
   "properties": {
+    "user_id": {
+      "type": "string"
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -86,9 +89,37 @@
     },
     "coupon_code": {
       "type": "string"
+    },
+    "stripe_payment_id": {
+      "type": "string"
     }
   },
   "required": [
     "status"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": true,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }

@@ -1,36 +1,36 @@
 {
-  "name": "Category",
+  "name": "OrderItem",
   "type": "object",
   "properties": {
-    "name": {
+    "order_id": {
       "type": "string"
     },
-    "slug": {
+    "product_id": {
       "type": "string"
     },
-    "parent_id": {
-      "type": "string",
-      "description": "Optional parent category id for subcategories"
-    },
-    "image_url": {
+    "variant_id": {
       "type": "string"
     },
-    "sort_order": {
+    "quantity": {
       "type": "number",
-      "default": 0
+      "default": 1
     },
-    "meta_title": {
-      "type": "string"
-    },
-    "meta_description": {
-      "type": "string"
+    "price_at_purchase": {
+      "type": "number"
     }
   },
   "required": [
-    "name"
+    "order_id",
+    "product_id",
+    "quantity",
+    "price_at_purchase"
   ],
   "rls": {
-    "read": true,
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
     "create": {
       "user_condition": {
         "role": "admin"

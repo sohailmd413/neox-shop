@@ -1,33 +1,24 @@
 {
-  "name": "Category",
+  "name": "ProductImage",
   "type": "object",
   "properties": {
-    "name": {
+    "product_id": {
       "type": "string"
     },
-    "slug": {
+    "url": {
       "type": "string"
     },
-    "parent_id": {
-      "type": "string",
-      "description": "Optional parent category id for subcategories"
-    },
-    "image_url": {
+    "alt_text": {
       "type": "string"
     },
     "sort_order": {
       "type": "number",
       "default": 0
-    },
-    "meta_title": {
-      "type": "string"
-    },
-    "meta_description": {
-      "type": "string"
     }
   },
   "required": [
-    "name"
+    "product_id",
+    "url"
   ],
   "rls": {
     "read": true,

@@ -8,7 +8,13 @@
     "slug": {
       "type": "string"
     },
+    "sku": {
+      "type": "string"
+    },
     "description": {
+      "type": "string"
+    },
+    "short_description": {
       "type": "string"
     },
     "price": {
@@ -20,6 +26,15 @@
     "stock": {
       "type": "number",
       "default": 0
+    },
+    "stock_status": {
+      "type": "string",
+      "enum": [
+        "in_stock",
+        "out_of_stock",
+        "preorder"
+      ],
+      "default": "in_stock"
     },
     "category": {
       "type": "string"
@@ -46,6 +61,38 @@
       "type": "boolean",
       "default": false
     },
+    "is_new_arrival": {
+      "type": "boolean",
+      "default": false
+    },
+    "is_best_seller": {
+      "type": "boolean",
+      "default": false
+    },
+    "weight": {
+      "type": "number"
+    },
+    "dimensions": {
+      "type": "string"
+    },
+    "shipping_class": {
+      "type": "string"
+    },
+    "tax_class": {
+      "type": "string"
+    },
+    "meta_title": {
+      "type": "string"
+    },
+    "meta_description": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "rating": {
       "type": "number",
       "default": 0
@@ -58,5 +105,23 @@
   "required": [
     "name",
     "price"
-  ]
+  ],
+  "rls": {
+    "read": true,
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
 }
