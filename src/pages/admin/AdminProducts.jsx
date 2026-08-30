@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Percent } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import AdminProductDialog from "@/components/admin/AdminProductDialog";
 import AdminBulkProductDialog from "@/components/admin/AdminBulkProductDialog";
+import AdminSaleDialog from "@/components/admin/AdminSaleDialog";
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -15,6 +16,8 @@ export default function AdminProducts() {
   const [editing, setEditing] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [selected, setSelected] = useState(new Set());
+  const [saleOpen, setSaleOpen] = useState(false);
   const { toast } = useToast();
 
   const load = async () => {
@@ -66,14 +69,59 @@ export default function AdminProducts() {
     }
   };
 
+  const toggleSelected = (id) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
+  const toggleSelectAll = () => {
+    const allSelected = filtered.length > 0 && filtered.every((p) => selected.has(p.id));
+    if (allSelected) {
+      setSelected((prev) => {
+        const next = new Set(prev);
+        filtered.forEach((p) => next.delete(p.id));
+        return next;
+      });
+    } else {
+      setSelected((prev) => {
+        const next = new Set(prev);
+        filtered.forEach((p) => next.add(p.id));
+        return next;
+      });
+    }
+  };
+
+  const selectedProducts = products.filter((p) => selected.has(p.id));
+
+  const applySale = async (updates) => {
+    try {
+      await base44.entities.Product.bulkUpdate(updates);
+      toast({ title: "Sale applied to selected items" });
+      setSaleOpen(false);
+      load();
+    } catch {
+      toast({ title: "Could not apply sale", variant: "destructive" });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Products</h1>
-          <p className="text-sm text-muted-foreground">{products.length} total</p>
+          <p className="text-sm text-muted-foreground">
+            {products.length} total
+            {selectedProducts.length > 0 && ` · ${selectedProducts.length} selected`}
+          </p>
         </div>
         <div className="flex gap-2">
+          {selectedProducts.length > 0 && (
+            <Button variant="outline" onClick={() => setSaleOpen(true)} className="rounded-full">
+              <Percent className="mr-1.5 h-4 w-4" /> Apply sale
+            </Button>
+          )}
           <Button variant="outline" onClick={() => setBulkOpen(true)} className="rounded-full">
             <Plus className="mr-1.5 h-4 w-4" /> Add multiple
           </Button>
@@ -98,6 +146,15 @@ export default function AdminProducts() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-[0.1em] text-muted-foreground">
+                <th className="px-4 py-3 font-medium">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all"
+                    checked={filtered.length > 0 && filtered.every((p) => selected.has(p.id))}
+                    onChange={toggleSelectAll}
+                    className="h-4 w-4 rounded border-border"
+                  />
+                </th>
                 <th className="px-4 py-3 font-medium">Product</th>
                 <th className="px-4 py-3 font-medium">Category</th>
                 <th className="px-4 py-3 font-medium">Price</th>
@@ -108,11 +165,20 @@ export default function AdminProducts() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">Loading…</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">Loading…</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">No products found.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">No products found.</td></tr>
               ) : filtered.map((p) => (
                 <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30">
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      aria-label="Select item"
+                      checked={selected.has(p.id)}
+                      onChange={() => toggleSelected(p.id)}
+                      className="h-4 w-4 rounded border-border"
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       {p.images?.[0] ? (
@@ -124,7 +190,12 @@ export default function AdminProducts() {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{p.category || "—"}</td>
-                  <td className="px-4 py-3">{formatPrice(p.price)}</td>
+                  <td className="px-4 py-3">
+                    <div className="font-medium">{formatPrice(p.price)}</div>
+                    {p.compare_at_price && p.compare_at_price > p.price && (
+                      <div className="text-xs text-muted-foreground line-through">{formatPrice(p.compare_at_price)}</div>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <span className={p.stock <= 5 ? "font-medium text-amber-600" : ""}>{p.stock}</span>
                   </td>
@@ -162,6 +233,14 @@ export default function AdminProducts() {
           categories={categories}
           onClose={() => setBulkOpen(false)}
           onDone={() => { setBulkOpen(false); load(); }}
+        />
+      )}
+
+      {saleOpen && (
+        <AdminSaleDialog
+          products={selectedProducts}
+          onClose={() => setSaleOpen(false)}
+          onDone={() => { setSaleOpen(false); load(); }}
         />
       )}
     </div>
