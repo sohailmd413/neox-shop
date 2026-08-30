@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 const EMPTY = {
   name: "",
@@ -12,7 +13,7 @@ const EMPTY = {
   brand: "",
   status: "active",
   featured: false,
-  imagesText: "",
+  images: [],
 };
 
 export default function AdminProductDialog({ product, categories, onClose, onSave }) {
@@ -24,7 +25,7 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
       price: product.price ?? "",
       compare_at_price: product.compare_at_price ?? "",
       stock: product.stock ?? "",
-      imagesText: (product.images || []).join("\n"),
+      images: product.images || [],
     };
   });
 
@@ -46,10 +47,7 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
       brand: form.brand || "",
       status: form.status,
       featured: !!form.featured,
-      images: form.imagesText
-        .split("\n")
-        .map((s) => s.trim())
-        .filter(Boolean),
+      images: form.images || [],
     };
     onSave(data);
   };
@@ -109,8 +107,8 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
             <textarea value={form.description} onChange={set("description")} rows={3} className={inputCls} />
           </Field>
 
-          <Field label="Image URLs (one per line)">
-            <textarea value={form.imagesText} onChange={set("imagesText")} rows={3} placeholder="https://…" className={inputCls} />
+          <Field label="Images (upload from device)">
+            <ImageUpload value={form.images} onChange={(imgs) => setForm((f) => ({ ...f, images: imgs }))} multiple />
           </Field>
 
           <label className="flex items-center gap-2 text-sm">

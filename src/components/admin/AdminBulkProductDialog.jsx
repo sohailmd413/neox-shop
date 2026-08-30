@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { slugify } from "@/lib/format";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 const blank = (categories) => ({
   name: "",
@@ -98,7 +99,9 @@ export default function AdminBulkProductDialog({ categories, onClose, onDone }) 
                     <option key={c.id} value={c.name}>{c.name}</option>
                   ))}
                 </SelectWrap>
-                <Input className="sm:col-span-3" placeholder="Image URL" value={r.image_url} onChange={(e) => update(i, "image_url", e.target.value)} />
+                <div className="sm:col-span-3">
+                  <ImageUpload value={r.image_url} onChange={(url) => update(i, "image_url", url)} />
+                </div>
                 <Input className="sm:col-span-4" placeholder="Brand" value={r.brand} onChange={(e) => update(i, "brand", e.target.value)} />
                 <SelectWrap value={r.status} onChange={(e) => update(i, "status", e.target.value)}>
                   <option value="active">active</option>

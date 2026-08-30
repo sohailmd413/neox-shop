@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { slugify } from "@/lib/format";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 const blankRow = () => ({ name: "", image_url: "", sort_order: 0 });
 
@@ -108,8 +109,8 @@ export default function AdminCategories() {
             <Input id="c-name" value={single.name} onChange={(e) => setSingle({ ...single, name: e.target.value })} placeholder="e.g. Electronics" />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="c-img">Image URL</Label>
-            <Input id="c-img" value={single.image_url} onChange={(e) => setSingle({ ...single, image_url: e.target.value })} placeholder="https://…" />
+            <Label>Image</Label>
+            <ImageUpload value={single.image_url} onChange={(url) => setSingle({ ...single, image_url: url })} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="c-sort">Sort order</Label>
@@ -131,7 +132,7 @@ export default function AdminCategories() {
             <Plus className="mr-1.5 h-4 w-4" /> Add row
           </Button>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">Slug is generated automatically. Leave a row blank to skip it.</p>
+        <p className="mt-1 text-xs text-muted-foreground">Slug is generated automatically. Upload an image from your device (stored in the backend). Leave a row blank to skip it.</p>
         <div className="mt-4 space-y-2">
           {rows.map((r, i) => (
             <div key={i} className="grid gap-2 sm:grid-cols-12">
@@ -141,12 +142,9 @@ export default function AdminCategories() {
                 value={r.name}
                 onChange={(e) => updateRow(i, "name", e.target.value)}
               />
-              <Input
-                className="sm:col-span-6"
-                placeholder="Image URL"
-                value={r.image_url}
-                onChange={(e) => updateRow(i, "image_url", e.target.value)}
-              />
+              <div className="sm:col-span-6">
+                <ImageUpload value={r.image_url} onChange={(url) => updateRow(i, "image_url", url)} />
+              </div>
               <Input
                 className="sm:col-span-1"
                 type="number"
