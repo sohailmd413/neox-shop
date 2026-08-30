@@ -6,7 +6,8 @@ import { base44 } from "@/api/base44Client";
 import ProductCard from "@/components/storefront/ProductCard";
 import { ProductGridSkeleton } from "@/components/storefront/Skeleton";
 import { Button } from "@/components/ui/button";
-import { SelectNative } from "@/components/ui/select-native";
+import SortDropdown from "@/components/storefront/SortDropdown";
+import SearchBar from "@/components/storefront/SearchBar";
 
 const SORT_OPTIONS = [
   { value: "featured", label: "Featured" },
@@ -100,7 +101,7 @@ export default function Catalog() {
     setSearchParams({}, { replace: true });
   };
 
-  const activeFilters = [category, onSale && "sale", maxPrice && `≤ $${maxPrice}`].filter(Boolean);
+  const activeFilters = [category, onSale && "sale", maxPrice && `≤ ${maxPrice} SAR`].filter(Boolean);
 
   return (
     <div className="pt-16">
@@ -118,6 +119,9 @@ export default function Catalog() {
           <p className="mt-2 text-sm text-muted-foreground">
             {loading ? "Loading…" : `${products?.length || 0} ${products?.length === 1 ? "item" : "items"}`}
           </p>
+          <div className="mt-5 max-w-md">
+            <SearchBar />
+          </div>
         </div>
       </div>
 
@@ -132,16 +136,12 @@ export default function Catalog() {
               >
                 <SlidersHorizontal className="h-4 w-4" /> Filters
               </button>
-              <SelectNative
-                rounded="full"
+              <SortDropdown
                 value={sort}
-                onChange={(e) => updateParam("sort", e.target.value === "featured" ? "" : e.target.value)}
-                className="px-4 py-2"
-              >
-                {SORT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </SelectNative>
+                options={SORT_OPTIONS}
+                onChange={(v) => updateParam("sort", v === "featured" ? "" : v)}
+                className="w-44"
+              />
             </div>
 
             {/* Desktop filters */}
@@ -163,15 +163,12 @@ export default function Catalog() {
               <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
                 Sort by
               </h3>
-              <SelectNative
+              <SortDropdown
                 value={sort}
-                onChange={(e) => updateParam("sort", e.target.value === "featured" ? "" : e.target.value)}
+                options={SORT_OPTIONS}
+                onChange={(v) => updateParam("sort", v === "featured" ? "" : v)}
                 className="mt-3"
-              >
-                {SORT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </SelectNative>
+              />
             </div>
           </aside>
 
@@ -293,7 +290,7 @@ function FilterPanel({ categories, category, onSale, maxPrice, priceLimit, updat
           className="mt-3 w-full accent-foreground"
         />
         <p className="mt-1 text-xs text-muted-foreground">
-          {maxPrice ? `Up to $${maxPrice}` : "Any price"}
+          {maxPrice ? `Up to ${maxPrice} SAR` : "Any price"}
         </p>
       </div>
 

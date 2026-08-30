@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Search, Menu, X, Heart, Package, LayoutDashboard, User, LogOut } from "lucide-react";
+import { ShoppingBag, Menu, X, Heart, Package, LayoutDashboard, User, LogOut } from "lucide-react";
 import { useCart } from "@/lib/CartContext";
 import { useWishlist } from "@/lib/WishlistContext";
 import { base44 } from "@/api/base44Client";
 import { useLanguage } from "@/lib/i18n";
 import { Languages } from "lucide-react";
+import SearchBar from "@/components/storefront/SearchBar";
 
 const navLinks = [
   { key: "nav.shop", path: "/shop" },
@@ -20,10 +21,8 @@ export default function Navbar() {
   const { t, toggle } = useLanguage();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [query, setQuery] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState(null);
-  const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
@@ -51,14 +50,6 @@ export default function Navbar() {
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
-
-  const submitSearch = (e) => {
-    e.preventDefault();
-    if (query.trim()) {
-      navigate(`/shop?q=${encodeURIComponent(query.trim())}`);
-      setQuery("");
-    }
-  };
 
   return (
     <header
@@ -95,17 +86,9 @@ export default function Navbar() {
             <Languages className="h-4 w-4" />
             {t("lang.btn")}
           </button>
-          <form onSubmit={submitSearch} className="hidden sm:block">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t("nav.search")}
-                className="h-9 w-40 rounded-full border border-border bg-background/60 pl-9 pr-3 text-sm outline-none transition-all focus:w-56 focus:border-foreground/40"
-              />
-            </div>
-          </form>
+          <div className="hidden w-64 sm:block">
+            <SearchBar placeholder={t("nav.search")} />
+          </div>
 
           {(isAdmin || !user) && (
             <Link
@@ -236,17 +219,9 @@ export default function Navbar() {
                   {t("nav.signIn")}
                 </Link>
               )}
-              <form onSubmit={submitSearch} className="px-3 pt-2">
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder={t("nav.searchProducts")}
-                    className="h-10 w-full rounded-full border border-border bg-background pl-9 pr-3 text-sm outline-none focus:border-foreground/40"
-                  />
-                </div>
-              </form>
+              <div className="px-3 pt-2">
+                <SearchBar placeholder={t("nav.searchProducts")} />
+              </div>
             </div>
           </motion.div>
         )}
