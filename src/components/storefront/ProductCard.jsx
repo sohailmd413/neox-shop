@@ -6,6 +6,7 @@ import { useCart } from "@/lib/CartContext";
 import { useWishlist } from "@/lib/WishlistContext";
 import { formatPrice } from "@/lib/format";
 import { Image } from "@/components/ui/image";
+import SaleCountdown from "@/components/admin/SaleCountdown";
 
 export default function ProductCard({ product, index = 0 }) {
   const { addItem } = useCart();
@@ -98,6 +99,9 @@ export default function ProductCard({ product, index = 0 }) {
               </span>
             )}
           </div>
+          {product.compare_at_price && product.compare_at_price > product.price && product.sale_ends_at && !outOfStock && (
+            <SaleCountdown endsAt={product.sale_ends_at} />
+          )}
         </div>
       </Link>
     </motion.div>

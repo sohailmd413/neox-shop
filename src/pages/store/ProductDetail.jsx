@@ -9,6 +9,7 @@ import { Image } from "@/components/ui/image";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import ProductCard from "@/components/storefront/ProductCard";
+import SaleCountdown from "@/components/admin/SaleCountdown";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -218,6 +219,9 @@ export default function ProductDetail() {
                 <span className="text-base text-muted-foreground line-through">
                   {formatPrice(product.compare_at_price)}
                 </span>
+              )}
+              {product.compare_at_price && product.compare_at_price > product.price && product.sale_ends_at && (
+                <SaleCountdown endsAt={product.sale_ends_at} />
               )}
             </div>
 
