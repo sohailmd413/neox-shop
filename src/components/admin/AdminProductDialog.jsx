@@ -31,14 +31,22 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
     };
   });
 
+  const [error, setError] = useState("");
+
   const set = (k) => (e) => {
     const val = e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    setError("");
     setForm((f) => ({ ...f, [k]: val }));
   };
 
   const submit = (e) => {
     e.preventDefault();
     if (!form.name.trim() || !form.price) return;
+    if (form.compare_at_price && Number(form.compare_at_price) <= Number(form.price)) {
+      setError("Compare-at price must be greater than the selling price.");
+      return;
+    }
+    setError("");
     const data = {
       name: form.name.trim(),
       description: form.description || "",
@@ -129,6 +137,9 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
             Featured product
           </label>
 
+          {error && (
+            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+          )}
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
             <Button type="submit">{product ? "Save changes" : "Create product"}</Button>
