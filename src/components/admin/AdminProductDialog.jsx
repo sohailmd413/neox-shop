@@ -14,6 +14,8 @@ const EMPTY = {
   status: "active",
   featured: false,
   images: [],
+  return_days: "",
+  warranty: "",
 };
 
 export default function AdminProductDialog({ product, categories, onClose, onSave }) {
@@ -48,6 +50,8 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
       status: form.status,
       featured: !!form.featured,
       images: form.images || [],
+      return_days: form.return_days === "" || form.return_days === null ? 0 : Number(form.return_days),
+      warranty: form.warranty || "",
     };
     onSave(data);
   };
@@ -106,6 +110,15 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
           <Field label="Description">
             <textarea value={form.description} onChange={set("description")} rows={3} className={inputCls} />
           </Field>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Return window (days)">
+              <input type="number" min="0" value={form.return_days} onChange={set("return_days")} className={inputCls} placeholder="0 = no returns" />
+            </Field>
+            <Field label="Warranty">
+              <input value={form.warranty} onChange={set("warranty")} className={inputCls} placeholder="e.g. 2-year manufacturer" />
+            </Field>
+          </div>
 
           <Field label="Images (upload from device)">
             <ImageUpload value={form.images} onChange={(imgs) => setForm((f) => ({ ...f, images: imgs }))} multiple />

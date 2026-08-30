@@ -100,6 +100,15 @@
     "num_reviews": {
       "type": "number",
       "default": 0
+    },
+    "return_days": {
+      "type": "number",
+      "default": 0,
+      "description": "Allowed return window in days. 0 or empty means no returns allowed."
+    },
+    "warranty": {
+      "type": "string",
+      "description": "Warranty terms set by admin, e.g. '2-year manufacturer warranty'."
     }
   },
   "required": [

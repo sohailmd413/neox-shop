@@ -21,6 +21,8 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [canReview, setCanReview] = useState(false);
+  const [reviewEligibleChecked, setReviewEligibleChecked] = useState(false);
   const { toast } = useToast();
 
   const submitReview = async (e) => {
@@ -36,6 +38,7 @@ export default function ProductDetail() {
         rating: reviewForm.rating,
         comment: reviewForm.comment.trim(),
         approved: false,
+        verified_purchase: true,
         author: "Customer",
       });
       toast({ title: "Review submitted for moderation" });
@@ -65,6 +68,20 @@ export default function ProductDetail() {
           const rv = await base44.entities.Review.filter({ product_id: id, approved: true }, "-created_date", 50);
           if (!cancelled) setReviews(rv);
         } catch {}
+
+        // Feedback form is only visible once the user has a delivered order containing this product.
+        try {
+          let user = null;
+          try { user = await base44.auth.me(); } catch {}
+          if (user) {
+            const orders = await base44.entities.Order.filter({}, "-created_date", 50);
+            const delivered = (orders || []).some(
+              (o) => o.status === "delivered" && (o.items || []).some((it) => it.product_id === id)
+            );
+            if (!cancelled) setCanReview(delivered);
+          }
+        } catch {}
+        if (!cancelled) setReviewEligibleChecked(true);
       } catch {
         if (!cancelled) setProduct(null);
       } finally {
@@ -289,11 +306,15 @@ export default function ProductDetail() {
               </div>
               <div className="flex flex-col items-center gap-2 text-center">
                 <RefreshCw className="h-5 w-5 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">30-day returns</span>
+                <span className="text-xs text-muted-foreground">
+                  {product.return_days ? `${product.return_days}-day returns` : "No returns"}
+                </span>
               </div>
               <div className="flex flex-col items-center gap-2 text-center">
                 <ShieldCheck className="h-5 w-5 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">2-year warranty</span>
+                <span className="text-xs text-muted-foreground">
+                  {product.warranty ? product.warranty : "No warranty"}
+                </span>
               </div>
             </div>
           </div>
@@ -329,37 +350,45 @@ export default function ProductDetail() {
             <p className="mt-6 text-sm text-muted-foreground">No reviews yet — be the first to share your thoughts.</p>
           )}
 
-          {/* Write a review */}
-          <form onSubmit={submitReview} className="mt-8 rounded-2xl border border-border p-6">
-            <h3 className="text-base font-medium">Write a review</h3>
-            <div className="mt-4 flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Your rating</span>
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => setReviewForm((f) => ({ ...f, rating: n }))}
-                    aria-label={`${n} stars`}
-                  >
-                    <Star
-                      className={`h-5 w-5 ${n <= reviewForm.rating ? "fill-foreground text-foreground" : "text-muted-foreground/30"}`}
-                    />
-                  </button>
-                ))}
+          {/* Write a review — only after delivery */}
+          {reviewEligibleChecked && canReview ? (
+            <form onSubmit={submitReview} className="mt-8 rounded-2xl border border-border p-6">
+              <h3 className="text-base font-medium">Write a review</h3>
+              <div className="mt-4 flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Your rating</span>
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setReviewForm((f) => ({ ...f, rating: n }))}
+                      aria-label={`${n} stars`}
+                    >
+                      <Star
+                        className={`h-5 w-5 ${n <= reviewForm.rating ? "fill-foreground text-foreground" : "text-muted-foreground/30"}`}
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
+              <textarea
+                value={reviewForm.comment}
+                onChange={(e) => setReviewForm((f) => ({ ...f, comment: e.target.value }))}
+                placeholder="Share your experience with this product…"
+                rows={3}
+                className="mt-4 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/40"
+              />
+              <Button type="submit" disabled={submitting} className="mt-3 rounded-full">
+                {submitting ? "Submitting…" : "Submit review"}
+              </Button>
+            </form>
+          ) : reviewEligibleChecked ? (
+            <div className="mt-8 rounded-2xl border border-dashed border-border p-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                You can leave a review once your order for this product has been delivered.
+              </p>
             </div>
-            <textarea
-              value={reviewForm.comment}
-              onChange={(e) => setReviewForm((f) => ({ ...f, comment: e.target.value }))}
-              placeholder="Share your experience with this product…"
-              rows={3}
-              className="mt-4 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/40"
-            />
-            <Button type="submit" disabled={submitting} className="mt-3 rounded-full">
-              {submitting ? "Submitting…" : "Submit review"}
-            </Button>
-          </form>
+          ) : null}
         </section>
 
         {/* Related */}
