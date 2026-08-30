@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, Search, Percent } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Percent, Ban } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import AdminProductDialog from "@/components/admin/AdminProductDialog";
 import AdminBulkProductDialog from "@/components/admin/AdminBulkProductDialog";
 import AdminSaleDialog from "@/components/admin/AdminSaleDialog";
+import SaleCountdown from "@/components/admin/SaleCountdown";
 
 export default function AdminProducts() {
   const [products, setProducts] = useState([]);
@@ -106,6 +107,24 @@ export default function AdminProducts() {
     }
   };
 
+  const isOnSale = (p) => !!p.compare_at_price && p.compare_at_price > p.price;
+  const salePercent = (p) =>
+    isOnSale(p) ? Math.round((1 - p.price / p.compare_at_price) * 100) : 0;
+
+  const removeSale = async (p) => {
+    try {
+      await base44.entities.Product.update(p.id, {
+        price: p.compare_at_price,
+        compare_at_price: null,
+        sale_ends_at: null,
+      });
+      toast({ title: "Removed from sale" });
+      load();
+    } catch {
+      toast({ title: "Could not remove sale", variant: "destructive" });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -160,14 +179,15 @@ export default function AdminProducts() {
                 <th className="px-4 py-3 font-medium">Price</th>
                 <th className="px-4 py-3 font-medium">Stock</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Sale</th>
                 <th className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">Loading…</td></tr>
+                <tr><td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">Loading…</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">No products found.</td></tr>
+                <tr><td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">No products found.</td></tr>
               ) : filtered.map((p) => (
                 <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30">
                   <td className="px-4 py-3">
@@ -203,7 +223,29 @@ export default function AdminProducts() {
                     <span className="rounded-full bg-muted px-2 py-0.5 text-xs capitalize">{p.status}</span>
                   </td>
                   <td className="px-4 py-3">
+                    {isOnSale(p) ? (
+                      <div className="flex flex-col gap-1">
+                        <span className="inline-flex w-fit items-center rounded-full bg-foreground px-2 py-0.5 text-[11px] font-medium text-background">
+                          {salePercent(p)}% off
+                        </span>
+                        <SaleCountdown endsAt={p.sale_ends_at} />
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground/60">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
                     <div className="flex justify-end gap-1">
+                      {isOnSale(p) && (
+                        <button
+                          onClick={() => removeSale(p)}
+                          className="rounded-lg p-2 text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+                          aria-label="Remove from sale"
+                          title="Remove from sale"
+                        >
+                          <Ban className="h-4 w-4" />
+                        </button>
+                      )}
                       <button onClick={() => { setEditing(p); setDialogOpen(true); }} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Edit">
                         <Pencil className="h-4 w-4" />
                       </button>

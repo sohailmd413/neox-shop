@@ -1,16 +1,28 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Percent } from "lucide-react";
+import { X, Percent, Clock } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 
+const DURATIONS = [
+  { label: "6 hours", ms: 6 * 3600000 },
+  { label: "24 hours", ms: 24 * 3600000 },
+  { label: "3 days", ms: 3 * 86400000 },
+  { label: "7 days", ms: 7 * 86400000 },
+  { label: "14 days", ms: 14 * 86400000 },
+  { label: "30 days", ms: 30 * 86400000 },
+];
+
 export default function AdminSaleDialog({ products, onClose, onDone }) {
   const [percent, setPercent] = useState("");
+  const [durationIdx, setDurationIdx] = useState(2);
   const [saving, setSaving] = useState(false);
 
-  const pct = Math.min(100, Math.max(0, Number(percent) || 0));
+  const pct = Math.min(99, Math.max(0, Number(percent) || 0));
   const valid = pct > 0 && pct < 100;
+
+  const endsAt = new Date(Date.now() + DURATIONS[durationIdx].ms).toISOString();
 
   const preview = products.map((p) => {
     const base = p.compare_at_price && p.compare_at_price > 0 ? p.compare_at_price : p.price;
@@ -27,7 +39,8 @@ export default function AdminSaleDialog({ products, onClose, onDone }) {
         return {
           id: p.id,
           price: p.newPrice,
-          compare_at_price: compareAt === p.price ? p.price : p.compare_at_price,
+          compare_at_price: compareAt,
+          sale_ends_at: endsAt,
         };
       });
       await base44.entities.Product.bulkUpdate(updates);
@@ -50,7 +63,7 @@ export default function AdminSaleDialog({ products, onClose, onDone }) {
             <h2 className="text-lg font-semibold">Create sale</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Applies to {products.length} {products.length === 1 ? "item" : "items"}. Discount is taken from the
-              comparison price when set, otherwise from the item's price (and the current price becomes the comparison price).
+              comparison price when set, otherwise from the item's price.
             </p>
           </div>
           <button onClick={onClose} className="rounded-full p-1.5 hover:bg-muted">
@@ -58,12 +71,12 @@ export default function AdminSaleDialog({ products, onClose, onDone }) {
           </button>
         </div>
 
-        <div className="mt-5">
-          <label className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
-            Sale percentage
-          </label>
-          <div className="mt-2 flex items-center gap-2">
-            <div className="relative flex-1">
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
+              Sale percentage
+            </label>
+            <div className="mt-2 relative">
               <Percent className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="number"
@@ -76,8 +89,26 @@ export default function AdminSaleDialog({ products, onClose, onDone }) {
                 autoFocus
               />
             </div>
-            <span className="text-sm text-muted-foreground">% off</span>
           </div>
+          <div>
+            <label className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
+              Sale lasts for
+            </label>
+            <select
+              value={durationIdx}
+              onChange={(e) => setDurationIdx(Number(e.target.value))}
+              className="mt-2 h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-foreground/40"
+            >
+              {DURATIONS.map((d, i) => (
+                <option key={d.label} value={i}>{d.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="mt-3 flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+          <Clock className="h-3.5 w-3.5" />
+          Sale ends {new Date(endsAt).toLocaleString()}
         </div>
 
         <div className="mt-5 max-h-56 overflow-y-auto rounded-xl border border-border">

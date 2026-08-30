@@ -109,6 +109,11 @@
     "warranty": {
       "type": "string",
       "description": "Warranty terms set by admin, e.g. '2-year manufacturer warranty'."
+    },
+    "sale_ends_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the current sale ends. Used to show a countdown; clearing it ends the sale."
     }
   },
   "required": [
