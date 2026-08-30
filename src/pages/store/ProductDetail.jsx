@@ -104,16 +104,17 @@ export default function ProductDetail() {
   }
 
   const outOfStock = product.stock <= 0;
+  const maxQty = product.stock > 0 ? product.stock : 1;
   const images = product.images?.length ? product.images : [];
 
+  const clampQty = (q) => Math.min(Math.max(q, 1), maxQty);
   const handleAdd = () => {
     if (outOfStock) return;
-    addItem(product, quantity);
+    addItem(product, clampQty(quantity));
   };
-
   const buyNow = () => {
     if (outOfStock) return;
-    addItem(product, quantity);
+    addItem(product, clampQty(quantity));
     setIsOpen(false);
     window.location.href = "/checkout";
   };
@@ -248,8 +249,9 @@ export default function ProductDetail() {
                 </button>
                 <span className="w-10 text-center text-sm font-medium">{quantity}</span>
                 <button
-                  onClick={() => setQuantity((q) => q + 1)}
-                  className="flex h-11 w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+                  onClick={() => setQuantity((q) => clampQty(q + 1))}
+                  disabled={outOfStock || quantity >= maxQty}
+                  className="flex h-11 w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40 disabled:hover:text-muted-foreground"
                   aria-label="Increase quantity"
                 >
                   <Plus className="h-4 w-4" />
@@ -260,8 +262,14 @@ export default function ProductDetail() {
                 disabled={outOfStock}
                 className="h-11 flex-1 rounded-full"
               >
-                <ShoppingBag className="mr-2 h-4 w-4" />
-                Add to cart — {formatPrice(product.price * quantity)}
+                {outOfStock ? (
+                  "Sold out"
+                ) : (
+                  <>
+                    <ShoppingBag className="mr-2 h-4 w-4" />
+                    Add to cart — {formatPrice(product.price * clampQty(quantity))}
+                  </>
+                )}
               </Button>
             </div>
             <Button
@@ -270,7 +278,7 @@ export default function ProductDetail() {
               variant="outline"
               className="mt-3 h-11 w-full rounded-full"
             >
-              Buy it now
+              {outOfStock ? "Sold out" : "Buy it now"}
             </Button>
 
             {/* Trust badges */}

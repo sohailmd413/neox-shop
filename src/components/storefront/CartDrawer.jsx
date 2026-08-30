@@ -102,7 +102,8 @@ export default function CartDrawer() {
                               </span>
                               <button
                                 onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                                className="flex h-7 w-7 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+                                disabled={Number.isFinite(item.stock) && item.quantity >= item.stock}
+                                className="flex h-7 w-7 items-center justify-center text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40 disabled:hover:text-muted-foreground"
                                 aria-label="Increase quantity"
                               >
                                 <Plus className="h-3 w-3" />
