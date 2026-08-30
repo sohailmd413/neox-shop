@@ -124,6 +124,8 @@ export default function ProductDetail() {
   const outOfStock = product.stock <= 0;
   const maxQty = product.stock > 0 ? product.stock : 1;
   const images = product.images?.length ? product.images : [];
+  const onSale = product.compare_at_price && product.compare_at_price > product.price;
+  const salePct = onSale ? Math.round((1 - product.price / product.compare_at_price) * 100) : 0;
 
   const clampQty = (q) => Math.min(Math.max(q, 1), maxQty);
   const handleAdd = () => {
@@ -179,9 +181,9 @@ export default function ProductDetail() {
                   <ShoppingBag className="h-10 w-10" />
                 </div>
               )}
-              {product.compare_at_price && product.compare_at_price > product.price && (
+              {onSale && (
                 <span className="absolute left-4 top-4 rounded-full bg-foreground px-3 py-1 text-[11px] font-medium text-background">
-                  Sale
+                  {salePct}% off
                 </span>
               )}
             </motion.div>
@@ -215,12 +217,17 @@ export default function ProductDetail() {
 
             <div className="mt-4 flex items-center gap-3">
               <span className="text-2xl font-semibold">{formatPrice(product.price)}</span>
-              {product.compare_at_price && product.compare_at_price > product.price && (
-                <span className="text-base text-muted-foreground line-through">
-                  {formatPrice(product.compare_at_price)}
-                </span>
+              {onSale && (
+                <>
+                  <span className="text-base text-muted-foreground line-through">
+                    {formatPrice(product.compare_at_price)}
+                  </span>
+                  <span className="rounded-full bg-foreground px-2.5 py-0.5 text-[11px] font-medium text-background">
+                    Save {salePct}%
+                  </span>
+                </>
               )}
-              {product.compare_at_price && product.compare_at_price > product.price && product.sale_ends_at && (
+              {onSale && product.sale_ends_at && (
                 <SaleCountdown endsAt={product.sale_ends_at} />
               )}
             </div>

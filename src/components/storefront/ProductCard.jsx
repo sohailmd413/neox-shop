@@ -13,6 +13,8 @@ export default function ProductCard({ product, index = 0 }) {
   const { toggleItem, isInWishlist } = useWishlist();
   const outOfStock = product.stock <= 0;
   const wished = isInWishlist(product.id);
+  const onSale = product.compare_at_price && product.compare_at_price > product.price;
+  const salePct = onSale ? Math.round((1 - product.price / product.compare_at_price) * 100) : 0;
 
   const toggleWish = (e) => {
     e.preventDefault();
@@ -49,9 +51,9 @@ export default function ProductCard({ product, index = 0 }) {
             </div>
           )}
 
-          {product.compare_at_price && product.compare_at_price > product.price && (
+          {onSale && (
             <span className="absolute left-3 top-3 rounded-full bg-foreground px-2.5 py-1 text-[11px] font-medium tracking-wide text-background">
-              Sale
+              {salePct}% off
             </span>
           )}
           {outOfStock && (
