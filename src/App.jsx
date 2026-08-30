@@ -7,11 +7,19 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import { CartProvider } from '@/lib/CartContext';
+import { WishlistProvider } from '@/lib/WishlistContext';
 import StorefrontLayout from '@/components/storefront/StorefrontLayout';
 import Home from '@/pages/store/Home';
 import Catalog from '@/pages/store/Catalog';
 import ProductDetail from '@/pages/store/ProductDetail';
 import Checkout from '@/pages/store/Checkout';
+import Wishlist from '@/pages/store/Wishlist';
+import Orders from '@/pages/store/Orders';
+import AdminLayout from '@/components/admin/AdminLayout';
+import AdminDashboard from '@/pages/admin/AdminDashboard';
+import AdminProducts from '@/pages/admin/AdminProducts';
+import AdminOrders from '@/pages/admin/AdminOrders';
+import AdminReviews from '@/pages/admin/AdminReviews';
 // Add page imports here
 
 const AuthenticatedApp = () => {
@@ -40,16 +48,27 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <CartProvider>
-      <Routes>
-        {/* Add your page Route elements here */}
-        <Route element={<StorefrontLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/shop" element={<Catalog />} />
-          <Route path="/product/:id" element={<ProductDetail />} />
-          <Route path="/checkout" element={<Checkout />} />
-        </Route>
-        <Route path="*" element={<PageNotFound />} />
-      </Routes>
+      <WishlistProvider>
+        <Routes>
+          {/* Storefront */}
+          <Route element={<StorefrontLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/shop" element={<Catalog />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/orders" element={<Orders />} />
+          </Route>
+          {/* Admin */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="orders" element={<AdminOrders />} />
+            <Route path="reviews" element={<AdminReviews />} />
+          </Route>
+          <Route path="*" element={<PageNotFound />} />
+        </Routes>
+      </WishlistProvider>
     </CartProvider>
   );
 };

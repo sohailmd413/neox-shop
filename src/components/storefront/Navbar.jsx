@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingBag, Search, Menu, X } from "lucide-react";
+import { ShoppingBag, Search, Menu, X, Heart, Package, LayoutDashboard } from "lucide-react";
 import { useCart } from "@/lib/CartContext";
+import { useWishlist } from "@/lib/WishlistContext";
+import { base44 } from "@/api/base44Client";
 
 const navLinks = [
   { label: "Shop", path: "/shop" },
@@ -12,11 +14,22 @@ const navLinks = [
 
 export default function Navbar() {
   const { count, setIsOpen } = useCart();
+  const { count: wishCount } = useWishlist();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const me = await base44.auth.me();
+        setIsAdmin(me?.role === "admin");
+      } catch {}
+    })();
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -76,12 +89,48 @@ export default function Navbar() {
             </div>
           </form>
 
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex"
+              aria-label="Admin"
+            >
+              <LayoutDashboard className="h-5 w-5" />
+            </Link>
+          )}
+          <Link
+            to="/orders"
+            className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex"
+            aria-label="My orders"
+          >
+            <Package className="h-5 w-5" />
+          </Link>
+          <Link
+            to="/wishlist"
+            className="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
+            aria-label="Wishlist"
+          >
+            <Heart className="h-5 w-5" />
+            <AnimatePresence>
+              {wishCount > 0 && (
+                <motion.span
+                  key={wishCount}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[10px] font-semibold text-background"
+                >
+                  {wishCount}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Link>
           <button
             onClick={() => setIsOpen(true)}
             className="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
             aria-label="Open cart"
           >
-            <ShoppingBag className="h-4.5 w-4.5" />
+            <ShoppingBag className="h-5 w-5" />
             <AnimatePresence>
               {count > 0 && (
                 <motion.span
@@ -102,7 +151,7 @@ export default function Navbar() {
             className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted md:hidden"
             aria-label="Menu"
           >
-            {mobileOpen ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </nav>
@@ -126,6 +175,18 @@ export default function Navbar() {
                   {link.label}
                 </Link>
               ))}
+              <div className="my-1 border-t border-border" />
+              <Link to="/wishlist" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                Wishlist
+              </Link>
+              <Link to="/orders" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                My orders
+              </Link>
+              {isAdmin && (
+                <Link to="/admin" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                  Admin panel
+                </Link>
+              )}
               <form onSubmit={submitSearch} className="px-3 pt-2">
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />

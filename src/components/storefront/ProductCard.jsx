@@ -1,14 +1,23 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ShoppingBag, Star } from "lucide-react";
+import { ShoppingBag, Star, Heart } from "lucide-react";
 import { useCart } from "@/lib/CartContext";
+import { useWishlist } from "@/lib/WishlistContext";
 import { formatPrice } from "@/lib/format";
 import { Image } from "@/components/ui/image";
 
 export default function ProductCard({ product, index = 0 }) {
   const { addItem } = useCart();
+  const { toggleItem, isInWishlist } = useWishlist();
   const outOfStock = product.stock <= 0;
+  const wished = isInWishlist(product.id);
+
+  const toggleWish = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleItem(product.id);
+  };
 
   const handleAdd = (e) => {
     e.preventDefault();
@@ -49,6 +58,14 @@ export default function ProductCard({ product, index = 0 }) {
               Sold out
             </span>
           )}
+
+          <button
+            onClick={toggleWish}
+            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur transition-all hover:bg-background"
+            aria-label="Toggle wishlist"
+          >
+            <Heart className={`h-4 w-4 transition-colors ${wished ? "fill-red-500 text-red-500" : ""}`} />
+          </button>
 
           <button
             onClick={handleAdd}

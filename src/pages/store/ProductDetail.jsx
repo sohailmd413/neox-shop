@@ -7,6 +7,7 @@ import { useCart } from "@/lib/CartContext";
 import { formatPrice } from "@/lib/format";
 import { Image } from "@/components/ui/image";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 import ProductCard from "@/components/storefront/ProductCard";
 
 export default function ProductDetail() {
@@ -18,6 +19,33 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  const submitReview = async (e) => {
+    e.preventDefault();
+    if (!reviewForm.comment.trim()) {
+      toast({ title: "Please write your review.", variant: "destructive" });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await base44.entities.Review.create({
+        product_id: id,
+        rating: reviewForm.rating,
+        comment: reviewForm.comment.trim(),
+        approved: false,
+        author: "Customer",
+      });
+      toast({ title: "Review submitted for moderation" });
+      setReviewForm({ rating: 5, comment: "" });
+    } catch {
+      toast({ title: "Could not submit review", variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -264,9 +292,13 @@ export default function ProductDetail() {
         </div>
 
         {/* Reviews */}
-        {reviews.length > 0 && (
-          <section className="mt-16 border-t border-border pt-12">
+        <section className="mt-16 border-t border-border pt-12">
+          <div className="flex flex-wrap items-end justify-between gap-2">
             <h2 className="text-2xl font-semibold tracking-tight">Customer reviews</h2>
+            <span className="text-sm text-muted-foreground">{reviews.length} review(s)</span>
+          </div>
+
+          {reviews.length > 0 ? (
             <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {reviews.map((r) => (
                 <div key={r.id} className="rounded-2xl border border-border p-5">
@@ -285,8 +317,42 @@ export default function ProductDetail() {
                 </div>
               ))}
             </div>
-          </section>
-        )}
+          ) : (
+            <p className="mt-6 text-sm text-muted-foreground">No reviews yet — be the first to share your thoughts.</p>
+          )}
+
+          {/* Write a review */}
+          <form onSubmit={submitReview} className="mt-8 rounded-2xl border border-border p-6">
+            <h3 className="text-base font-medium">Write a review</h3>
+            <div className="mt-4 flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Your rating</span>
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setReviewForm((f) => ({ ...f, rating: n }))}
+                    aria-label={`${n} stars`}
+                  >
+                    <Star
+                      className={`h-5 w-5 ${n <= reviewForm.rating ? "fill-foreground text-foreground" : "text-muted-foreground/30"}`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <textarea
+              value={reviewForm.comment}
+              onChange={(e) => setReviewForm((f) => ({ ...f, comment: e.target.value }))}
+              placeholder="Share your experience with this product…"
+              rows={3}
+              className="mt-4 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/40"
+            />
+            <Button type="submit" disabled={submitting} className="mt-3 rounded-full">
+              {submitting ? "Submitting…" : "Submit review"}
+            </Button>
+          </form>
+        </section>
 
         {/* Related */}
         {related.length > 0 && (

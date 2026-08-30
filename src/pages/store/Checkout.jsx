@@ -18,6 +18,9 @@ export default function Checkout() {
   const { toast } = useToast();
   const [placing, setPlacing] = useState(false);
   const [placed, setPlaced] = useState(null);
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState(null);
+  const [couponMsg, setCouponMsg] = useState("");
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -29,9 +32,49 @@ export default function Checkout() {
     phone: "",
   });
 
-  const tax = subtotal * TAX_RATE;
+  const discount = coupon
+    ? coupon.discount_type === "percent"
+      ? subtotal * (coupon.discount_value / 100)
+      : Math.min(coupon.discount_value, subtotal)
+    : 0;
+  const taxable = Math.max(0, subtotal - discount);
+  const tax = taxable * TAX_RATE;
   const shipping = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : SHIPPING_FEE;
-  const total = subtotal + tax + shipping;
+  const total = taxable + tax + shipping;
+
+  const applyCoupon = async () => {
+    setCouponMsg("");
+    if (!couponInput.trim()) return;
+    try {
+      const found = await base44.entities.Coupon.filter({ code: couponInput.trim(), active: true }, "-created_date", 5);
+      const c = found?.[0];
+      if (!c) {
+        setCoupon(null);
+        setCouponMsg("Invalid coupon code.");
+        return;
+      }
+      if (c.expires_at && new Date(c.expires_at) < new Date()) {
+        setCoupon(null);
+        setCouponMsg("This coupon has expired.");
+        return;
+      }
+      if (c.usage_limit && c.times_used >= c.usage_limit) {
+        setCoupon(null);
+        setCouponMsg("This coupon has reached its usage limit.");
+        return;
+      }
+      setCoupon(c);
+      setCouponMsg("Coupon applied!");
+    } catch {
+      setCouponMsg("Could not validate coupon.");
+    }
+  };
+
+  const removeCoupon = () => {
+    setCoupon(null);
+    setCouponInput("");
+    setCouponMsg("");
+  };
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -59,8 +102,9 @@ export default function Checkout() {
         subtotal,
         tax,
         shipping_fee: shipping,
-        discount: 0,
+        discount,
         total,
+        coupon_code: coupon?.code || "",
         shipping_address: {
           name: form.name,
           line1: form.line1,
@@ -197,8 +241,42 @@ export default function Checkout() {
                 ))}
               </ul>
 
-              <div className="mt-5 space-y-2 border-t border-border pt-4 text-sm">
+              {/* Coupon */}
+              <div className="mt-5 border-t border-border pt-4">
+                {coupon ? (
+                  <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm">
+                    <span className="font-medium">
+                      {coupon.code} · {coupon.discount_type === "percent" ? `${coupon.discount_value}% off` : `${formatPrice(coupon.discount_value)} off`}
+                    </span>
+                    <button onClick={removeCoupon} className="text-xs text-muted-foreground underline hover:text-foreground">
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value)}
+                      placeholder="Coupon code"
+                      className="h-9 flex-1 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-foreground/40"
+                    />
+                    <button
+                      type="button"
+                      onClick={applyCoupon}
+                      className="rounded-lg border border-border px-4 text-sm font-medium transition-colors hover:bg-muted"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                )}
+                {couponMsg && (
+                  <p className={`mt-1.5 text-xs ${coupon ? "text-emerald-600" : "text-destructive"}`}>{couponMsg}</p>
+                )}
+              </div>
+
+              <div className="mt-4 space-y-2 text-sm">
                 <Row label="Subtotal" value={formatPrice(subtotal)} />
+                {discount > 0 && <Row label="Discount" value={`−${formatPrice(discount)}`} />}
                 <Row label="Shipping" value={shipping === 0 ? "Free" : formatPrice(shipping)} />
                 <Row label="Tax" value={formatPrice(tax)} />
               </div>
