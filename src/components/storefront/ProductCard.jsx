@@ -54,7 +54,7 @@ export default function ProductCard({ product, index = 0 }) {
             </span>
           )}
           {outOfStock && (
-            <span className="absolute left-3 top-3 rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium tracking-wide text-muted-foreground">
+            <span className="absolute left-3 top-3 rounded-full bg-red-500 px-2.5 py-1 text-[11px] font-medium tracking-wide text-white">
               Sold out
             </span>
           )}
@@ -85,9 +85,9 @@ export default function ProductCard({ product, index = 0 }) {
           )}
           <h3 className="line-clamp-1 text-sm font-medium text-foreground">{product.name}</h3>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold">{formatPrice(product.price)}</span>
+            <span className={`text-sm font-semibold ${outOfStock ? "select-none text-transparent blur-[3px]" : ""}`}>{formatPrice(product.price)}</span>
             {product.compare_at_price && product.compare_at_price > product.price && (
-              <span className="text-xs text-muted-foreground line-through">
+              <span className={`text-xs text-muted-foreground line-through ${outOfStock ? "select-none blur-[3px]" : ""}`}>
                 {formatPrice(product.compare_at_price)}
               </span>
             )}
