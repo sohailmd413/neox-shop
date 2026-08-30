@@ -117,6 +117,11 @@ export default function Checkout() {
       });
       setPlaced(order);
       clearCart();
+      try {
+        await base44.functions.invoke("decrementStock", { order_id: order.id });
+      } catch {
+        // Non-blocking: stock may be reconciled later via admin.
+      }
     } catch (err) {
       toast({ title: "Could not place order. Please try again.", variant: "destructive" });
     } finally {
