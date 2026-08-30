@@ -5,16 +5,19 @@ import { ShoppingBag, Search, Menu, X, Heart, Package, LayoutDashboard, User, Lo
 import { useCart } from "@/lib/CartContext";
 import { useWishlist } from "@/lib/WishlistContext";
 import { base44 } from "@/api/base44Client";
+import { useLanguage } from "@/lib/i18n";
+import { Languages } from "lucide-react";
 
 const navLinks = [
-  { label: "Shop", path: "/shop" },
-  { label: "New Arrivals", path: "/shop?sort=newest" },
-  { label: "Sale", path: "/shop?filter=sale" },
+  { key: "nav.shop", path: "/shop" },
+  { key: "nav.new", path: "/shop?sort=newest" },
+  { key: "nav.sale", path: "/shop?filter=sale" },
 ];
 
 export default function Navbar() {
   const { count, setIsOpen } = useCart();
   const { count: wishCount } = useWishlist();
+  const { t, toggle } = useLanguage();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -73,24 +76,32 @@ export default function Navbar() {
           <div className="hidden items-center gap-6 md:flex">
             {navLinks.map((link) => (
               <Link
-                key={link.label}
+                key={link.key}
                 to={link.path}
                 className="text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
-                {link.label}
+                {t(link.key)}
               </Link>
             ))}
           </div>
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={toggle}
+            className="hidden h-9 items-center gap-1.5 rounded-full px-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex"
+            aria-label="Switch language"
+          >
+            <Languages className="h-4 w-4" />
+            {t("lang.btn")}
+          </button>
           <form onSubmit={submitSearch} className="hidden sm:block">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search"
+                placeholder={t("nav.search")}
                 className="h-9 w-40 rounded-full border border-border bg-background/60 pl-9 pr-3 text-sm outline-none transition-all focus:w-56 focus:border-foreground/40"
               />
             </div>
@@ -100,8 +111,8 @@ export default function Navbar() {
             <Link
               to={isAdmin ? "/admin" : "/admin/login"}
               className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex"
-              aria-label={isAdmin ? "Admin panel" : "Admin sign in"}
-              title={isAdmin ? "Admin panel" : "Admin sign in"}
+              aria-label={isAdmin ? t("nav.adminPanel") : t("nav.adminSignin")}
+              title={isAdmin ? t("nav.adminPanel") : t("nav.adminSignin")}
             >
               <LayoutDashboard className="h-5 w-5" />
             </Link>
@@ -110,7 +121,7 @@ export default function Navbar() {
             <button
               onClick={signOut}
               className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex"
-              aria-label="Sign out"
+              aria-label={t("nav.signOut")}
             >
               <LogOut className="h-5 w-5" />
             </button>
@@ -118,7 +129,7 @@ export default function Navbar() {
             <Link
               to="/login"
               className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex"
-              aria-label="Sign in"
+              aria-label={t("nav.signIn")}
             >
               <User className="h-5 w-5" />
             </Link>
@@ -126,14 +137,14 @@ export default function Navbar() {
           <Link
             to="/orders"
             className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex"
-            aria-label="My orders"
+            aria-label={t("nav.myOrders")}
           >
             <Package className="h-5 w-5" />
           </Link>
           <Link
             to="/wishlist"
             className="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
-            aria-label="Wishlist"
+            aria-label={t("nav.wishlist")}
           >
             <Heart className="h-5 w-5" />
             <AnimatePresence>
@@ -153,7 +164,7 @@ export default function Navbar() {
           <button
             onClick={() => setIsOpen(true)}
             className="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
-            aria-label="Open cart"
+            aria-label={t("nav.openCart")}
           >
             <ShoppingBag className="h-5 w-5" />
             <AnimatePresence>
@@ -174,7 +185,7 @@ export default function Navbar() {
           <button
             onClick={() => setMobileOpen((v) => !v)}
             className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted md:hidden"
-            aria-label="Menu"
+            aria-label={t("nav.menu")}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -193,36 +204,36 @@ export default function Navbar() {
             <div className="space-y-1 px-5 py-4">
               {navLinks.map((link) => (
                 <Link
-                  key={link.label}
+                  key={link.key}
                   to={link.path}
                   className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
-                  {link.label}
+                  {t(link.key)}
                 </Link>
               ))}
               <div className="my-1 border-t border-border" />
               <Link to="/wishlist" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-                Wishlist
+                {t("nav.wishlist")}
               </Link>
               <Link to="/orders" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-                My orders
+                {t("nav.myOrders")}
               </Link>
               {isAdmin ? (
                 <Link to="/admin" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-                  Admin panel
+                  {t("nav.adminPanel")}
                 </Link>
               ) : !user ? (
                 <Link to="/admin/login" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-                  Admin sign in
+                  {t("nav.adminSignin")}
                 </Link>
               ) : null}
               {user ? (
                 <button onClick={signOut} className="block w-full rounded-lg px-3 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-                  Sign out
+                  {t("nav.signOut")}
                 </button>
               ) : (
                 <Link to="/login" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-                  Sign in
+                  {t("nav.signIn")}
                 </Link>
               )}
               <form onSubmit={submitSearch} className="px-3 pt-2">
@@ -231,7 +242,7 @@ export default function Navbar() {
                   <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search products"
+                    placeholder={t("nav.searchProducts")}
                     className="h-10 w-full rounded-full border border-border bg-background pl-9 pr-3 text-sm outline-none focus:border-foreground/40"
                   />
                 </div>

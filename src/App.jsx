@@ -8,6 +8,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import { CartProvider } from '@/lib/CartContext';
 import { WishlistProvider } from '@/lib/WishlistContext';
+import { LanguageProvider } from '@/lib/i18n';
 import StorefrontLayout from '@/components/storefront/StorefrontLayout';
 import Home from '@/pages/store/Home';
 import Catalog from '@/pages/store/Catalog';
@@ -53,6 +54,7 @@ const AuthenticatedApp = () => {
 
   // Render the main app
   return (
+    <LanguageProvider>
     <CartProvider>
       <WishlistProvider>
         <Routes>
@@ -84,6 +86,7 @@ const AuthenticatedApp = () => {
         </Routes>
       </WishlistProvider>
     </CartProvider>
+    </LanguageProvider>
   );
 };
 
