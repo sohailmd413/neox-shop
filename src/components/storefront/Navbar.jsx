@@ -96,11 +96,12 @@ export default function Navbar() {
             </div>
           </form>
 
-          {isAdmin && (
+          {(isAdmin || !user) && (
             <Link
-              to="/admin"
+              to={isAdmin ? "/admin" : "/admin/login"}
               className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex"
-              aria-label="Admin"
+              aria-label={isAdmin ? "Admin panel" : "Admin sign in"}
+              title={isAdmin ? "Admin panel" : "Admin sign in"}
             >
               <LayoutDashboard className="h-5 w-5" />
             </Link>
@@ -206,11 +207,15 @@ export default function Navbar() {
               <Link to="/orders" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                 My orders
               </Link>
-              {isAdmin && (
+              {isAdmin ? (
                 <Link to="/admin" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                   Admin panel
                 </Link>
-              )}
+              ) : !user ? (
+                <Link to="/admin/login" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                  Admin sign in
+                </Link>
+              ) : null}
               {user ? (
                 <button onClick={signOut} className="block w-full rounded-lg px-3 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                   Sign out

@@ -92,7 +92,7 @@ export default function AdminLogin() {
           </form>
 
           <div className="mt-6 rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
-            Default admin email: <span className="font-medium text-foreground">admin@marketflow.com</span>. Use the admin account provisioned for this store — regular customer accounts are rejected.
+            Sign in with an admin account. Only users with the <span className="font-medium text-foreground">admin</span> role can enter — regular customer accounts are rejected. The app owner is an admin by default; other admins are added via invite.
           </div>
 
           <Link
