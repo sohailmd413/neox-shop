@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "reset_expired_sales",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "reset_sales": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "resetExpiredSales",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Reset expired sales",
+            "description": "Restore original price for ended sales"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Every hour, finds products whose sale end time has passed and restores their original price, clearing the sale price and timer.",
+  "name": "Reset Expired Sales",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 * * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Riyadh",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

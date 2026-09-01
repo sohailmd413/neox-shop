@@ -256,16 +256,36 @@ function FilterPanel({ categories, category, onSale, maxPrice, priceLimit, updat
               All
             </button>
           </li>
-          {categories.map((c) => (
-            <li key={c.id}>
-              <button
-                onClick={() => updateParam("category", c.name)}
-                className={`text-sm transition-colors ${category === c.name ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                {lf(c, "name", lang)}
-              </button>
-            </li>
-          ))}
+          {categories
+            .filter((c) => !c.parent_id)
+            .map((parent) => {
+              const subs = categories.filter((c) => c.parent_id === parent.id);
+              return (
+                <li key={parent.id} className={subs.length ? "space-y-1.5" : undefined}>
+                  <button
+                    onClick={() => updateParam("category", parent.name)}
+                    className={`text-sm transition-colors ${category === parent.name ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {lf(parent, "name", lang)}
+                  </button>
+                  {subs.length > 0 && (
+                    <ul className="ml-3 space-y-1.5 border-l border-border pl-3">
+                      {subs.map((s) => (
+                        <li key={s.id}>
+                          <button
+                            onClick={() => updateParam("category", s.name)}
+                            className={`flex items-center gap-1 text-sm transition-colors ${category === s.name ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                          >
+                            <span className="text-muted-foreground/60">↳</span>
+                            {lf(s, "name", lang)}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
         </ul>
       </div>
 
