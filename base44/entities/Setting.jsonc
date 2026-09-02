@@ -30,6 +30,10 @@
       "type": "string",
       "description": "Free-text business hours, e.g. 'Sat\u2013Thu, 9am\u20139pm'."
     },
+    "tax_id": {
+      "type": "string",
+      "description": "VAT / tax registration number shown on invoices."
+    },
     "currency": {
       "type": "string",
       "default": "SAR",

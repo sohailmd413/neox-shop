@@ -3,6 +3,7 @@ import { Store, CreditCard, Truck, Percent, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { ensureStoreSetting, patchStoreSetting } from "@/lib/settings";
+import { refreshStoreSettingCache } from "@/lib/useStoreSetting";
 import GeneralSettings from "@/components/admin/settings/GeneralSettings";
 import PaymentsSettings from "@/components/admin/settings/PaymentsSettings";
 import ShippingSettings from "@/components/admin/settings/ShippingSettings";
@@ -32,6 +33,9 @@ export default function AdminSettings() {
   const save = async (patch) => {
     const updated = await patchStoreSetting(setting.id, patch);
     setSetting((s) => ({ ...s, ...patch, ...updated }));
+    // Reload the app-wide cache so storefront header/footer, checkout, and the
+    // currency formatter pick up the new values in this session.
+    refreshStoreSettingCache();
     toast.success("Settings saved");
   };
 

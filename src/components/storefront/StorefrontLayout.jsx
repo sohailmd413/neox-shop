@@ -3,9 +3,12 @@ import { Outlet, Link } from "react-router-dom";
 import Navbar from "./Navbar";
 import CartDrawer from "./CartDrawer";
 import { useLanguage } from "@/lib/i18n";
+import { useStoreSetting } from "@/lib/useStoreSetting";
+import { Image } from "@/components/ui/image";
 
 export default function StorefrontLayout() {
   const { t } = useLanguage();
+  const store = useStoreSetting();
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Navbar />
@@ -16,12 +19,21 @@ export default function StorefrontLayout() {
         <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8">
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <Link to="/" className="text-lg font-semibold tracking-tight">
-                MAISON
+              <Link to="/" className="flex items-center gap-2">
+                {store.logo_url ? (
+                  <Image src={store.logo_url} alt={store.store_name || "Store"} fittingType="fit" className="h-8 w-auto max-w-[140px]" />
+                ) : (
+                  <span className="text-lg font-semibold tracking-tight">{store.store_name || "MarketFlow"}</span>
+                )}
               </Link>
               <p className="mt-3 max-w-xs text-sm text-muted-foreground">
                 {t("footer.tagline")}
               </p>
+              <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                {store.contact_email && <p>{store.contact_email}</p>}
+                {store.contact_phone && <p>{store.contact_phone}</p>}
+                {store.business_address && <p>{store.business_address}</p>}
+              </div>
             </div>
             <div>
               <h4 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">

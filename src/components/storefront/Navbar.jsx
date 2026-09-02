@@ -6,7 +6,9 @@ import { useCart } from "@/lib/CartContext";
 import { useWishlist } from "@/lib/WishlistContext";
 import { base44 } from "@/api/base44Client";
 import { useLanguage } from "@/lib/i18n";
+import { useStoreSetting } from "@/lib/useStoreSetting";
 import { Languages } from "lucide-react";
+import { Image } from "@/components/ui/image";
 import SearchBar from "@/components/storefront/SearchBar";
 
 const navLinks = [
@@ -19,6 +21,7 @@ export default function Navbar() {
   const { count, setIsOpen } = useCart();
   const { count: wishCount } = useWishlist();
   const { t, toggle } = useLanguage();
+  const store = useStoreSetting();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -61,8 +64,12 @@ export default function Navbar() {
     >
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
         <div className="flex items-center gap-8">
-          <Link to="/" className="text-lg font-semibold tracking-tight">
-            MAISON
+          <Link to="/" className="flex items-center gap-2">
+            {store.logo_url ? (
+              <Image src={store.logo_url} alt={store.store_name || "Store"} fittingType="fit" className="h-8 w-auto max-w-[140px]" />
+            ) : (
+              <span className="text-lg font-semibold tracking-tight">{store.store_name || "MarketFlow"}</span>
+            )}
           </Link>
           <div className="hidden items-center gap-6 md:flex">
             {navLinks.map((link) => (

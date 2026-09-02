@@ -8,20 +8,37 @@ import { base44 } from "@/api/base44Client";
 import { Image } from "@/components/ui/image";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { useStoreSetting } from "@/lib/useStoreSetting";
+import { computeTax, computeShipping, PAYMENT_LABELS } from "@/lib/settings";
 
-const TAX_RATE = 0.08;
-const FREE_SHIPPING_THRESHOLD = 75;
-const SHIPPING_FEE = 8;
+const PAYMENT_ICONS = {
+  card: "💳",
+  cod: "💵",
+  upi: "📱",
+  wallet: "👛",
+  net_banking: "🏦",
+};
 
 export default function Checkout() {
   const { items, subtotal, clearCart } = useCart();
   const { toast } = useToast();
+  const store = useStoreSetting();
   const [placing, setPlacing] = useState(false);
   const [placed, setPlaced] = useState(null);
   const [couponInput, setCouponInput] = useState("");
   const [coupon, setCoupon] = useState(null);
   const [couponMsg, setCouponMsg] = useState("");
   const [blocked, setBlocked] = useState(false);
+  const enabledPayments = store.payment_methods_enabled || [];
+  const [paymentMethod, setPaymentMethod] = useState(enabledPayments[0] || "card");
+
+  // Keep the selection valid if the enabled methods change (e.g. an admin
+  // disables a method while a checkout is open).
+  useEffect(() => {
+    if (enabledPayments.length && !enabledPayments.includes(paymentMethod)) {
+      setPaymentMethod(enabledPayments[0]);
+    }
+  }, [enabledPayments.join(",")]);
 
   useEffect(() => {
     base44.functions.invoke("getCustomerAccess", {})
@@ -45,8 +62,10 @@ export default function Checkout() {
       : Math.min(coupon.discount_value, subtotal)
     : 0;
   const taxable = Math.max(0, subtotal - discount);
-  const tax = taxable * TAX_RATE;
-  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : SHIPPING_FEE;
+  // Tax + shipping come from the store Setting (tax_rules / shipping_zones),
+  // matched against the customer's country — no hardcoded rates.
+  const tax = computeTax(taxable, form.country, store.tax_rules);
+  const shipping = subtotal === 0 ? 0 : computeShipping(subtotal, form.country, store.shipping_zones);
   const total = taxable + tax + shipping;
 
   const applyCoupon = async () => {
@@ -107,7 +126,7 @@ export default function Checkout() {
         total,
         coupon_code: coupon?.code || "",
         customer_email: form.email,
-        payment_method: "card",
+        payment_method: paymentMethod,
         timeline: [{ status: "pending", by: "system", at: new Date().toISOString() }],
         shipping_address: {
           name: form.name,
@@ -219,11 +238,36 @@ export default function Checkout() {
             </section>
 
             <section>
-              <h2 className="text-lg font-medium">Payment</h2>
-              <div className="mt-4 flex items-center gap-3 rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
-                <Lock className="h-4 w-4" />
-                Secure payment via Stripe. Card details are collected on the next step —
-                we never store raw card numbers.
+              <h2 className="text-lg font-medium">Payment method</h2>
+              <div className="mt-4 space-y-3">
+                {enabledPayments.length === 0 && (
+                  <p className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
+                    No payment methods are currently available. Please contact the store.
+                  </p>
+                )}
+                {enabledPayments.map((m) => {
+                  const on = paymentMethod === m;
+                  return (
+                    <button
+                      type="button"
+                      key={m}
+                      onClick={() => setPaymentMethod(m)}
+                      className={`flex w-full items-center gap-3 rounded-2xl border p-4 text-left transition-colors ${on ? "border-foreground bg-muted/40" : "border-border hover:border-foreground/30"}`}
+                    >
+                      <span className="text-xl">{PAYMENT_ICONS[m] || "•"}</span>
+                      <span className="flex-1 text-sm font-medium">{PAYMENT_LABELS[m]?.en || m}</span>
+                      <span className={`flex h-5 w-5 items-center justify-center rounded-full border ${on ? "border-foreground bg-foreground text-background" : "border-border"}`}>
+                        {on && <Check className="h-3 w-3" />}
+                      </span>
+                    </button>
+                  );
+                })}
+                {paymentMethod === "card" && (
+                  <div className="flex items-center gap-3 rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
+                    <Lock className="h-4 w-4" />
+                    Secure payment via Stripe. Card details are collected on the next step — we never store raw card numbers.
+                  </div>
+                )}
               </div>
             </section>
           </div>

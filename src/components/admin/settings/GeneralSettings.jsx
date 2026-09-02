@@ -27,6 +27,7 @@ export default function GeneralSettings({ setting, onSave }) {
         contact_phone: f.contact_phone,
         business_address: f.business_address,
         business_hours: f.business_hours,
+        tax_id: f.tax_id,
         currency: f.currency,
         currency_symbol: f.currency_symbol,
         default_language: f.default_language,
@@ -75,6 +76,11 @@ export default function GeneralSettings({ setting, onSave }) {
       <Label className="space-y-1.5">
         <span className="text-xs font-medium text-muted-foreground">Business hours</span>
         <Input value={f.business_hours || ""} onChange={(e) => set("business_hours", e.target.value)} placeholder="Sat–Thu, 9am–9pm" />
+      </Label>
+
+      <Label className="space-y-1.5">
+        <span className="text-xs font-medium text-muted-foreground">VAT / Tax ID</span>
+        <Input value={f.tax_id || ""} onChange={(e) => set("tax_id", e.target.value)} placeholder="300000000000003" />
       </Label>
 
       <div className="grid gap-4 sm:grid-cols-3">

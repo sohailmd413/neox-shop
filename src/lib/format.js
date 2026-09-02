@@ -1,8 +1,13 @@
+import { getActiveCurrency } from "@/lib/settings";
+
+// Currency comes from the Setting entity (set once on load via
+// useStoreSetting → setActiveCurrency). Defaults to the store default until
+// the first Setting load resolves, so synchronous callers are always safe.
 export function formatPrice(value) {
   const n = Number(value) || 0;
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "SAR",
+    currency: getActiveCurrency(),
     currencyDisplay: "narrowSymbol",
     minimumFractionDigits: 2,
   }).format(n);

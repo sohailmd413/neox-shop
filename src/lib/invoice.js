@@ -3,6 +3,7 @@ import html2canvas from "html2canvas";
 import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
 import { STORE_INFO, INVOICE_LABELS } from "@/lib/storeInfo";
+import { getStoreSetting } from "@/lib/settings";
 
 const PAYMENT_LABELS = {
   pending: { en: "Pending", ar: "قيد الانتظار" },
@@ -72,7 +73,9 @@ const PAYMENT_LABEL_EN = { card: "Card", cod: "Cash on delivery", wallet: "Walle
 const PAYMENT_LABEL_AR = { card: "بطاقة", cod: "الدفع عند الاستلام", wallet: "محفظة", upi: "UPI", net_banking: "تحويل مصرفي" };
 
 // Build the offscreen invoice DOM node (bilingual EN + AR in one A4-width document).
-export function buildInvoiceNode(order, productsById, invoiceNumber) {
+// `store` is the live Setting record; fields fall back to STORE_INFO defaults
+// when blank, so invoices never render empty even before Settings is filled.
+export function buildInvoiceNode(order, productsById, invoiceNumber, store = {}) {
   const items = order.items || [];
   const bill = order.billing_address && order.billing_address.line1 ? order.billing_address : order.shipping_address;
   const ship = order.shipping_address || {};
@@ -80,6 +83,15 @@ export function buildInvoiceNode(order, productsById, invoiceNumber) {
   const pStatus = paymentStatusLabel(order.status);
   const payEn = PAYMENT_LABEL_EN[order.payment_method || "card"] || "Card";
   const payAr = PAYMENT_LABEL_AR[order.payment_method || "card"] || "Card";
+
+  const sNameEn = store.store_name || STORE_INFO.name_en;
+  const sNameAr = store.store_name_ar || STORE_INFO.name_ar;
+  const sAddress = store.business_address || STORE_INFO.address_en;
+  const sAddressAr = STORE_INFO.address_ar;
+  const sPhone = store.contact_phone || STORE_INFO.phone;
+  const sEmail = store.contact_email || STORE_INFO.email;
+  const sTaxId = store.tax_id || STORE_INFO.tax_id_en.replace(/^VAT:\s*/i, "");
+  const sLogo = store.logo_url || "";
 
   const rows = items.map((i, idx) => {
     const p = productsById[i.product_id];
@@ -120,12 +132,15 @@ export function buildInvoiceNode(order, productsById, invoiceNumber) {
   const html = `
   <div style="width:794px;padding:40px 44px;font-family:'Tahoma','Arial','Segoe UI',system-ui,sans-serif;background:#fff;color:#111;box-sizing:border-box">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:14px">
-      <div>
-        <div style="font-size:24px;font-weight:700">${esc(STORE_INFO.name_en)} · ${esc(STORE_INFO.name_ar)}</div>
-        <div style="font-size:11px;color:#555;margin-top:2px">${esc(STORE_INFO.address_en)}</div>
-        <div dir="rtl" style="font-size:11px;color:#555">${esc(STORE_INFO.address_ar)}</div>
-        <div style="font-size:11px;color:#555">${esc(STORE_INFO.phone)} · ${esc(STORE_INFO.email)}</div>
-        <div style="font-size:11px;color:#555;margin-top:3px">${esc(STORE_INFO.tax_id_en)} · <span dir="rtl">${esc(STORE_INFO.tax_id_ar)}</span></div>
+      <div style="display:flex;gap:12px">
+        ${sLogo ? `<img src="${esc(sLogo)}" style="width:54px;height:54px;object-fit:contain;border-radius:8px" />` : ""}
+        <div>
+          <div style="font-size:24px;font-weight:700">${esc(sNameEn)} · ${esc(sNameAr)}</div>
+          <div style="font-size:11px;color:#555;margin-top:2px">${esc(sAddress)}</div>
+          <div dir="rtl" style="font-size:11px;color:#555">${esc(sAddressAr)}</div>
+          <div style="font-size:11px;color:#555">${esc(sPhone)} · ${esc(sEmail)}</div>
+          <div style="font-size:11px;color:#555;margin-top:3px">VAT: ${esc(sTaxId)} · <span dir="rtl">الرقم الضريبي: ${esc(sTaxId)}</span></div>
+        </div>
       </div>
       <div style="text-align:right">
         <div style="font-size:22px;font-weight:700">${esc(INVOICE_LABELS.invoice.en)} · <span dir="rtl">${esc(INVOICE_LABELS.invoice.ar)}</span></div>
@@ -256,7 +271,8 @@ export function verifyTotals(order) {
 export async function downloadInvoicePDF(order, allOrders = []) {
   const { number } = await ensureInvoiceNumber(order, allOrders);
   const productsById = await fetchProductsForOrder(order);
-  const host = buildInvoiceNode(order, productsById, number);
+  const store = await getStoreSetting();
+  const host = buildInvoiceNode(order, productsById, number, store);
   const canvas = await nodeToCanvas(host);
   const pdf = new jsPDF("p", "mm", "a4");
   addPagedImage(pdf, canvas, false);
@@ -274,11 +290,12 @@ export async function downloadInvoicePDF(order, allOrders = []) {
 // Generate one combined multi-page PDF containing every selected order's invoice.
 export async function downloadMultipleInvoices(orders, allOrders = []) {
   const pdf = new jsPDF("p", "mm", "a4");
+  const store = await getStoreSetting();
   for (let i = 0; i < orders.length; i++) {
     const order = orders[i];
     const { number } = await ensureInvoiceNumber(order, allOrders);
     const productsById = await fetchProductsForOrder(order);
-    const host = buildInvoiceNode(order, productsById, number);
+    const host = buildInvoiceNode(order, productsById, number, store);
     const canvas = await nodeToCanvas(host);
     addPagedImage(pdf, canvas, i !== 0);
     if (order.invoice_status !== "sent") {
