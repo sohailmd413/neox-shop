@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Plus, Search, Copy, Pencil, Trash2, Loader2, TicketPercent, CheckCircle2, Repeat, TrendingDown } from "lucide-react";
+import { Plus, Search, Copy, Pencil, Trash2, TicketPercent, CheckCircle2, Repeat, TrendingDown } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import Dropdown from "@/components/admin/ui/Dropdown";
@@ -7,6 +7,7 @@ import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
 import CouponForm from "@/components/admin/CouponForm";
 import { useToast } from "@/components/ui/use-toast";
 import { formatPrice } from "@/lib/format";
+import { EmptyState, TableSkeleton } from "@/components/shared/StateViews";
 
 const TYPE_OPTS = [{ label: "Percentage", value: "percent" }, { label: "Fixed amount", value: "fixed" }];
 const STATUS_OPTS = [{ label: "Active", value: "active" }, { label: "Inactive", value: "inactive" }, { label: "Expired", value: "expired" }];
@@ -111,9 +112,15 @@ export default function AdminCoupons() {
       </div>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Loading…</div>
+        <TableSkeleton rows={6} cols={7} />
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-border p-10 text-center text-sm text-muted-foreground">No coupons match the current filters.</div>
+        <EmptyState
+          icon={TicketPercent}
+          title={coupons.length === 0 ? "No coupons yet" : "No coupons match"}
+          description={coupons.length === 0 ? "Create your first coupon to offer customers a discount." : "Try adjusting your filters."}
+          action={coupons.length === 0 ? <Button onClick={() => setEditing("new")}><Plus className="h-4 w-4" /> New coupon</Button> : undefined}
+          className="py-10"
+        />
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-border bg-background">
           <table className="w-full min-w-[860px] text-sm">

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { SlidersHorizontal, X } from "lucide-react";
+import { SlidersHorizontal, X, Search } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import ProductCard from "@/components/storefront/ProductCard";
 import { ProductGridSkeleton } from "@/components/storefront/Skeleton";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { lf } from "@/lib/format";
 import { useLanguage } from "@/lib/i18n";
 import SortDropdown from "@/components/storefront/SortDropdown";
+import { EmptyState, ErrorState } from "@/components/shared/StateViews";
 import SearchBar from "@/components/storefront/SearchBar";
 
 const SORT_OPTIONS = [
@@ -26,6 +27,7 @@ export default function Catalog() {
   const [loading, setLoading] = useState(true);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [priceLimit, setPriceLimit] = useState(500);
+  const [error, setError] = useState(null);
   const { lang } = useLanguage();
 
   const q = searchParams.get("q") || "";
@@ -45,6 +47,7 @@ export default function Catalog() {
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       let result = await base44.entities.Product.filter({ status: "active" }, "-created_date", 200);
       let list = result || [];
@@ -83,6 +86,7 @@ export default function Catalog() {
       }
       setProducts(list);
     } catch {
+      setError(true);
       setProducts([]);
     } finally {
       setLoading(false);
@@ -183,14 +187,16 @@ export default function Catalog() {
           <div className="flex-1">
             {loading ? (
               <ProductGridSkeleton count={8} />
+            ) : error ? (
+              <ErrorState onRetry={loadProducts} className="py-24" />
             ) : products?.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-                <p className="text-lg font-medium">No products found</p>
-                <p className="text-sm text-muted-foreground">Try adjusting your filters.</p>
-                <Button variant="outline" onClick={clearFilters} className="mt-2">
-                  Clear filters
-                </Button>
-              </div>
+              <EmptyState
+                icon={Search}
+                title="No products found"
+                description="Try adjusting your filters or search terms."
+                action={<Button variant="outline" onClick={clearFilters}>Clear filters</Button>}
+                className="py-24"
+              />
             ) : (
               <div className="grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3">
                 {products.map((p, i) => (

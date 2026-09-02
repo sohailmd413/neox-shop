@@ -1,7 +1,9 @@
 import React from "react";
-import { Outlet, Link } from "react-router-dom";
+import { Outlet, Link, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
 import Navbar from "./Navbar";
 import CartDrawer from "./CartDrawer";
+import PageTransition from "@/components/shared/PageTransition";
 import { useLanguage } from "@/lib/i18n";
 import { useStoreSetting } from "@/lib/useStoreSetting";
 import { Image } from "@/components/ui/image";
@@ -9,11 +11,16 @@ import { Image } from "@/components/ui/image";
 export default function StorefrontLayout() {
   const { t } = useLanguage();
   const store = useStoreSetting();
+  const location = useLocation();
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Navbar />
       <main className="flex-1">
-        <Outlet />
+        <AnimatePresence mode="wait">
+          <PageTransition key={location.pathname}>
+            <Outlet />
+          </PageTransition>
+        </AnimatePresence>
       </main>
       <footer className="border-t border-border bg-background">
         <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8">

@@ -6,6 +6,7 @@ import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
 import { Image } from "@/components/ui/image";
 import { Button } from "@/components/ui/button";
+import { EmptyState, ErrorState } from "@/components/shared/StateViews";
 
 const STATUS_STEPS = [
   { key: "pending", label: "Placed", icon: Clock },
@@ -17,21 +18,26 @@ const STATUS_STEPS = [
 
 export default function Orders() {
   const [orders, setOrders] = useState(null);
+  const [error, setError] = useState(null);
+
+  const load = async () => {
+    setError(null);
+    try {
+      const user = await base44.auth.me();
+      const list = await base44.entities.Order.filter(
+        { created_by_id: user.id },
+        "-created_date",
+        50
+      );
+      setOrders(list || []);
+    } catch {
+      setOrders([]);
+      setError(true);
+    }
+  };
 
   useEffect(() => {
-    (async () => {
-      try {
-        const user = await base44.auth.me();
-        const list = await base44.entities.Order.filter(
-          { created_by_id: user.id },
-          "-created_date",
-          50
-        );
-        setOrders(list || []);
-      } catch {
-        setOrders([]);
-      }
-    })();
+    load();
   }, []);
 
   const stepIndex = (status) => STATUS_STEPS.findIndex((s) => s.key === status);
@@ -52,14 +58,20 @@ export default function Orders() {
               <div key={i} className="h-48 animate-pulse rounded-2xl bg-muted/40" />
             ))}
           </div>
+        ) : error ? (
+          <ErrorState onRetry={load} className="py-24" />
         ) : orders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-            <Package className="h-10 w-10 text-muted-foreground/40" />
-            <p className="text-lg font-medium">No orders yet</p>
-            <Button asChild variant="outline" className="mt-2">
-              <Link to="/shop">Start shopping</Link>
-            </Button>
-          </div>
+          <EmptyState
+            icon={Package}
+            title="No orders yet"
+            description="When you place an order it will appear here with tracking updates."
+            action={
+              <Button asChild variant="outline" className="mt-2">
+                <Link to="/shop">Start shopping</Link>
+              </Button>
+            }
+            className="py-24"
+          />
         ) : (
           <div className="space-y-6">
             {orders.map((order, i) => {

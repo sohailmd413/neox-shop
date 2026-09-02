@@ -8,30 +8,37 @@ import { useCart } from "@/lib/CartContext";
 import { formatPrice } from "@/lib/format";
 import { Image } from "@/components/ui/image";
 import { Button } from "@/components/ui/button";
+import { EmptyState, ErrorState, CardGridSkeleton } from "@/components/shared/StateViews";
 
 export default function Wishlist() {
   const { ids, removeItem } = useWishlist();
   const { addItem } = useCart();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const load = async () => {
+    setError(null);
+    if (ids.length === 0) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      const all = await base44.entities.Product.list("-created_date", 200);
+      setProducts(all.filter((p) => ids.includes(p.id)));
+    } catch {
+      setProducts([]);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    (async () => {
-      if (ids.length === 0) {
-        setProducts([]);
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      try {
-        const all = await base44.entities.Product.list("-created_date", 200);
-        setProducts(all.filter((p) => ids.includes(p.id)));
-      } catch {
-        setProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ids]);
 
   return (
@@ -46,15 +53,22 @@ export default function Wishlist() {
       </div>
 
       <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
-        {!loading && products.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-            <Heart className="h-10 w-10 text-muted-foreground/40" />
-            <p className="text-lg font-medium">Your wishlist is empty</p>
-            <p className="text-sm text-muted-foreground">Tap the heart on any product to save it for later.</p>
-            <Button asChild variant="outline" className="mt-2">
-              <Link to="/shop">Browse products</Link>
-            </Button>
-          </div>
+        {loading ? (
+          <CardGridSkeleton count={3} className="sm:grid-cols-1 lg:grid-cols-2" />
+        ) : error ? (
+          <ErrorState onRetry={load} className="py-24" />
+        ) : products.length === 0 ? (
+          <EmptyState
+            icon={Heart}
+            title="Your wishlist is empty"
+            description="Tap the heart on any product to save it for later."
+            action={
+              <Button asChild variant="outline" className="mt-2">
+                <Link to="/shop">Browse products</Link>
+              </Button>
+            }
+            className="py-24"
+          />
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {products.map((p, i) => (

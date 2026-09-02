@@ -12,6 +12,7 @@ import ReviewReplyDialog from "@/components/admin/ReviewReplyDialog";
 import ReviewDetailDrawer from "@/components/admin/ReviewDetailDrawer";
 import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
 import { showUndoToast } from "@/components/admin/ui/UndoToast";
+import { EmptyState, ErrorState, TableSkeleton } from "@/components/shared/StateViews";
 
 const TABS = [
   { id: "pending", label: "Pending", icon: Clock },
@@ -27,6 +28,7 @@ export default function AdminReviews() {
   const [products, setProducts] = useState([]);
   const [tab, setTab] = useState("pending");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [ratingFilter, setRatingFilter] = useState("");
   const [mediaOnly, setMediaOnly] = useState(false);
@@ -40,6 +42,7 @@ export default function AdminReviews() {
 
   const load = async () => {
     setLoading(true);
+    setError(null);
     try {
       const [list, prods] = await Promise.all([
         base44.entities.Review.list("-created_date", 300),
@@ -47,7 +50,9 @@ export default function AdminReviews() {
       ]);
       setReviews(list || []);
       setProducts(prods || []);
-    } catch {}
+    } catch {
+      setError(true);
+    }
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -264,9 +269,20 @@ export default function AdminReviews() {
 
       {/* Table */}
       {loading ? (
-        <div className="text-sm text-muted-foreground">Loading…</div>
+        <TableSkeleton rows={6} cols={8} />
+      ) : error ? (
+        <ErrorState onRetry={load} />
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-border p-10 text-center text-sm text-muted-foreground">No reviews match.</div>
+        <EmptyState
+          icon={MessageSquare}
+          title={tab === "deleted" ? "No deleted reviews" : "No reviews yet"}
+          description={
+            search || ratingFilter || mediaOnly || verifiedOnly || noReply
+              ? "No reviews match your filters."
+              : "Reviews customers submit will appear here for moderation."
+          }
+          className="py-10"
+        />
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-border bg-background">
           <table className="w-full text-sm">
