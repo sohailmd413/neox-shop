@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { roleOptions, roleLabel } from "@/lib/adminPermissions";
 import StaffInviteDialog from "@/components/admin/StaffInviteDialog";
 import StaffDeleteDialog from "@/components/admin/StaffDeleteDialog";
-import { Loader2, Save, ShieldCheck, UserPlus, Trash2, KeyRound, Eye, EyeOff, Clock } from "lucide-react";
+import { Loader2, Save, ShieldCheck, UserPlus, Trash2, Send, AlertTriangle, Clock } from "lucide-react";
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -17,6 +17,7 @@ export default function AdminUsers() {
   const [inviting, setInviting] = useState(false);
   const [removing, setRemoving] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [resending, setResending] = useState(null);
   const [customRoles, setCustomRoles] = useState([]);
   const { toast } = useToast();
 
@@ -73,6 +74,18 @@ export default function AdminUsers() {
     setSavingId(null);
   };
 
+  const resend = async (u) => {
+    setResending(u.id);
+    try {
+      await base44.functions.invoke("manageStaffAccess", { action: "resend", email: u.email, role: u.role });
+      toast({ title: `Invite resent to ${u.email}` });
+      load();
+    } catch (e) {
+      toast({ title: e.response?.data?.error || "Could not resend", variant: "destructive" });
+    }
+    setResending(null);
+  };
+
   const remove = (u) => setRemoving(u);
   const confirmRemove = async () => {
     if (!removing) return;
@@ -124,7 +137,17 @@ export default function AdminUsers() {
                     <p className="font-medium">{u.email}</p>
                     {u.pending && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-                        <Clock className="h-3 w-3" /> Pending invite
+                        <Clock className="h-3 w-3" /> Invited · Pending
+                      </span>
+                    )}
+                    {u.pending && (u.last_sent_at || u.created_date) && (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        Invited {invitedLabel(u.last_sent_at || u.created_date)}
+                        {isStale(u.last_sent_at || u.created_date) && (
+                          <span className="inline-flex items-center text-amber-600" title="Invite pending for over 7 days">
+                            <AlertTriangle className="h-3 w-3" />
+                          </span>
+                        )}
                       </span>
                     )}
                     {isAdmin && !u.pending && (
@@ -150,12 +173,6 @@ export default function AdminUsers() {
                   </div>
                 </div>
 
-                {u.temp_password ? (
-                  <div className="mt-3 flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
-                    <StaffTempPassword value={u.temp_password} />
-                  </div>
-                ) : null}
-
                 {!u.pending && (
                   <p className="mt-3 text-xs text-muted-foreground">
                     Access for this staff member comes from the <span className="font-medium text-foreground">{roleLabel(d.role, customRoles)}</span> role. Edit the role's permissions on the Roles page.
@@ -167,6 +184,12 @@ export default function AdminUsers() {
                     <Button onClick={() => save(u)} disabled={!dirty(u) || savingId === u.id || isAdmin} size="sm">
                       {savingId === u.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                       Save role
+                    </Button>
+                  )}
+                  {u.pending && (
+                    <Button onClick={() => resend(u)} disabled={resending === u.id} size="sm" variant="outline">
+                      {resending === u.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                      Resend invite
                     </Button>
                   )}
                   <Button
@@ -186,7 +209,11 @@ export default function AdminUsers() {
       )}
 
       {inviting && (
-        <StaffInviteDialog onClose={() => setInviting(false)} onInvited={() => { setInviting(false); load(); }} />
+        <StaffInviteDialog
+          existingStaff={users.map((u) => ({ email: u.email, role: u.role, label: roleLabel(u.role, customRoles), pending: u.pending }))}
+          onClose={() => setInviting(false)}
+          onInvited={() => { setInviting(false); load(); }}
+        />
       )}
       <StaffDeleteDialog
         staff={removing}
@@ -205,31 +232,18 @@ export default function AdminUsers() {
   );
 }
 
-function StaffTempPassword({ value }) {
-  const [show, setShow] = useState(false);
-  return (
-    <div className="flex flex-1 items-center gap-2">
-      <KeyRound className="h-4 w-4 shrink-0 text-muted-foreground" />
-      <span className="text-xs text-muted-foreground">Temp password</span>
-      <code className="flex-1 truncate font-mono text-sm font-medium">
-        {show ? value : "••••••••"}
-      </code>
-      <button
-        type="button"
-        onClick={() => setShow((v) => !v)}
-        className="text-muted-foreground hover:text-foreground"
-        aria-label={show ? "Hide password" : "Show password"}
-      >
-        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-      </button>
-      <button
-        type="button"
-        onClick={() => navigator.clipboard?.writeText(value)}
-        className="text-muted-foreground hover:text-foreground"
-        aria-label="Copy password"
-      >
-        <span className="text-xs underline">Copy</span>
-      </button>
-    </div>
-  );
+function invitedLabel(iso) {
+  if (!iso) return "—";
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+function isStale(iso) {
+  if (!iso) return false;
+  return Date.now() - new Date(iso).getTime() > 7 * 24 * 60 * 60 * 1000;
 }

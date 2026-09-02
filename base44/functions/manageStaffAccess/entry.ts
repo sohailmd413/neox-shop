@@ -31,6 +31,8 @@ export default async function (req) {
           permissions: {},
           temp_password: i.temp_password || '',
           pending: true,
+          created_date: i.created_date,
+          last_sent_at: i.last_sent_at || i.created_date,
         }));
       const sanitized = (users || []).map((u) => ({
         id: u.id,
@@ -139,6 +141,21 @@ export default async function (req) {
         update.permissions = clean;
       }
       await base44.asServiceRole.entities.User.update(u.id, update);
+      return Response.json({ ok: true });
+    }
+
+    if (action === 'resend') {
+      const { email, role } = body;
+      if (!email || typeof email !== 'string' || !email.includes('@')) {
+        return Response.json({ error: 'A valid email is required' }, { status: 400 });
+      }
+      const safeRole = role && typeof role === 'string' && role !== 'user' && !/\s/.test(role) ? role : 'user';
+      try { await base44.asServiceRole.users.inviteUser(email, safeRole); } catch (_e) { /* may already exist */ }
+      try {
+        const invites = await base44.asServiceRole.entities.StaffInvite.list('-created_date', 200).catch(() => []);
+        const match = (invites || []).find((i) => (i.email || '').toLowerCase() === email.toLowerCase());
+        if (match) await base44.asServiceRole.entities.StaffInvite.update(match.id, { last_sent_at: new Date().toISOString(), status: 'pending' });
+      } catch (_e) {}
       return Response.json({ ok: true });
     }
 

@@ -21,6 +21,11 @@
         "accepted"
       ],
       "default": "pending"
+    },
+    "last_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the invite email was last (re)sent. Falls back to created_date for display."
     }
   },
   "required": [
