@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, PackageX, Star, MessageSquare } from "lucide-react";
-import { SelectNative } from "@/components/ui/select-native";
+import Dropdown from "@/components/admin/ui/Dropdown";
 import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
 import { useToast } from "@/components/ui/use-toast";
@@ -126,9 +126,14 @@ export default function AdminDashboard() {
           <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
           <p className="text-sm text-muted-foreground">Store performance at a glance.</p>
         </div>
-        <SelectNative value={range} onChange={(e) => setRange(e.target.value)} className="!w-auto !py-1.5 text-sm">
-          {RANGES.map((r) => (<option key={r.id} value={r.id}>{r.label}</option>))}
-        </SelectNative>
+        <Dropdown
+          type="select"
+          value={range}
+          onChange={setRange}
+          options={RANGES.map((r) => ({ label: r.label, value: r.id }))}
+          placeholder="Date range"
+          className="w-[170px]"
+        />
       </div>
 
       <DashboardKpis metrics={metrics} />

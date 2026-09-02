@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Check, ChevronDown, Search, X, Loader2, FolderTree, Layers, Inbox } from "lucide-react";
+import { Check, ChevronDown, X, Loader2, FolderTree, Layers, Inbox } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
@@ -66,10 +66,7 @@ export default function Dropdown({
 
   const triggerLabel = () => {
     if (loading) return null;
-    if (multi) {
-      if (!Array.isArray(value) || value.length === 0) return placeholder;
-      return null; // chips render instead
-    }
+    if (multi) return null; // chips (with placeholder) render in the block below
     if (value === undefined || value === "" || value === null) return placeholder;
     return pathLabel(value) ?? placeholder;
   };
