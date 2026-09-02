@@ -38,7 +38,7 @@ export default function Catalog() {
     (async () => {
       try {
         const c = await base44.entities.Category.list("sort_order", 100);
-        setCategories(c);
+        setCategories((c || []).filter((cat) => cat.active !== false));
       } catch {}
     })();
   }, []);

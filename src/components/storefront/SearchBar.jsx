@@ -24,7 +24,7 @@ export default function SearchBar({ placeholder = "Search products or categories
           base44.entities.Category.list("sort_order", 100),
         ]);
         setProducts(p || []);
-        setCategories(c || []);
+        setCategories((c || []).filter((cat) => cat.active !== false));
       } catch {}
     })();
   }, []);

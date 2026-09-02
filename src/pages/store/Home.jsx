@@ -27,7 +27,7 @@ export default function Home() {
       } catch { setNewArrivals([]); }
       try {
         const c = await base44.entities.Category.list("sort_order", 50);
-        setCategories(c);
+        setCategories((c || []).filter((cat) => cat.active !== false));
       } catch { setCategories([]); }
     })();
   }, []);

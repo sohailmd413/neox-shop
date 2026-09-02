@@ -137,10 +137,9 @@ export default function ProductDetail() {
   const salePct = onSale ? Math.round((1 - product.price / product.compare_at_price) * 100) : 0;
   const displayName = lf(product, "name", lang);
   const displayDesc = lf(product, "description", lang) || (product.description || "");
-  const categoryName = (() => {
-    const c = categories.find((x) => x.name === product.category);
-    return c ? lf(c, "name", lang) : product.category;
-  })();
+  const productCategory = categories.find((x) => x.name === product.category);
+  const showCategoryCrumb = productCategory && productCategory.active !== false;
+  const categoryName = productCategory ? lf(productCategory, "name", lang) : product.category;
 
   const clampQty = (q) => Math.min(Math.max(q, 1), maxQty);
   const handleAdd = () => {
@@ -162,7 +161,7 @@ export default function ProductDetail() {
           <Link to="/" className="hover:text-foreground">Home</Link>
           <ChevronRight className="h-3 w-3" />
           <Link to="/shop" className="hover:text-foreground">Shop</Link>
-          {product.category && (
+          {showCategoryCrumb && (
             <>
               <ChevronRight className="h-3 w-3" />
               <Link to={`/shop?category=${encodeURIComponent(product.category)}`} className="hover:text-foreground">
