@@ -7,13 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ADMIN_SECTIONS, roleOptions, roleLabel, roleDefaults, defaultsAllowed } from "@/lib/adminPermissions";
 import StaffInviteDialog from "@/components/admin/StaffInviteDialog";
 import StaffDeleteDialog from "@/components/admin/StaffDeleteDialog";
-import { Loader2, Save, ShieldCheck, UserPlus, Trash2, KeyRound, Eye, EyeOff } from "lucide-react";
-
-const TRI_STATES = [
-  { value: "inherit", label: "Inherit" },
-  { value: "allow", label: "Allow" },
-  { value: "deny", label: "Deny" },
-];
+import { Loader2, Save, ShieldCheck, UserPlus, Trash2, KeyRound, Eye, EyeOff, Check } from "lucide-react";
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -164,39 +158,22 @@ export default function AdminUsers() {
 
                 <div className="mt-4 grid gap-2 sm:grid-cols-2">
                   {ADMIN_SECTIONS.map((s) => {
-                    const currentValue = d.permissions?.[s.id] || "inherit";
-                    const effective = currentValue === "allow" || (currentValue === "inherit" && allowed.includes(s.id));
+                    const currentValue = d.permissions?.[s.id];
+                    const eff = currentValue === "allow" || (currentValue !== "deny" && allowed.includes(s.id));
                     return (
-                      <div
+                      <button
                         key={s.id}
-                        className="flex items-center justify-between rounded-lg border border-border px-3 py-2"
+                        type="button"
+                        onClick={() => setPerm(u.id, s.id, eff ? "deny" : "allow")}
+                        className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-left transition-colors hover:bg-muted/50"
                       >
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`h-2 w-2 rounded-full ${effective ? "bg-foreground" : "bg-muted-foreground/30"}`}
-                          />
-                          <span className="text-sm font-medium">{s.label}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {TRI_STATES.map((t) => (
-                            <button
-                              key={t.value}
-                              onClick={() => setPerm(u.id, s.id, t.value)}
-                              className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
-                                currentValue === t.value
-                                  ? t.value === "allow"
-                                    ? "bg-foreground text-background"
-                                    : t.value === "deny"
-                                    ? "bg-destructive text-destructive-foreground"
-                                    : "bg-muted text-foreground"
-                                  : "text-muted-foreground hover:bg-muted"
-                              }`}
-                            >
-                              {t.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                        <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
+                          eff ? "border-foreground bg-foreground text-background" : "border-border bg-background text-transparent"
+                        }`}>
+                          <Check className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">{s.label}</span>
+                      </button>
                     );
                   })}
                 </div>

@@ -8,11 +8,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { ADMIN_SECTIONS, roleOptions, roleLabel, roleDefaults, defaultsAllowed } from "@/lib/adminPermissions";
 import { X, Loader2, UserPlus, Lock, Eye, EyeOff, Copy, Check } from "lucide-react";
 
-const TRI = [
-  { value: "inherit", label: "Inherit" },
-  { value: "allow", label: "Allow" },
-  { value: "deny", label: "Deny" },
-];
 const NEW_ROLE = "__new__";
 
 export default function StaffInviteDialog({ onClose, onInvited }) {
@@ -174,7 +169,7 @@ export default function StaffInviteDialog({ onClose, onInvited }) {
 
           <div className="space-y-2">
             <Label>Role</Label>
-            <SelectNative value={role} onChange={(e) => setRole(e.target.value)} className="h-9 w-full">
+            <SelectNative value={role} onChange={(e) => { const v = e.target.value; setRole(v); if (v !== NEW_ROLE) setPermissions({}); }} className="h-9 w-full">
               {options.map((r) => (
                 <option key={r.value} value={r.value}>{r.label}</option>
               ))}
@@ -195,37 +190,30 @@ export default function StaffInviteDialog({ onClose, onInvited }) {
           )}
 
           <div>
-            <Label className="mb-2 block">
-              {isCreatingRole ? "Default section access for new role" : "Section access"}
-            </Label>
+            <Label className="mb-2 block">Permission</Label>
+            <p className="mb-2 text-xs text-muted-foreground">
+              {isCreatingRole ? "Pick the modules this new role can access." : "Grant access to specific modules. Unchecked modules inherit the role default."}
+            </p>
             <div className="grid grid-cols-2 gap-2">
               {ADMIN_SECTIONS.map((s) => {
-                const current = permissions[s.id] || "inherit";
-                const eff = isCreatingRole ? current === "allow" : current === "allow" || (current === "inherit" && allowedSet.includes(s.id));
+                const current = permissions[s.id];
+                const eff = isCreatingRole
+                  ? current === "allow"
+                  : current === "allow" || (current !== "deny" && allowedSet.includes(s.id));
                 return (
-                  <div key={s.id} className="flex w-full items-center gap-2 rounded-lg border border-border px-3 py-2">
-                    <span className={`h-2 w-2 shrink-0 rounded-full ${eff ? "bg-foreground" : "bg-muted-foreground/30"}`} />
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setPerm(s.id, eff ? "deny" : "allow")}
+                    className="flex w-full items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-left transition-colors hover:bg-muted/50"
+                  >
+                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
+                      eff ? "border-foreground bg-foreground text-background" : "border-border bg-background text-transparent"
+                    }`}>
+                      <Check className="h-3.5 w-3.5" />
+                    </span>
                     <span className="min-w-0 flex-1 truncate text-sm font-medium">{s.label}</span>
-                    <div className="flex shrink-0 items-center gap-1">
-                      {TRI.map((t) => (
-                        <button
-                          key={t.value}
-                          onClick={() => setPerm(s.id, t.value)}
-                          className={`w-[58px] rounded-md px-2 py-1 text-center text-[11px] font-medium transition-colors ${
-                            current === t.value
-                              ? t.value === "allow"
-                                ? "bg-foreground text-background"
-                                : t.value === "deny"
-                                ? "bg-destructive text-destructive-foreground"
-                                : "bg-muted text-foreground"
-                              : "text-muted-foreground hover:bg-muted"
-                          }`}
-                        >
-                          {t.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
