@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
-import { SelectNative } from "@/components/ui/select-native";
+import Dropdown from "@/components/admin/ui/Dropdown";
 import { Input } from "@/components/ui/input";
 import ReviewAnalytics from "@/components/admin/ReviewAnalytics";
 import ReviewReplyDialog from "@/components/admin/ReviewReplyDialog";
@@ -190,10 +190,14 @@ export default function AdminReviews() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search reviews, products, customers…" className="pl-9" />
         </div>
-        <SelectNative value={ratingFilter} onChange={(e) => setRatingFilter(e.target.value)} className="!w-auto !py-1.5 text-sm">
-          <option value="">All ratings</option>
-          {[5, 4, 3, 2, 1].map((s) => (<option key={s} value={s}>{s}★</option>))}
-        </SelectNative>
+        <Dropdown
+          type="select"
+          options={[{ label: "All ratings", value: "" }, ...[5, 4, 3, 2, 1].map((s) => ({ label: `${s} star${s > 1 ? "s" : ""}`, value: String(s) }))]}
+          value={ratingFilter}
+          onChange={setRatingFilter}
+          placeholder="All ratings"
+          className="w-[160px]"
+        />
         <FilterChip active={mediaOnly} onClick={() => setMediaOnly(!mediaOnly)} icon={ImageIcon} label="With media" />
         <FilterChip active={verifiedOnly} onClick={() => setVerifiedOnly(!verifiedOnly)} icon={BadgeCheck} label="Verified" />
         <FilterChip active={noReply} onClick={() => setNoReply(!noReply)} icon={MessageSquare} label="No reply" />

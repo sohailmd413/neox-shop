@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { X, Info, Image, Tag, Truck, Search, Box, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SelectNative } from "@/components/ui/select-native";
+import Dropdown from "@/components/admin/ui/Dropdown";
 import ImageUpload from "@/components/admin/ImageUpload";
 
 const EMPTY = {
@@ -50,6 +50,7 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
     setError("");
     setForm((f) => ({ ...f, [k]: val }));
   };
+  const setVal = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
   const setTags = (e) => setForm((f) => ({ ...f, tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) }));
 
   const submit = (e) => {
@@ -129,18 +130,31 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
                 <Field label="Category">
-                  <SelectNative value={form.category} onChange={set("category")} className="mt-1.5">
-                    <option value="">None</option>
-                    {categories.map((c) => (<option key={c.id} value={c.name}>{c.name}</option>))}
-                  </SelectNative>
+                  <div className="mt-1.5">
+                    <Dropdown
+                      type="search"
+                      options={[{ label: "None", value: "" }, ...categories.map((c) => ({ label: c.name, value: c.name }))]}
+                      value={form.category || ""}
+                      onChange={setVal("category")}
+                      placeholder="Select category"
+                    />
+                  </div>
                 </Field>
                 <Field label="Brand"><input value={form.brand} onChange={set("brand")} className={inputCls} /></Field>
                 <Field label="Status">
-                  <SelectNative value={form.status} onChange={set("status")} className="mt-1.5">
-                    <option value="active">Active</option>
-                    <option value="draft">Draft</option>
-                    <option value="archived">Archived</option>
-                  </SelectNative>
+                  <div className="mt-1.5">
+                    <Dropdown
+                      type="select"
+                      options={[
+                        { label: "Active", value: "active" },
+                        { label: "Draft", value: "draft" },
+                        { label: "Archived", value: "archived" },
+                      ]}
+                      value={form.status}
+                      onChange={setVal("status")}
+                      placeholder="Status"
+                    />
+                  </div>
                 </Field>
               </div>
               <Field label="Short description"><input value={form.short_description} onChange={set("short_description")} className={inputCls} placeholder="One-line summary" /></Field>
@@ -176,11 +190,19 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Stock quantity"><input type="number" value={form.stock} onChange={set("stock")} className={inputCls} /></Field>
                 <Field label="Stock status">
-                  <SelectNative value={form.stock_status} onChange={set("stock_status")} className="mt-1.5">
-                    <option value="in_stock">In stock</option>
-                    <option value="out_of_stock">Out of stock</option>
-                    <option value="preorder">Preorder</option>
-                  </SelectNative>
+                  <div className="mt-1.5">
+                    <Dropdown
+                      type="select"
+                      options={[
+                        { label: "In stock", value: "in_stock" },
+                        { label: "Out of stock", value: "out_of_stock" },
+                        { label: "Preorder", value: "preorder" },
+                      ]}
+                      value={form.stock_status}
+                      onChange={setVal("stock_status")}
+                      placeholder="Stock status"
+                    />
+                  </div>
                 </Field>
               </div>
             </>

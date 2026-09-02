@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SelectNative } from "@/components/ui/select-native";
+import Dropdown from "@/components/admin/ui/Dropdown";
 import { useToast } from "@/components/ui/use-toast";
 
 const STATUSES = ["pending", "paid", "packed", "shipped", "delivered", "cancelled", "refunded"];
@@ -40,6 +40,7 @@ export default function OrderDetailDrawer({ order, onClose, onChanged, adminName
   if (!order) return null;
 
   const set = (k) => (e) => setDraft((d) => ({ ...d, [k]: e.target.value }));
+  const setVal = (k) => (v) => setDraft((d) => ({ ...d, [k]: v }));
 
   const saveShipping = async () => {
     setSaving(true);
@@ -203,18 +204,10 @@ export default function OrderDetailDrawer({ order, onClose, onChanged, adminName
             <div className="space-y-4">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Order status">
-                  <SelectNative value={draft.status} onChange={set("status")} className="!py-1.5 text-sm">
-                    {STATUSES.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </SelectNative>
+                  <Dropdown type="select" value={draft.status} onChange={setVal("status")} options={STATUSES.map((s) => ({ label: s, value: s }))} placeholder="Status" />
                 </Field>
                 <Field label="Payment method">
-                  <SelectNative value={draft.payment_method} onChange={set("payment_method")} className="!py-1.5 text-sm">
-                    {METHODS.map((m) => (
-                      <option key={m.id} value={m.id}>{m.label}</option>
-                    ))}
-                  </SelectNative>
+                  <Dropdown type="select" value={draft.payment_method} onChange={setVal("payment_method")} options={METHODS.map((m) => ({ label: m.label, value: m.id }))} placeholder="Method" />
                 </Field>
                 <Field label="Courier">
                   <Input value={draft.courier} onChange={set("courier")} placeholder="e.g. Aramex" className="h-9" />

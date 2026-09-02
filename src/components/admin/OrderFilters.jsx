@@ -1,48 +1,37 @@
 import React from "react";
 import { Search } from "lucide-react";
-import { SelectNative } from "@/components/ui/select-native";
+import Dropdown from "@/components/admin/ui/Dropdown";
 
 const STATUSES = ["all", "pending", "paid", "packed", "shipped", "delivered", "cancelled", "refunded"];
 const METHODS = ["all", "card", "cod", "wallet", "upi", "net_banking"];
 const RANGES = [
-  { id: "all", label: "All time" },
-  { id: "today", label: "Today" },
-  { id: "7", label: "Last 7 days" },
-  { id: "30", label: "Last 30 days" },
+    { label: "All time", value: "all" },
+    { label: "Today", value: "today" },
+    { label: "Last 7 days", value: "7" },
+    { label: "Last 30 days", value: "30" },
 ];
 
 export default function OrderFilters({ filters, setFilters }) {
-  const set = (k) => (e) => setFilters((f) => ({ ...f, [k]: e.target.value }));
+  const set = (k) => (v) => setFilters((f) => ({ ...f, [k]: v }));
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  const statusOpts = STATUSES.map((s) => ({ label: s === "all" ? "All statuses" : cap(s), value: s }));
+  const methodOpts = METHODS.map((m) => ({ label: m === "all" ? "All payments" : m === "cod" ? "Cash on delivery" : cap(m), value: m }));
 
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <div className="relative flex-1 min-w-[220px]">
+      <div className="relative min-w-[220px] flex-1">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           value={filters.query}
-          onChange={set("query")}
+          onChange={(e) => set("query")(e.target.value)}
           placeholder="Search order #, customer, email, phone…"
-          className="h-9 w-full rounded-lg border border-input bg-transparent pl-9 pr-3 text-sm outline-none focus:border-foreground/40"
+          className="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 text-sm shadow-sm outline-none focus:border-foreground/40"
         />
       </div>
 
-      <SelectNative value={filters.status} onChange={set("status")} className="!w-auto !py-1.5 text-sm">
-        {STATUSES.map((s) => (
-          <option key={s} value={s}>{s === "all" ? "All statuses" : s}</option>
-        ))}
-      </SelectNative>
-
-      <SelectNative value={filters.method} onChange={set("method")} className="!w-auto !py-1.5 text-sm">
-        {METHODS.map((m) => (
-          <option key={m} value={m}>{m === "all" ? "All payments" : m}</option>
-        ))}
-      </SelectNative>
-
-      <SelectNative value={filters.range} onChange={set("range")} className="!w-auto !py-1.5 text-sm">
-        {RANGES.map((r) => (
-          <option key={r.id} value={r.id}>{r.label}</option>
-        ))}
-      </SelectNative>
+      <Dropdown type="select" options={statusOpts} value={filters.status || "all"} onChange={set("status")} placeholder="All statuses" className="w-[160px]" />
+      <Dropdown type="select" options={methodOpts} value={filters.method || "all"} onChange={set("method")} placeholder="All payments" className="w-[170px]" />
+      <Dropdown type="select" options={RANGES} value={filters.range || "all"} onChange={set("range")} placeholder="All time" className="w-[160px]" />
     </div>
   );
 }

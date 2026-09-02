@@ -3,7 +3,7 @@ import { Plus, Pencil, Trash2, Copy, Download, Percent, Ban } from "lucide-react
 import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { SelectNative } from "@/components/ui/select-native";
+import Dropdown from "@/components/admin/ui/Dropdown";
 import { useToast } from "@/components/ui/use-toast";
 import ProductAnalytics from "@/components/admin/ProductAnalytics";
 import ProductFilters from "@/components/admin/ProductFilters";
@@ -209,12 +209,18 @@ export default function AdminProducts() {
           <span className="text-sm font-medium">{selectedProducts.length} selected</span>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Set status</span>
-            <SelectNative onChange={(e) => { if (e.target.value) bulkStatus(e.target.value); e.target.value = ""; }} value="" className="!w-auto !py-1.5 text-sm">
-              <option value="" disabled>Choose…</option>
-              <option value="active">Active</option>
-              <option value="draft">Draft</option>
-              <option value="archived">Archived</option>
-            </SelectNative>
+            <Dropdown
+              type="select"
+              options={[
+                { label: "Active", value: "active" },
+                { label: "Draft", value: "draft" },
+                { label: "Archived", value: "archived" },
+              ]}
+              value=""
+              onChange={(v) => v && bulkStatus(v)}
+              placeholder="Choose…"
+              className="w-[150px]"
+            />
           </div>
           <Button variant="outline" size="sm" onClick={bulkDelete}><Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete</Button>
           <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>Clear</Button>

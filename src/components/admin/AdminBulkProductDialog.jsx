@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { slugify } from "@/lib/format";
-import { SelectNative } from "@/components/ui/select-native";
+import Dropdown from "@/components/admin/ui/Dropdown";
 import ImageUpload from "@/components/admin/ImageUpload";
 
 const blank = (categories) => ({
@@ -19,10 +19,8 @@ const blank = (categories) => ({
   featured: false,
 });
 
-const SelectWrap = ({ value, onChange, children }) => (
-  <SelectNative value={value} onChange={onChange} className="!h-9 !px-2">
-    {children}
-  </SelectNative>
+const SelectWrap = ({ value, onChange, options, className }) => (
+  <Dropdown type="select" value={value} onChange={onChange} options={options} placeholder="Select" className={className || "min-w-[150px] sm:col-span-2"} />
 );
 
 export default function AdminBulkProductDialog({ categories, onClose, onDone }) {
@@ -90,21 +88,24 @@ export default function AdminBulkProductDialog({ categories, onClose, onDone }) 
                 <Input className="sm:col-span-4" placeholder="Name" value={r.name} onChange={(e) => update(i, "name", e.target.value)} />
                 <Input className="sm:col-span-2" type="number" placeholder="Price" value={r.price} onChange={(e) => update(i, "price", e.target.value)} />
                 <Input className="sm:col-span-2" type="number" placeholder="Stock" value={r.stock} onChange={(e) => update(i, "stock", e.target.value)} />
-                <SelectWrap value={r.category} onChange={(e) => update(i, "category", e.target.value)}>
-                  <option value="">No category</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.name}>{c.name}</option>
-                  ))}
-                </SelectWrap>
+                <SelectWrap
+                  value={r.category}
+                  onChange={(v) => update(i, "category", v)}
+                  options={[{ label: "No category", value: "" }, ...categories.map((c) => ({ label: c.name, value: c.name }))]}
+                />
                 <div className="sm:col-span-3">
                   <ImageUpload value={r.image_url} onChange={(url) => update(i, "image_url", url)} />
                 </div>
                 <Input className="sm:col-span-4" placeholder="Brand" value={r.brand} onChange={(e) => update(i, "brand", e.target.value)} />
-                <SelectWrap value={r.status} onChange={(e) => update(i, "status", e.target.value)}>
-                  <option value="active">active</option>
-                  <option value="draft">draft</option>
-                  <option value="archived">archived</option>
-                </SelectWrap>
+                <SelectWrap
+                  value={r.status}
+                  onChange={(v) => update(i, "status", v)}
+                  options={[
+                    { label: "Active", value: "active" },
+                    { label: "Draft", value: "draft" },
+                    { label: "Archived", value: "archived" },
+                  ]}
+                />
                 <label className="flex items-center gap-2 sm:col-span-3 text-sm">
                   <input type="checkbox" checked={r.featured} onChange={(e) => update(i, "featured", e.target.checked)} />
                   Featured
