@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/lib/AuthContext";
 import { Loader2, User, Lock } from "lucide-react";
 
 export default function AdminProfile() {
@@ -18,6 +20,7 @@ export default function AdminProfile() {
   const [savingPw, setSavingPw] = useState(false);
 
   const { toast } = useToast();
+  const { checkUserAuth } = useAuth();
 
   useEffect(() => {
     base44.auth.me().then((u) => {
@@ -35,6 +38,7 @@ export default function AdminProfile() {
     setSavingName(true);
     try {
       await base44.auth.updateMe({ full_name: name.trim() });
+      await checkUserAuth();
       toast({ title: "Profile updated" });
     } catch (e) {
       toast({ title: e.response?.data?.error || "Could not update profile", variant: "destructive" });
@@ -121,6 +125,11 @@ export default function AdminProfile() {
             {savingPw && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Update password
           </Button>
+          <div className="pt-1 text-xs">
+            <Link to="/forgot-password" className="text-primary underline-offset-4 hover:underline">
+              Forgot password? Reset it
+            </Link>
+          </div>
         </div>
       </div>
     </div>
