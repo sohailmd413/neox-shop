@@ -126,10 +126,14 @@ export default async function (req) {
 
       // Actually send the invite through the platform's invite system — this is
       // the real email send. Capture the result instead of swallowing it.
+      // The platform invite API only accepts 'user' or 'admin'. The app's
+      // granular custom roles are stored on User.role after the invitee joins,
+      // so map any non-admin role to platform 'user' for the actual send.
+      const platformRole = role === 'admin' ? 'admin' : 'user';
       let inviteOk = true;
       let invite_error = '';
       try {
-        await base44.users.inviteUser(email, role);
+        await base44.users.inviteUser(email, platformRole);
       } catch (e) {
         inviteOk = false;
         invite_error = (e && e.message) || 'Invite failed';
