@@ -88,6 +88,24 @@ export default function AdminRoles() {
         <div className="text-sm text-muted-foreground">Loading…</div>
       ) : (
         <div className="space-y-3">
+          {/* Main admin — default role, full access, cannot be edited or deleted */}
+          <div className="rounded-2xl border border-border bg-background p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium">{ROLE_LABELS.admin}</p>
+                  <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">admin</code>
+                  <span className="rounded-full bg-foreground px-2 py-0.5 text-xs text-background">Default</span>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">Full access to every module. The main admin cannot be deleted or changed.</p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {ADMIN_SECTIONS.map((s) => (
+                    <span key={s.id} className="rounded-full bg-foreground px-2 py-0.5 text-xs text-background">{s.label}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
           {BUILTIN_KEYS.map((key) => {
             const override = roles.find((r) => r.name === key);
             const perms = override ? override.permissions : ROLE_DEFAULTS[key];

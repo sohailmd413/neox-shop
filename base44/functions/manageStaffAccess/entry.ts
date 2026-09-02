@@ -1,6 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 
-const STAFF_ROLES = ['admin', 'product_manager', 'delivery_manager', 'marketing_manager', 'user'];
 const SECTIONS = ['dashboard', 'products', 'categories', 'orders', 'reviews', 'posters'];
 
 // Staff & access management for the admin panel. Only the main admin (role
@@ -16,7 +15,23 @@ export default async function (req) {
     const action = body.action;
 
     if (action === 'list') {
-      const users = await base44.asServiceRole.entities.User.list('-created_date', 200);
+      const [users, invites] = await Promise.all([
+        base44.asServiceRole.entities.User.list('-created_date', 200),
+        base44.asServiceRole.entities.StaffInvite.list('-created_date', 200).catch(() => []),
+      ]);
+      const emails = new Set((users || []).map((u) => (u.email || '').toLowerCase()));
+      const pending = (invites || [])
+        .filter((i) => i.status !== 'accepted' && !emails.has((i.email || '').toLowerCase()))
+        .map((i) => ({
+          id: 'invite:' + i.id,
+          invite_id: i.id,
+          email: i.email,
+          full_name: i.name || '',
+          role: i.role || 'user',
+          permissions: {},
+          temp_password: i.temp_password || '',
+          pending: true,
+        }));
       const sanitized = (users || []).map((u) => ({
         id: u.id,
         email: u.email,
@@ -25,13 +40,17 @@ export default async function (req) {
         permissions: u.permissions || {},
         temp_password: u.temp_password || '',
       }));
-      return Response.json({ users: sanitized });
+      return Response.json({ users: [...sanitized, ...pending] });
     }
 
     if (action === 'update') {
       const { user_id, role, permissions } = body;
       if (!user_id || typeof user_id !== 'string') {
         return Response.json({ error: 'user_id is required' }, { status: 400 });
+      }
+      const target = await base44.asServiceRole.entities.User.get(user_id).catch(() => null);
+      if (target && target.role === 'admin' && role !== undefined && role !== 'admin') {
+        return Response.json({ error: 'The main admin role cannot be changed' }, { status: 400 });
       }
       const next = {};
       if (role !== undefined) {
@@ -56,7 +75,7 @@ export default async function (req) {
     }
 
     if (action === 'invite') {
-      const { email, name, role, permissions, create_role } = body;
+      const { email, name, role, permissions, password, create_role } = body;
       if (!email || typeof email !== 'string' || !email.includes('@')) {
         return Response.json({ error: 'A valid email is required' }, { status: 400 });
       }
@@ -64,37 +83,32 @@ export default async function (req) {
         return Response.json({ error: 'invalid role' }, { status: 400 });
       }
 
-      let finalRole = role;
-      if (create_role && create_role.name) {
-        const rname = String(create_role.name).trim().toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '');
-        if (!rname || rname === 'user' || rname === 'admin' || /\s/.test(rname)) {
-          return Response.json({ error: 'Role key must be a single lowercase token, not "user" or "admin"' }, { status: 400 });
-        }
-        const rperms = {};
-        for (const s of SECTIONS) {
-          const v = create_role.permissions && create_role.permissions[s];
-          if (v === 'allow' || v === 'deny') rperms[s] = v;
-        }
-        try {
-          await base44.asServiceRole.entities.Role.create({
-            name: rname,
-            label: String(create_role.label || rname).trim(),
-            description: String(create_role.description || '').trim(),
-            permissions: rperms,
-          });
-        } catch (_e) {
-          // role may already exist — fall through and still assign it
-        }
-        finalRole = rname;
+      // Persist a pending invite so the staff member appears in the list
+      // immediately, before they accept the email and their user record exists.
+      try {
+        const existing = await base44.asServiceRole.entities.StaffInvite.list('-created_date', 200).catch(() => []);
+        const prev = (existing || []).find(
+          (i) => (i.email || '').toLowerCase() === email.toLowerCase() && i.status !== 'accepted'
+        );
+        const payload = {
+          email,
+          name: typeof name === 'string' ? name.trim() : '',
+          role,
+          temp_password: typeof password === 'string' ? password.trim() : '',
+          status: 'pending',
+        };
+        if (prev) await base44.asServiceRole.entities.StaffInvite.update(prev.id, payload);
+        else await base44.asServiceRole.entities.StaffInvite.create(payload);
+      } catch (_e) {
+        // non-fatal
       }
 
       try {
-        await base44.asServiceRole.users.inviteUser(email, finalRole);
+        await base44.asServiceRole.users.inviteUser(email, role);
       } catch (_e) {
-        // user may already exist — fall through and apply role/permissions below
+        // user may already exist — fall through
       }
-      // The new user record may take a moment to be readable after the invite
-      // call returns. Poll briefly so we can apply the role/permissions now.
+
       let u = null;
       for (let attempt = 0; attempt < 8 && !u; attempt++) {
         const users = await base44.asServiceRole.entities.User.list('-created_date', 200);
@@ -102,13 +116,16 @@ export default async function (req) {
         if (!u) await new Promise((r) => setTimeout(r, 800));
       }
       if (!u) {
-        // The user record is not created until the invitee accepts the email.
-        // inviteUser() already set their role; name/password/permissions will be
-        // applied once their account is visible. Treat this as a successful
-        // invite rather than failing the whole action.
         return Response.json({ ok: true, pending: true });
       }
-      const update = { role: finalRole };
+      // The user record now exists — mark the invite accepted.
+      try {
+        const invites = await base44.asServiceRole.entities.StaffInvite.list('-created_date', 200).catch(() => []);
+        const match = (invites || []).find((i) => (i.email || '').toLowerCase() === email.toLowerCase());
+        if (match) await base44.asServiceRole.entities.StaffInvite.update(match.id, { status: 'accepted' });
+      } catch (_e) {}
+
+      const update = { role };
       if (typeof name === 'string' && name.trim()) update.full_name = name.trim();
       if (typeof body.password === 'string' && body.password.trim()) update.temp_password = body.password.trim();
       if (create_role) {
@@ -126,12 +143,20 @@ export default async function (req) {
     }
 
     if (action === 'delete') {
-      const { user_id } = body;
+      const { user_id, invite_id } = body;
+      if (invite_id && typeof invite_id === 'string') {
+        await base44.asServiceRole.entities.StaffInvite.delete(invite_id);
+        return Response.json({ ok: true });
+      }
       if (!user_id || typeof user_id !== 'string') {
         return Response.json({ error: 'user_id is required' }, { status: 400 });
       }
       if (user_id === caller.id) {
         return Response.json({ error: 'You cannot delete your own account' }, { status: 400 });
+      }
+      const target = await base44.asServiceRole.entities.User.get(user_id).catch(() => null);
+      if (target && target.role === 'admin') {
+        return Response.json({ error: 'The main admin cannot be deleted' }, { status: 400 });
       }
       await base44.asServiceRole.entities.User.delete(user_id);
       return Response.json({ ok: true });

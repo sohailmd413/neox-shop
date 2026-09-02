@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { SelectNative } from "@/components/ui/select-native";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { ADMIN_SECTIONS, roleOptions, roleLabel, roleDefaults, defaultsAllowed } from "@/lib/adminPermissions";
+import { roleOptions, roleLabel } from "@/lib/adminPermissions";
 import StaffInviteDialog from "@/components/admin/StaffInviteDialog";
 import StaffDeleteDialog from "@/components/admin/StaffDeleteDialog";
-import { Loader2, Save, ShieldCheck, UserPlus, Trash2, KeyRound, Eye, EyeOff, Check } from "lucide-react";
+import { Loader2, Save, ShieldCheck, UserPlus, Trash2, KeyRound, Eye, EyeOff, Clock } from "lucide-react";
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -35,7 +34,7 @@ export default function AdminUsers() {
       setUsers(list);
       const d = {};
       list.forEach((u) => {
-        d[u.id] = { role: u.role, permissions: { ...(u.permissions || {}) } };
+        d[u.id] = { role: u.role };
       });
       setDrafts(d);
     } catch (e) {
@@ -51,21 +50,10 @@ export default function AdminUsers() {
   const setRole = (id, role) =>
     setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], role } }));
 
-  const setPerm = (id, section, value) =>
-    setDrafts((prev) => {
-      const perms = { ...(prev[id]?.permissions || {}) };
-      if (value === "inherit") delete perms[section];
-      else perms[section] = value;
-      return { ...prev, [id]: { ...prev[id], permissions: perms } };
-    });
-
   const dirty = (u) => {
     const d = drafts[u.id];
     if (!d) return false;
-    if (d.role !== u.role) return true;
-    const cur = u.permissions || {};
-    if (JSON.stringify(d.permissions) !== JSON.stringify(cur)) return true;
-    return false;
+    return d.role !== u.role;
   };
 
   const save = async (u) => {
@@ -76,9 +64,8 @@ export default function AdminUsers() {
         action: "update",
         user_id: u.id,
         role: d.role,
-        permissions: d.permissions,
       });
-      toast({ title: "Access updated" });
+      toast({ title: "Role updated" });
       load();
     } catch (e) {
       toast({ title: e.response?.data?.error || "Could not update", variant: "destructive" });
@@ -91,8 +78,11 @@ export default function AdminUsers() {
     if (!removing) return;
     setDeleting(true);
     try {
-      await base44.functions.invoke("manageStaffAccess", { action: "delete", user_id: removing.id });
-      toast({ title: "Staff member removed" });
+      const payload = removing.pending
+        ? { action: "delete", invite_id: removing.invite_id }
+        : { action: "delete", user_id: removing.id };
+      await base44.functions.invoke("manageStaffAccess", payload);
+      toast({ title: removing.pending ? "Invite cancelled" : "Staff member removed" });
       setRemoving(null);
       load();
     } catch (e) {
@@ -107,7 +97,7 @@ export default function AdminUsers() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Staff members</h1>
           <p className="text-sm text-muted-foreground">
-            Add new staff, assign roles, and grant or deny access to individual sections. Roles set the defaults; the toggles below override them per person.
+            Add staff and assign a role. Each role's module access is managed on the Roles page. Pending invites appear here as soon as the link is sent.
           </p>
         </div>
         <Button onClick={() => setInviting(true)} className="self-start">
@@ -119,26 +109,39 @@ export default function AdminUsers() {
         <div className="text-sm text-muted-foreground">Loading…</div>
       ) : users.length === 0 ? (
         <div className="rounded-2xl border border-border p-10 text-center text-sm text-muted-foreground">
-          No users found.
+          No staff members yet.
         </div>
       ) : (
         <div className="space-y-4">
           {users.map((u) => {
-            const d = drafts[u.id] || { role: u.role, permissions: {} };
-            const defaults = roleDefaults(d.role, customRoles);
-            const allowed = defaultsAllowed(defaults);
+            const d = drafts[u.id] || { role: u.role };
+            const isAdmin = u.role === "admin";
+            const locked = u.pending || isAdmin;
             return (
               <div key={u.id} className="rounded-2xl border border-border bg-background p-5">
                 <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="font-medium">{u.email}</p>
-                    <p className="text-xs text-muted-foreground">{u.full_name || "—"}</p>
+                  <div className="flex items-center gap-2">
+                    <div>
+                      <p className="font-medium">{u.email}</p>
+                      <p className="text-xs text-muted-foreground">{u.full_name || "—"}</p>
+                    </div>
+                    {u.pending && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                        <Clock className="h-3 w-3" /> Pending invite
+                      </span>
+                    )}
+                    {isAdmin && !u.pending && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-2 py-0.5 text-xs text-background">
+                        <ShieldCheck className="h-3 w-3" /> Main admin
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">Role</span>
                     <SelectNative
                       value={d.role}
                       onChange={(e) => setRole(u.id, e.target.value)}
+                      disabled={locked}
                       className="h-9 w-48"
                     >
                       {roleOptions(customRoles).map((r) => (
@@ -156,48 +159,28 @@ export default function AdminUsers() {
                   </div>
                 ) : null}
 
-                <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                  {ADMIN_SECTIONS.map((s) => {
-                    const currentValue = d.permissions?.[s.id];
-                    const eff = currentValue === "allow" || (currentValue !== "deny" && allowed.includes(s.id));
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => setPerm(u.id, s.id, eff ? "deny" : "allow")}
-                        className="flex items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-left transition-colors hover:bg-muted/50"
-                      >
-                        <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
-                          eff ? "border-foreground bg-foreground text-background" : "border-border bg-background text-transparent"
-                        }`}>
-                          <Check className="h-3.5 w-3.5" />
-                        </span>
-                        <span className="min-w-0 flex-1 truncate text-sm font-medium">{s.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">
-                    Default access for <span className="font-medium text-foreground">{roleLabel(d.role, customRoles)}</span>:{" "}
-                    {allowed.length || "none"}
+                {!u.pending && (
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Access for this staff member comes from the <span className="font-medium text-foreground">{roleLabel(d.role, customRoles)}</span> role. Edit the role's permissions on the Roles page.
                   </p>
-                  <div className="flex items-center gap-2">
-                    <Button onClick={() => save(u)} disabled={!dirty(u) || savingId === u.id} size="sm">
+                )}
+
+                <div className="mt-4 flex items-center justify-end gap-2">
+                  {!u.pending && (
+                    <Button onClick={() => save(u)} disabled={!dirty(u) || savingId === u.id || isAdmin} size="sm">
                       {savingId === u.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                      Save access
+                      Save role
                     </Button>
-                    <Button
-                      onClick={() => remove(u)}
-                      disabled={u.id === currentUserId}
-                      size="sm"
-                      variant="outline"
-                      className="text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" /> Remove
-                    </Button>
-                  </div>
+                  )}
+                  <Button
+                    onClick={() => remove(u)}
+                    disabled={!u.pending && (u.id === currentUserId || isAdmin)}
+                    size="sm"
+                    variant="outline"
+                    className="text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" /> {u.pending ? "Cancel invite" : "Remove"}
+                  </Button>
                 </div>
               </div>
             );
@@ -218,7 +201,7 @@ export default function AdminUsers() {
       <div className="flex items-start gap-3 rounded-xl bg-muted/50 p-4 text-xs text-muted-foreground">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
         <p>
-          <span className="font-medium text-foreground">Staff members</span> is only available to the main admin. The main admin cannot lock themselves out. Staff join via invite; assign their role and section access here after they sign in once.
+          <span className="font-medium text-foreground">Staff members</span> is only available to the main admin. The main admin has full access and cannot be deleted. Staff join via invite; new invites appear here immediately.
         </p>
       </div>
     </div>
