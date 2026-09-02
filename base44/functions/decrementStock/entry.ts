@@ -13,6 +13,16 @@ export default async function(req) {
     }
 
     const order = await base44.asServiceRole.entities.Order.get(orderId);
+
+    // Increment coupon redemption count (Coupon is admin-only, so use service role).
+    if (order.coupon_code) {
+      const coupons = await base44.asServiceRole.entities.Coupon.filter({ code: order.coupon_code });
+      const cp = Array.isArray(coupons) ? coupons[0] : null;
+      if (cp) {
+        await base44.asServiceRole.entities.Coupon.update(cp.id, { times_used: (Number(cp.times_used) || 0) + 1 });
+      }
+    }
+
     const items = Array.isArray(order.items) ? order.items : [];
     if (items.length === 0) {
       return Response.json({ ok: true, updated: 0 });
@@ -32,15 +42,6 @@ export default async function(req) {
         stock_status: nextStatus,
       });
       updated += 1;
-    }
-
-    // Increment coupon redemption count (Coupon is admin-only, so use service role).
-    if (order.coupon_code) {
-      const coupons = await base44.asServiceRole.entities.Coupon.filter({ code: order.coupon_code });
-      const cp = Array.isArray(coupons) ? coupons[0] : null;
-      if (cp) {
-        await base44.asServiceRole.entities.Coupon.update(cp.id, { times_used: (Number(cp.times_used) || 0) + 1 });
-      }
     }
 
     return Response.json({ ok: true, updated: updated });
