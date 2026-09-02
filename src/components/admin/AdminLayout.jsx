@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { canAccess } from "@/lib/adminPermissions";
 
@@ -11,20 +11,24 @@ const NAV = [
   { section: "orders", label: "Orders", path: "/admin/orders", icon: ClipboardList },
   { section: "reviews", label: "Reviews", path: "/admin/reviews", icon: Star },
   { section: "posters", label: "Posters", path: "/admin/posters", icon: ImageIcon },
-  { section: "roles", label: "Roles", path: "/admin/roles", icon: ShieldCheck },
-  { section: "users", label: "Staff members", path: "/admin/users", icon: UsersIcon },
 ];
 
-const SECTION_LABEL = {
-  dashboard: "Dashboard", products: "Products", categories: "Categories",
-  orders: "Orders", reviews: "Reviews", posters: "Posters",
-  roles: "Roles", users: "Staff members",
+// Staff members groups the Members and Roles sub-pages; both are admin-only.
+const STAFF_GROUP = {
+  section: "staff",
+  label: "Staff members",
+  icon: UsersIcon,
+  children: [
+    { section: "users", label: "Members", path: "/admin/users", icon: UsersIcon },
+    { section: "roles", label: "Roles", path: "/admin/roles", icon: ShieldCheck },
+  ],
 };
 
 export default function AdminLayout() {
   const [user, setUser] = useState(null);
   const [customRoles, setCustomRoles] = useState([]);
   const [checking, setChecking] = useState(true);
+  const [staffOpen, setStaffOpen] = useState(true);
   const location = useLocation();
 
   useEffect(() => {
@@ -51,9 +55,11 @@ export default function AdminLayout() {
   }
 
   const navItems = NAV.filter((n) => canAccess(user, n.section, customRoles));
+  const staffChildren = STAFF_GROUP.children.filter((c) => canAccess(user, c.section, customRoles));
+  const hasStaff = staffChildren.length > 0;
 
   // Customer accounts (or unknown roles) have no admin access at all.
-  if (navItems.length === 0) {
+  if (navItems.length === 0 && !hasStaff) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-5 text-center">
         <ShieldAlert className="h-10 w-10 text-muted-foreground" />
@@ -80,7 +86,8 @@ export default function AdminLayout() {
 
   // Landing on dashboard without dashboard access -> redirect to first allowed section.
   if (location.pathname === "/admin" && !canAccess(user, "dashboard", customRoles)) {
-    return <Navigate to={navItems[0].path} replace />;
+    const first = [...navItems, ...staffChildren][0];
+    return <Navigate to={first.path} replace />;
   }
 
   const sectionBlocked = !canAccess(user, currentSection, customRoles);
@@ -108,6 +115,31 @@ export default function AdminLayout() {
               </NavLink>
             );
           })}
+          {hasStaff && (
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={() => setStaffOpen((v) => !v)}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <UsersIcon className="h-4 w-4" />
+                <span className="flex-1 text-left">Staff members</span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${staffOpen ? "rotate-180" : ""}`} />
+              </button>
+              {staffOpen && (
+                <div className="mt-1 ml-5 space-y-0.5 border-l border-border pl-2">
+                  {staffChildren.map((child) => {
+                    const Icon = child.icon;
+                    return (
+                      <NavLink key={child.path} to={child.path} className={linkClass}>
+                        <Icon className="h-4 w-4" /> {child.label}
+                      </NavLink>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </nav>
         <div className="border-t border-border p-3">
           <Link to="/" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted">
@@ -122,6 +154,11 @@ export default function AdminLayout() {
             {navItems.map((item) => (
               <NavLink key={item.path} to={item.path} end={item.end} className={mobileLinkClass}>
                 {item.label}
+              </NavLink>
+            ))}
+            {staffChildren.map((child) => (
+              <NavLink key={child.path} to={child.path} className={mobileLinkClass}>
+                {child.label}
               </NavLink>
             ))}
           </nav>
