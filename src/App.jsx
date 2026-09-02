@@ -24,6 +24,7 @@ import AdminReviews from '@/pages/admin/AdminReviews';
 import AdminPosters from '@/pages/admin/AdminPosters';
 import AdminUsers from '@/pages/admin/AdminUsers';
 import AdminRoles from '@/pages/admin/AdminRoles';
+import AdminProfile from '@/pages/admin/AdminProfile';
 import AdminLogin from '@/pages/admin/AdminLogin';
 import AdminCategories from '@/pages/admin/AdminCategories';
 import Login from '@/pages/Login';
@@ -87,6 +88,7 @@ const AuthenticatedApp = () => {
             <Route path="posters" element={<AdminPosters />} />
             <Route path="roles" element={<AdminRoles />} />
             <Route path="users" element={<AdminUsers />} />
+            <Route path="profile" element={<AdminProfile />} />
           </Route>
           <Route path="*" element={<PageNotFound />} />
         </Routes>

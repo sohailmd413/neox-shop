@@ -162,9 +162,9 @@ export default function AdminLayout() {
               </NavLink>
             ))}
           </nav>
-          <div className="ml-auto text-sm text-muted-foreground">
+          <Link to="/admin/profile" className="ml-auto rounded-lg px-2 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
             Signed in as <span className="font-medium text-foreground">{user.email}</span>
-          </div>
+          </Link>
         </header>
         <main className="p-5 md:p-8">
           {sectionBlocked ? (
