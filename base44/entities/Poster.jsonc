@@ -3,20 +3,188 @@
   "type": "object",
   "properties": {
     "title": {
-      "type": "string"
+      "type": "string",
+      "description": "Internal reference name for the banner."
     },
     "image_url": {
-      "type": "string"
+      "type": "string",
+      "description": "Desktop banner image (recommended 1920x600px)."
+    },
+    "image_mobile_url": {
+      "type": "string",
+      "description": "Mobile banner image (recommended 800x1000px). Falls back to image_url when not set."
+    },
+    "alt_text": {
+      "type": "string",
+      "description": "Alt text for SEO/accessibility."
     },
     "link_url": {
       "type": "string",
-      "description": "Optional URL the poster links to."
+      "description": "Legacy plain link; superseded by cta_link but kept for compatibility."
+    },
+    "tagline": {
+      "type": "string",
+      "description": "Tagline overlay text (English)."
+    },
+    "tagline_ar": {
+      "type": "string",
+      "description": "Tagline overlay text (Arabic)."
+    },
+    "animation": {
+      "type": "string",
+      "enum": [
+        "none",
+        "marquee",
+        "fade",
+        "slide",
+        "typewriter"
+      ],
+      "default": "none",
+      "description": "Tagline animation type."
+    },
+    "animation_direction": {
+      "type": "string",
+      "enum": [
+        "left",
+        "right"
+      ],
+      "default": "left",
+      "description": "Marquee scroll direction."
+    },
+    "animation_speed": {
+      "type": "string",
+      "enum": [
+        "slow",
+        "medium",
+        "fast"
+      ],
+      "default": "medium"
+    },
+    "text_position": {
+      "type": "string",
+      "enum": [
+        "top",
+        "center",
+        "bottom"
+      ],
+      "default": "center"
+    },
+    "text_align": {
+      "type": "string",
+      "enum": [
+        "left",
+        "center",
+        "right"
+      ],
+      "default": "center"
+    },
+    "font_size": {
+      "type": "number",
+      "default": 0,
+      "description": "Tagline font size in px; 0 uses a sensible default per device."
+    },
+    "font_color": {
+      "type": "string",
+      "description": "CSS color for the tagline text."
+    },
+    "font_weight": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "bold"
+      ],
+      "default": "bold"
+    },
+    "strip_bg": {
+      "type": "boolean",
+      "default": false,
+      "description": "Show a semi-transparent strip behind the tagline for readability."
+    },
+    "cta_text": {
+      "type": "string",
+      "description": "Call-to-action button label."
+    },
+    "cta_link": {
+      "type": "string",
+      "description": "Call-to-action destination URL."
+    },
+    "cta_color": {
+      "type": "string",
+      "description": "Call-to-action button background color."
+    },
+    "page": {
+      "type": "string",
+      "enum": [
+        "home",
+        "category",
+        "catalog",
+        "product_detail",
+        "cart",
+        "checkout",
+        "search",
+        "splash",
+        "custom"
+      ],
+      "default": "home"
+    },
+    "zone": {
+      "type": "string",
+      "enum": [
+        "hero",
+        "secondary",
+        "sidebar",
+        "mid_strip",
+        "grid_interstitial",
+        "footer",
+        "popup",
+        "sticky_bar"
+      ],
+      "default": "hero"
+    },
+    "category_ref": {
+      "type": "string",
+      "description": "When page=category, the target Category id."
+    },
+    "device": {
+      "type": "string",
+      "enum": [
+        "both",
+        "desktop",
+        "mobile"
+      ],
+      "default": "both"
+    },
+    "start_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "end_at": {
+      "type": "string",
+      "format": "date-time"
     },
     "active": {
       "type": "boolean",
       "default": true
     },
     "sort_order": {
+      "type": "number",
+      "default": 0,
+      "description": "Rotation/priority order within a slot (lower shows first)."
+    },
+    "target_audience": {
+      "type": "string",
+      "enum": [
+        "all",
+        "new",
+        "logged_in"
+      ],
+      "default": "all"
+    },
+    "impressions": {
+      "type": "number",
+      "default": 0
+    },
+    "clicks": {
       "type": "number",
       "default": 0
     }
