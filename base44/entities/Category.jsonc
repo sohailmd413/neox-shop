@@ -17,7 +17,20 @@
       "description": "Optional parent category id for subcategories"
     },
     "image_url": {
-      "type": "string"
+      "type": "string",
+      "description": "Category icon/thumbnail shown in-tree and on cards."
+    },
+    "banner_image_url": {
+      "type": "string",
+      "description": "Hero banner image for the category landing page."
+    },
+    "description": {
+      "type": "string",
+      "description": "Rich HTML description shown on the category landing page."
+    },
+    "short_description": {
+      "type": "string",
+      "description": "Short blurb shown on category cards/tiles."
     },
     "sort_order": {
       "type": "number",
@@ -32,6 +45,15 @@
       "type": "boolean",
       "default": true,
       "description": "Inactive categories are hidden from the storefront."
+    },
+    "show_in_nav": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show this category in the storefront navigation menu."
+    },
+    "focus_keyword": {
+      "type": "string",
+      "description": "SEO focus keyword for the category page."
     },
     "meta_title": {
       "type": "string"
