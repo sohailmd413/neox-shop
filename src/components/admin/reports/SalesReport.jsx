@@ -165,16 +165,14 @@ export default function SalesReport({ orders, products, categories, bounds, comp
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
         {kpis.map((k) => (
-          <div key={k.label} className="rounded-2xl border border-border bg-background p-4">
+          <div key={k.label} className="flex flex-col overflow-hidden rounded-2xl border border-border bg-background p-4">
             <span className="text-xs text-muted-foreground">{k.label}</span>
-            <div className="mt-1 flex items-center gap-1">
-              <p className="text-lg font-semibold">{k.value}</p>
-              {k.delta !== undefined && (
-                <span className={`text-xs font-medium ${k.delta >= 0 ? "text-emerald-600" : "text-destructive"}`}>
-                  {k.delta >= 0 ? <ArrowUp className="inline h-3 w-3" /> : <ArrowDown className="inline h-3 w-3" />}{Math.abs(Math.round(k.delta))}%
-                </span>
-              )}
-            </div>
+            <p className="mt-1 truncate text-lg font-semibold leading-tight" title={k.value}>{k.value}</p>
+            {k.delta !== undefined && (
+              <span className={`mt-1 inline-flex w-fit items-center gap-0.5 text-xs font-medium ${k.delta >= 0 ? "text-emerald-600" : "text-destructive"}`}>
+                {k.delta >= 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}{Math.abs(Math.round(k.delta))}%
+              </span>
+            )}
           </div>
         ))}
       </div>
