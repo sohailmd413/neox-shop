@@ -67,21 +67,37 @@ export default function BulkAddGrid({ categories, onSubmit, saving, toast }) {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
+      transformHeader: (h) => h.trim().toLowerCase().replace(/[\s_]+/g, "_").replace(/^name_\(en\)$/, "name"),
       complete: (results) => {
+        const pick = (row, keys) => {
+          for (const k of keys) {
+            const v = row[k];
+            if (v != null && String(v).trim()) return String(v).trim();
+          }
+          return "";
+        };
         const parsed = (results.data || [])
-          .map((row) => ({
-            name: String(row.name || "").trim(),
-            name_ar: String(row.name_ar || "").trim(),
-            short_description: String(row.short_description || "").trim(),
-            sort_order: Number(row.sort_order) || 0,
-            active: String(row.active || "").toLowerCase() !== "false",
-            parent_id: "",
-            image_url: "",
-          }))
+          .map((row) => {
+            const activeRaw = pick(row, ["active", "status", "enabled", "is_active"]).toLowerCase();
+            return {
+              name: pick(row, ["name", "category", "category_name", "title", "name_en", "en", "label"]),
+              name_ar: pick(row, ["name_ar", "arabic_name", "name_arabic", "ar", "ar_name"]),
+              short_description: pick(row, ["short_description", "shortdescription", "description", "desc", "short", "blurb"]),
+              sort_order: Number(pick(row, ["sort_order", "order", "sort", "priority"])) || 0,
+              active: !(activeRaw && ["false", "inactive", "0", "no", "off"].includes(activeRaw)),
+              parent_id: "",
+              image_url: "",
+            };
+          })
           .filter((r) => r.name);
         if (parsed.length) setRows(parsed.length === 1 ? [parsed[0], blank()] : parsed);
-        else toast({ title: "No rows found in CSV", variant: "destructive" });
+        else toast({
+          title: "No usable rows found",
+          description: `Expected a "name" column. Detected headers: ${results.meta.fields?.join(", ") || "none"}.`,
+          variant: "destructive",
+        });
       },
+      error: (err) => toast({ title: "Could not read CSV", description: err.message, variant: "destructive" }),
     });
     if (fileRef.current) fileRef.current.value = "";
   };
