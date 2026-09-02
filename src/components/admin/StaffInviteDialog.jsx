@@ -5,10 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { ADMIN_SECTIONS, roleOptions, roleLabel, roleDefaults, defaultsAllowed } from "@/lib/adminPermissions";
+import { roleOptions, roleLabel } from "@/lib/adminPermissions";
 import { X, Loader2, UserPlus, Lock, Eye, EyeOff, Copy, Check } from "lucide-react";
-
-const NEW_ROLE = "__new__";
 
 export default function StaffInviteDialog({ onClose, onInvited }) {
   const { toast } = useToast();
@@ -19,29 +17,12 @@ export default function StaffInviteDialog({ onClose, onInvited }) {
   const [showPw, setShowPw] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [newRoleName, setNewRoleName] = useState("");
-  const [newRoleLabel, setNewRoleLabel] = useState("");
-  const [permissions, setPermissions] = useState({});
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(null);
 
   useEffect(() => {
     base44.entities.Role.list().then((r) => setCustomRoles(r || [])).catch(() => {});
   }, []);
-
-  const setPerm = (section, value) =>
-    setPermissions((p) => {
-      const n = { ...p };
-      if (value === "inherit") delete n[section];
-      else n[section] = value;
-      return n;
-    });
-
-  const isCreatingRole = role === NEW_ROLE;
-  const previewDefaults = isCreatingRole ? permissions : roleDefaults(role, customRoles);
-  const allowedSet = isCreatingRole
-    ? Object.keys(permissions).filter((k) => permissions[k] === "allow")
-    : defaultsAllowed(previewDefaults);
 
   const submit = async () => {
     if (!email || !email.includes("@")) {
@@ -52,42 +33,17 @@ export default function StaffInviteDialog({ onClose, onInvited }) {
       toast({ title: "Passwords do not match", variant: "destructive" });
       return;
     }
-    let finalRole = role;
-    let createRole = null;
-    let finalPerms = permissions;
-    if (isCreatingRole) {
-      const key = newRoleName.trim().toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "");
-      if (!key || key === "user" || key === "admin") {
-        toast({ title: "Role key must be one lowercase token, not 'user' or 'admin'", variant: "destructive" });
-        return;
-      }
-      if (!newRoleLabel.trim()) {
-        toast({ title: "Enter a role label", variant: "destructive" });
-        return;
-      }
-      finalRole = key;
-      createRole = { name: key, label: newRoleLabel.trim(), permissions };
-      finalPerms = {};
-    }
 
     setSaving(true);
     try {
-      const payload = {
+      await base44.functions.invoke("manageStaffAccess", {
         action: "invite",
         email,
         name,
-        role: finalRole,
-        permissions: finalPerms,
-        password,
-      };
-      if (createRole) payload.create_role = createRole;
-      await base44.functions.invoke("manageStaffAccess", payload);
-      setDone({
-        email,
-        name,
-        roleLabel: isCreatingRole ? newRoleLabel : roleLabel(role, customRoles),
+        role,
         password,
       });
+      setDone({ email, name, roleLabel: roleLabel(role, customRoles), password });
     } catch (e) {
       toast({ title: e.response?.data?.error || "Could not add staff", variant: "destructive" });
     }
@@ -96,10 +52,7 @@ export default function StaffInviteDialog({ onClose, onInvited }) {
 
   if (done) return <InviteSummary done={done} onClose={onInvited} />;
 
-  const options = [
-    ...roleOptions(customRoles),
-    { value: NEW_ROLE, label: "+ Create new role…", custom: true },
-  ];
+  const options = roleOptions(customRoles);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -169,7 +122,7 @@ export default function StaffInviteDialog({ onClose, onInvited }) {
 
           <div className="space-y-2">
             <Label>Role</Label>
-            <Select value={role} onValueChange={(v) => { setRole(v); if (v !== NEW_ROLE) setPermissions({}); }}>
+            <Select value={role} onValueChange={setRole}>
               <SelectTrigger className="h-9 w-full">
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
@@ -179,49 +132,9 @@ export default function StaffInviteDialog({ onClose, onInvited }) {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          {isCreatingRole && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>New role key</Label>
-                <Input value={newRoleName} onChange={(e) => setNewRoleName(e.target.value)} placeholder="support_agent" className="font-mono" />
-              </div>
-              <div className="space-y-2">
-                <Label>New role label</Label>
-                <Input value={newRoleLabel} onChange={(e) => setNewRoleLabel(e.target.value)} placeholder="Support agent" />
-              </div>
-            </div>
-          )}
-
-          <div>
-            <Label className="mb-2 block">Permission</Label>
-            <p className="mb-2 text-xs text-muted-foreground">
-              {isCreatingRole ? "Pick the modules this new role can access." : "Grant access to specific modules. Unchecked modules inherit the role default."}
+            <p className="text-xs text-muted-foreground">
+              Permissions are managed on the role. Create and edit roles from the Roles page.
             </p>
-            <div className="grid grid-cols-2 gap-2">
-              {ADMIN_SECTIONS.map((s) => {
-                const current = permissions[s.id];
-                const eff = isCreatingRole
-                  ? current === "allow"
-                  : current === "allow" || (current !== "deny" && allowedSet.includes(s.id));
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setPerm(s.id, eff ? "deny" : "allow")}
-                    className="flex w-full items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-left transition-colors hover:bg-muted/50"
-                  >
-                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
-                      eff ? "border-foreground bg-foreground text-background" : "border-border bg-background text-transparent"
-                    }`}>
-                      <Check className="h-3.5 w-3.5" />
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{s.label}</span>
-                  </button>
-                );
-              })}
-            </div>
           </div>
         </div>
 
