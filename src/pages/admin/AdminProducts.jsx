@@ -223,7 +223,19 @@ export default function AdminProducts() {
 
       <div className="overflow-hidden rounded-2xl border border-border bg-background">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full table-fixed text-sm">
+            <colgroup>
+              <col className="w-12" />
+              <col />
+              <col className="w-28" />
+              <col className="w-28" />
+              <col className="w-28" />
+              <col className="w-16" />
+              <col className="w-24" />
+              <col className="w-24" />
+              <col className="w-32" />
+              <col className="w-36" />
+            </colgroup>
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-[0.1em] text-muted-foreground">
                 <th className="px-4 py-3 font-medium">
