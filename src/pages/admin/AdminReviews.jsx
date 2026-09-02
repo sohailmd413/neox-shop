@@ -90,7 +90,7 @@ export default function AdminReviews() {
       </div>
 
       {/* Segmented tabs */}
-      <div className="inline-flex w-full max-w-xl flex-wrap items-center gap-1 rounded-xl bg-muted/60 p-1">
+      <div className="flex flex-wrap items-center justify-center gap-1 rounded-xl bg-muted/60 p-1">
         {TABS.map((t) => {
           const Icon = t.icon;
           const active = tab === t.id;
@@ -100,7 +100,7 @@ export default function AdminReviews() {
               key={t.id}
               type="button"
               onClick={() => setTab(t.id)}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              className={`flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               }`}
             >
