@@ -109,13 +109,21 @@ export default function Navbar() {
               <LogOut className="h-5 w-5" />
             </button>
           ) : (
-            <Link
-              to="/login"
-              className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex"
-              aria-label={t("nav.signIn")}
-            >
-              <User className="h-5 w-5" />
-            </Link>
+            <div className="hidden items-center gap-1.5 sm:flex">
+              <Link
+                to="/login"
+                className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
+                aria-label={t("nav.signIn")}
+              >
+                <User className="h-5 w-5" />
+              </Link>
+              <Link
+                to="/register"
+                className="flex h-9 items-center rounded-full bg-foreground px-4 text-sm font-medium text-background transition-opacity hover:opacity-90"
+              >
+                {t("nav.register")}
+              </Link>
+            </div>
           )}
           <Link
             to="/orders"
@@ -215,9 +223,14 @@ export default function Navbar() {
                   {t("nav.signOut")}
                 </button>
               ) : (
-                <Link to="/login" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-                  {t("nav.signIn")}
-                </Link>
+                <div className="flex gap-2">
+                  <Link to="/login" className="flex-1 rounded-lg px-3 py-2.5 text-center text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                    {t("nav.signIn")}
+                  </Link>
+                  <Link to="/register" className="flex-1 rounded-lg bg-foreground px-3 py-2.5 text-center text-sm font-medium text-background">
+                    {t("nav.register")}
+                  </Link>
+                </div>
               )}
               <div className="px-3 pt-2">
                 <SearchBar placeholder={t("nav.searchProducts")} />
