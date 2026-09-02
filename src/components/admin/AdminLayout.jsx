@@ -11,7 +11,7 @@ const NAV = [
   { section: "orders", label: "Orders", path: "/admin/orders", icon: ClipboardList },
   { section: "reviews", label: "Reviews", path: "/admin/reviews", icon: Star },
   { section: "posters", label: "Posters", path: "/admin/posters", icon: ImageIcon },
-  { section: "users", label: "Staff & access", path: "/admin/users", icon: UsersIcon },
+  { section: "users", label: "Staff members", path: "/admin/users", icon: UsersIcon },
 ];
 
 export default function AdminLayout() {

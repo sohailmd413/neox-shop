@@ -52,6 +52,41 @@ export default async function (req) {
       return Response.json({ ok: true });
     }
 
+    if (action === 'invite') {
+      const { email, role, permissions } = body;
+      if (!email || typeof email !== 'string' || !email.includes('@')) {
+        return Response.json({ error: 'A valid email is required' }, { status: 400 });
+      }
+      if (!STAFF_ROLES.includes(role)) return Response.json({ error: 'invalid role' }, { status: 400 });
+      try {
+        await base44.asServiceRole.users.inviteUser(email, role);
+      } catch (_e) {
+        // user may already exist — fall through and apply role/permissions below
+      }
+      const users = await base44.asServiceRole.entities.User.list('-created_date', 200);
+      const u = (users || []).find((x) => x.email === email);
+      if (!u) return Response.json({ error: 'Could not locate the invited user account' }, { status: 500 });
+      const clean = {};
+      for (const s of SECTIONS) {
+        const v = permissions && permissions[s];
+        if (v === 'allow' || v === 'deny') clean[s] = v;
+      }
+      await base44.asServiceRole.entities.User.update(u.id, { role, permissions: clean });
+      return Response.json({ ok: true });
+    }
+
+    if (action === 'delete') {
+      const { user_id } = body;
+      if (!user_id || typeof user_id !== 'string') {
+        return Response.json({ error: 'user_id is required' }, { status: 400 });
+      }
+      if (user_id === caller.id) {
+        return Response.json({ error: 'You cannot delete your own account' }, { status: 400 });
+      }
+      await base44.asServiceRole.entities.User.delete(user_id);
+      return Response.json({ ok: true });
+    }
+
     return Response.json({ error: 'unknown action' }, { status: 400 });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
