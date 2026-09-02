@@ -166,7 +166,7 @@ export function buildInvoiceNode(order, productsById, invoiceNumber) {
         ${totalRow(INVOICE_LABELS.subtotal.en, INVOICE_LABELS.subtotal.ar, formatPrice(order.subtotal))}
         ${totalRow(INVOICE_LABELS.shipping.en, INVOICE_LABELS.shipping.ar, order.shipping_fee === 0 ? "Free" : formatPrice(order.shipping_fee))}
         ${totalRow(INVOICE_LABELS.tax.en, INVOICE_LABELS.tax.ar, formatPrice(order.tax))}
-        ${order.discount ? totalRow(INVOICE_LABELS.discount.en, INVOICE_LABELS.discount.ar, "−" + formatPrice(order.discount)) : ""}
+        ${order.discount ? totalRow(order.coupon_code ? `${INVOICE_LABELS.discount.en} (${esc(order.coupon_code)})` : INVOICE_LABELS.discount.en, order.coupon_code ? `${INVOICE_LABELS.discount.ar} (${esc(order.coupon_code)})` : INVOICE_LABELS.discount.ar, "−" + formatPrice(order.discount)) : ""}
         ${totalRow(INVOICE_LABELS.grand_total.en, INVOICE_LABELS.grand_total.ar, formatPrice(order.total), true)}
       </div>
     </div>
@@ -197,7 +197,7 @@ export function buildInvoiceNode(order, productsById, invoiceNumber) {
         ${totalRow(INVOICE_LABELS.subtotal.ar, INVOICE_LABELS.subtotal.en, formatPrice(order.subtotal))}
         ${totalRow(INVOICE_LABELS.shipping.ar, INVOICE_LABELS.shipping.en, order.shipping_fee === 0 ? "Free" : formatPrice(order.shipping_fee))}
         ${totalRow(INVOICE_LABELS.tax.ar, INVOICE_LABELS.tax.en, formatPrice(order.tax))}
-        ${order.discount ? totalRow(INVOICE_LABELS.discount.ar, INVOICE_LABELS.discount.en, "−" + formatPrice(order.discount)) : ""}
+        ${order.discount ? totalRow(order.coupon_code ? `${INVOICE_LABELS.discount.ar} (${esc(order.coupon_code)})` : INVOICE_LABELS.discount.ar, order.coupon_code ? `${INVOICE_LABELS.discount.en} (${esc(order.coupon_code)})` : INVOICE_LABELS.discount.en, "−" + formatPrice(order.discount)) : ""}
         ${totalRow(INVOICE_LABELS.grand_total.ar, INVOICE_LABELS.grand_total.en, formatPrice(order.total), true)}
       </div></div>
       <div style="font-size:12px;margin-top:4px">${esc(INVOICE_LABELS.payment_method.ar)}: ${esc(payAr)} — ${esc(INVOICE_LABELS.payment_status.ar)}: ${esc(pStatus.ar)}</div>

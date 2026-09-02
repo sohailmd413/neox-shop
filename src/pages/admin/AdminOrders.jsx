@@ -263,7 +263,15 @@ export default function AdminOrders() {
                   <td className="px-3 py-3">
                     <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${INVOICE_STATUS[o.invoice_status || "not_generated"]}`}>{INVOICE_STATUS_LABEL[o.invoice_status || "not_generated"]}</span>
                   </td>
-                  <td className="px-3 py-3 text-right font-semibold">{formatPrice(o.total)}</td>
+                  <td className="px-3 py-3 text-right">
+                    <span className="font-semibold">{formatPrice(o.total)}</span>
+                    {o.discount > 0 && (
+                      <div className="mt-0.5 flex items-center justify-end gap-1 text-[11px] text-emerald-600">
+                        <span>−{formatPrice(o.discount)}</span>
+                        {o.coupon_code && <span className="rounded bg-emerald-100 px-1 py-0.5 font-mono uppercase tracking-wide">{o.coupon_code}</span>}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-3 py-3 text-right">
                     <div className="flex justify-end gap-1">
                       <button onClick={() => downloadOneInvoice(o)} disabled={invoiceBusy} className="rounded-lg p-2 hover:bg-muted" aria-label="Download invoice" title="Download invoice"><FileText className="h-4 w-4" /></button>

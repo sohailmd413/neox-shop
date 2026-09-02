@@ -257,7 +257,7 @@ function Totals({ order }) {
       <Line label="Subtotal" value={formatPrice(order.subtotal)} />
       <Line label="Shipping" value={order.shipping_fee === 0 ? "Free" : formatPrice(order.shipping_fee)} />
       <Line label="Tax" value={formatPrice(order.tax)} />
-      {order.discount ? <Line label="Discount" value={`−${formatPrice(order.discount)}`} /> : null}
+      {order.discount ? <Line label={`Discount${order.coupon_code ? ` · ${order.coupon_code}` : ""}`} value={`−${formatPrice(order.discount)}`} /> : null}
       <div className="mt-2 flex items-center justify-between border-t border-border pt-2">
         <span className="font-medium">Grand total</span>
         <span className="text-lg font-semibold">{formatPrice(order.total)}</span>
