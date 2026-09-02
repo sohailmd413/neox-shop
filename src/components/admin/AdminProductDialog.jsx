@@ -31,7 +31,7 @@ const TABS = [
   { id: "flags", label: "Flags", icon: Flag },
 ];
 
-const baseInput = "mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/40";
+const baseInput = "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/40";
 const errInput = " !border-red-500 focus:border-red-500 ring-1 ring-red-200";
 
 export default function AdminProductDialog({ product, categories, onClose, onSaved, onDraftUpsert }) {
@@ -415,7 +415,7 @@ function SaveIndicator({ state }) {
 function Field({ label, required, hint, error, fieldKey, children }) {
   return (
     <div id={fieldKey ? `fld-${fieldKey}` : undefined} className="block">
-      <span className="text-xs font-medium text-muted-foreground">{label}{required && <span className="text-red-500"> *</span>}</span>
+      <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{label}{required && <span className="text-red-500"> *</span>}</label>
       {children}
       {hint && !error && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
