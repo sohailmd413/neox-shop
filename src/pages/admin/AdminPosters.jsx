@@ -3,13 +3,14 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, Pencil, Trash2, Copy, Loader2, Search, Image as ImageIcon, GripVertical } from "lucide-react";
+import { Plus, Pencil, Trash2, Copy, Search, Image as ImageIcon, GripVertical } from "lucide-react";
 import Dropdown from "@/components/admin/ui/Dropdown";
 import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
 import { showUndoToast } from "@/components/admin/ui/UndoToast";
 import PosterAnalytics from "@/components/admin/posters/PosterAnalytics";
 import PosterForm from "@/components/admin/posters/PosterForm";
 import SlotReorder from "@/components/admin/posters/SlotReorder";
+import { EmptyState, ErrorState, TableSkeleton } from "@/components/shared/StateViews";
 import {
   PAGES, DEVICES, optionsOf, statusOf, placementLabel, ctr, fmtDate, pageLabel,
 } from "@/components/admin/posters/posterConfig";
@@ -31,6 +32,7 @@ const STATUS_OPTS = [
 export default function AdminPosters() {
   const [posters, setPosters] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState("");
   const [fPage, setFPage] = useState("");
@@ -43,10 +45,12 @@ export default function AdminPosters() {
 
   const load = async () => {
     setLoading(true);
+    setError(null);
     try {
       const list = await base44.entities.Poster.list("-created_date", 500);
       setPosters(list || []);
     } catch {
+      setError(true);
       toast({ title: "Could not load banners", variant: "destructive" });
     }
     setLoading(false);
@@ -243,13 +247,17 @@ export default function AdminPosters() {
       )}
 
       {loading ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading…
-        </div>
+        <TableSkeleton rows={6} cols={9} />
+      ) : error ? (
+        <ErrorState onRetry={load} />
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-border p-10 text-center text-sm text-muted-foreground">
-          No banners match the current filters.
-        </div>
+        <EmptyState
+          icon={ImageIcon}
+          title={posters.length === 0 ? "No banners yet" : "No banners match"}
+          description={posters.length === 0 ? "Create your first banner to promote a collection or offer on your storefront." : "Try adjusting your filters."}
+          action={posters.length === 0 ? <Button onClick={() => setEditing("new")}><Plus className="h-4 w-4" /> New banner</Button> : undefined}
+          className="py-10"
+        />
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-border bg-background">
           <table className="w-full min-w-[920px] border-collapse text-sm">

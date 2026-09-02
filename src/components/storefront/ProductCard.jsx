@@ -7,6 +7,7 @@ import { useWishlist } from "@/lib/WishlistContext";
 import { formatPrice, lf } from "@/lib/format";
 import ProductImage from "@/components/storefront/ProductImage";
 import { useLanguage } from "@/lib/i18n";
+import { motionPresets } from "@/lib/motion";
 import SaleCountdown from "@/components/admin/SaleCountdown";
 
 export default function ProductCard({ product, index = 0 }) {
@@ -37,7 +38,7 @@ export default function ProductCard({ product, index = 0 }) {
       initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.4, delay: Math.min(index * 0.04, 0.3), ease: "easeOut" }}
+      transition={{ ...motionPresets.card, delay: Math.min(index * 0.04, 0.3) }}
     >
       <Link to={`/product/${product.id}`} className="group block">
         <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted/40">

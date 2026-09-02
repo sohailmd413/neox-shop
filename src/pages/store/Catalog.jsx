@@ -11,6 +11,7 @@ import { useLanguage } from "@/lib/i18n";
 import SortDropdown from "@/components/storefront/SortDropdown";
 import { EmptyState, ErrorState } from "@/components/shared/StateViews";
 import SearchBar from "@/components/storefront/SearchBar";
+import { motionPresets } from "@/lib/motion";
 
 const SORT_OPTIONS = [
   { value: "featured", label: "Featured" },
@@ -118,7 +119,7 @@ export default function Catalog() {
           <motion.h1
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
+            transition={motionPresets.fade}
             className="text-3xl font-semibold tracking-tight sm:text-4xl"
           >
             {category
@@ -141,12 +142,9 @@ export default function Catalog() {
           {/* Filters sidebar */}
           <aside className="lg:w-56 lg:flex-shrink-0">
             <div className="mb-4 flex items-center justify-between lg:hidden">
-              <button
-                onClick={() => setFiltersOpen(true)}
-                className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm"
-              >
+              <Button variant="outline" size="sm" onClick={() => setFiltersOpen(true)} className="gap-2 rounded-full px-4">
                 <SlidersHorizontal className="h-4 w-4" /> Filters
-              </button>
+              </Button>
               <SortDropdown
                 value={sort}
                 options={SORT_OPTIONS}
@@ -329,12 +327,9 @@ function FilterPanel({ categories, category, onSale, maxPrice, priceLimit, updat
       </div>
 
       {activeFilters.length > 0 && (
-        <button
-          onClick={clearFilters}
-          className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-        >
+        <Button variant="link" size="sm" onClick={clearFilters} className="h-auto p-0 text-xs text-muted-foreground">
           Clear all filters
-        </button>
+        </Button>
       )}
     </div>
   );

@@ -6,6 +6,7 @@ import {
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 import Dropdown from "@/components/admin/ui/Dropdown";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ReviewAnalytics from "@/components/admin/ReviewAnalytics";
 import ReviewReplyDialog from "@/components/admin/ReviewReplyDialog";
@@ -223,11 +224,11 @@ export default function AdminReviews() {
           const active = tab === t.id;
           const count = t.id === "recent" ? reviews.filter((r) => !r.deleted).length : counts[t.id];
           return (
-            <button key={t.id} type="button" onClick={() => { setTab(t.id); setSelected([]); }}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+            <Button key={t.id} type="button" variant={active ? "secondary" : "ghost"} size="sm"
+              onClick={() => { setTab(t.id); setSelected([]); }} className="gap-1.5">
               <Icon className="h-4 w-4" /> {t.label}
               <span className={`rounded-full px-1.5 py-0.5 text-xs ${active ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>{count}</span>
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -249,9 +250,9 @@ export default function AdminReviews() {
         <FilterChip active={mediaOnly} onClick={() => setMediaOnly(!mediaOnly)} icon={ImageIcon} label="With media" />
         <FilterChip active={verifiedOnly} onClick={() => setVerifiedOnly(!verifiedOnly)} icon={BadgeCheck} label="Verified" />
         <FilterChip active={noReply} onClick={() => setNoReply(!noReply)} icon={MessageSquare} label="No reply" />
-        <button onClick={exportCSV} className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm hover:bg-muted">
+        <Button type="button" variant="outline" size="sm" onClick={exportCSV} className="gap-1.5">
           <Download className="h-4 w-4" /> Export
-        </button>
+        </Button>
       </div>
 
       {/* Bulk bar */}
@@ -411,26 +412,24 @@ export default function AdminReviews() {
 
 function FilterChip({ active, onClick, icon: Icon, label }) {
   return (
-    <button type="button" onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm transition-colors ${active ? "border-foreground bg-foreground text-background" : "border-border hover:bg-muted"}`}>
+    <Button type="button" variant={active ? "default" : "outline"} size="sm" onClick={onClick} className="gap-1.5">
       <Icon className="h-4 w-4" /> {label}
-    </button>
+    </Button>
   );
 }
 
 function BulkBtn({ onClick, icon: Icon, label, variant }) {
   return (
-    <button type="button" onClick={onClick}
-      className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${variant === "destructive" ? "border-destructive/30 text-destructive hover:bg-destructive/10" : "border-border hover:bg-muted"}`}>
+    <Button type="button" variant={variant === "destructive" ? "destructive" : "outline"} size="sm" onClick={onClick} className="gap-1.5 h-8">
       <Icon className="h-3.5 w-3.5" /> {label}
-    </button>
+    </Button>
   );
 }
 
 function IconBtn({ onClick, title, children }) {
   return (
-    <button type="button" onClick={onClick} title={title} className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+    <Button type="button" variant="ghost" size="icon" onClick={onClick} title={title} className="h-8 w-8 text-muted-foreground hover:text-foreground">
       {children}
-    </button>
+    </Button>
   );
 }

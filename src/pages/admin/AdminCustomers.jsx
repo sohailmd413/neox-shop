@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Eye, Ban, CheckCircle2 } from "lucide-react";
+import { Search, Eye, Ban, CheckCircle2, Users } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import Dropdown from "@/components/admin/ui/Dropdown";
 import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
 import CustomerAnalytics from "@/components/admin/CustomerAnalytics";
 import { formatPrice } from "@/lib/format";
+import { EmptyState, ErrorState, TableSkeleton } from "@/components/shared/StateViews";
 
 const STAFF_ROLES = ["admin", "product_manager", "delivery_manager", "marketing_manager"];
 const STATUS_OPTS = [{ label: "Active", value: "active" }, { label: "Blocked", value: "blocked" }];
@@ -21,6 +22,7 @@ export default function AdminCustomers() {
   const [orders, setOrders] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [fStatus, setFStatus] = useState("");
   const [fSegment, setFSegment] = useState("");
@@ -28,6 +30,7 @@ export default function AdminCustomers() {
 
   const load = async () => {
     setLoading(true);
+    setError(null);
     try {
       const [u, o, p] = await Promise.all([
         base44.entities.User.list().catch(() => []),
@@ -37,7 +40,9 @@ export default function AdminCustomers() {
       setUsers(u || []);
       setOrders(o || []);
       setProfiles(p || []);
-    } catch {}
+    } catch {
+      setError(true);
+    }
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -160,9 +165,13 @@ export default function AdminCustomers() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={9} className="px-4 py-10 text-center text-muted-foreground">Loading…</td></tr>
+                <tr><td colSpan={9} className="p-0"><TableSkeleton rows={6} cols={9} className="rounded-none border-0" /></td></tr>
+              ) : error ? (
+                <tr><td colSpan={9}><ErrorState onRetry={load} /></td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={9} className="px-4 py-10 text-center text-muted-foreground">No customers match the current filters.</td></tr>
+                <tr><td colSpan={9}>
+                  <EmptyState icon={Users} title="No customers yet" description="Customers who place orders will appear here with their spend and segments." className="py-10" />
+                </td></tr>
               ) : filtered.map((c) => (
                 <tr key={c.id} className="border-b border-border last:border-0 transition-colors hover:bg-muted/30">
                   <td className="px-4 py-3">

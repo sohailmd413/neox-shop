@@ -7,6 +7,7 @@ import { formatPrice } from "@/lib/format";
 import { Image } from "@/components/ui/image";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState } from "@/components/shared/StateViews";
+import { motionPresets } from "@/lib/motion";
 
 const STATUS_STEPS = [
   { key: "pending", label: "Placed", icon: Clock },
@@ -82,7 +83,7 @@ export default function Orders() {
                   key={order.id}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: i * 0.05 }}
+                  transition={{ ...motionPresets.card, delay: i * 0.05 }}
                   className="rounded-2xl border border-border p-6"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">

@@ -9,6 +9,7 @@ import { formatPrice } from "@/lib/format";
 import { Image } from "@/components/ui/image";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, CardGridSkeleton } from "@/components/shared/StateViews";
+import { motionPresets } from "@/lib/motion";
 
 export default function Wishlist() {
   const { ids, removeItem } = useWishlist();
@@ -76,7 +77,7 @@ export default function Wishlist() {
                 key={p.id}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: i * 0.05 }}
+                transition={{ ...motionPresets.card, delay: i * 0.05 }}
               >
                 <div className="flex gap-4 rounded-2xl border border-border p-4">
                   <Link to={`/product/${p.id}`} className="h-24 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-muted/40">
@@ -98,13 +99,15 @@ export default function Wishlist() {
                       >
                         <ShoppingBag className="mr-1.5 h-3.5 w-3.5" /> Add to cart
                       </Button>
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => removeItem(p.id)}
-                        className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                        className="h-8 w-8 rounded-full text-muted-foreground hover:bg-muted hover:text-destructive"
                         aria-label="Remove from wishlist"
                       >
                         <Heart className="h-4 w-4 fill-current" />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>

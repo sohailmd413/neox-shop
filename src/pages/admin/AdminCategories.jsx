@@ -11,11 +11,13 @@ import BulkAddGrid from "@/components/admin/categories/BulkAddGrid";
 import MergeDialog from "@/components/admin/categories/MergeDialog";
 import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
 import { showUndoToast } from "@/components/admin/ui/UndoToast";
+import { EmptyState, ErrorState } from "@/components/shared/StateViews";
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [editing, setEditing] = useState(null); // category being edited or null
   const [selectedId, setSelectedId] = useState(null);
   const [selected, setSelected] = useState(new Set());
@@ -27,6 +29,7 @@ export default function AdminCategories() {
 
   const load = async () => {
     setLoading(true);
+    setError(null);
     try {
       const [c, p] = await Promise.all([
         base44.entities.Category.list("sort_order", 500),
@@ -35,6 +38,7 @@ export default function AdminCategories() {
       setCategories(c || []);
       setProducts(p || []);
     } catch {
+      setError(true);
       toast({ title: "Could not load categories", variant: "destructive" });
     }
     setLoading(false);
@@ -310,20 +314,21 @@ export default function AdminCategories() {
         </div>
       </div>
 
-      {loading && categories.length === 0 && (
+      {error ? (
+        <ErrorState onRetry={load} className="py-20" />
+      ) : loading && categories.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 py-20 text-center text-muted-foreground">
-          <Layers className="h-8 w-8" />
+          <Layers className="h-8 w-8 animate-pulse" />
           <p>Loading categories…</p>
         </div>
-      )}
-
-      {!loading && categories.length === 0 && (
-        <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted"><Layers className="h-7 w-7 text-muted-foreground" /></div>
-          <p className="text-lg font-medium">No categories yet</p>
-          <p className="text-sm text-muted-foreground">Add your first category using the form above.</p>
-        </div>
-      )}
+      ) : categories.length === 0 ? (
+        <EmptyState
+          icon={Layers}
+          title="No categories yet"
+          description="Add your first category using the form above to organize your catalog."
+          className="py-20"
+        />
+      ) : null}
 
       {mergeSrc && (
         <MergeDialog source={mergeSrc} categories={categories} products={products} onClose={() => setMergeSrc(null)} onDone={load} />

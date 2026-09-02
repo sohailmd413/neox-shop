@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Eye, Download, CheckSquare, Square, FileText } from "lucide-react";
+import { Eye, Download, CheckSquare, Square, FileText, Package } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import OrderAnalytics from "@/components/admin/OrderAnalytics";
 import OrderFilters from "@/components/admin/OrderFilters";
 import OrderDetailDrawer from "@/components/admin/OrderDetailDrawer";
 import { downloadInvoicePDF, downloadMultipleInvoices } from "@/lib/invoice";
+import { EmptyState, ErrorState, TableSkeleton } from "@/components/shared/StateViews";
 
 const STATUSES = ["pending", "paid", "packed", "shipped", "delivered", "cancelled", "refunded"];
 const STATUS_STYLES = {
@@ -27,6 +28,7 @@ const INVOICE_STATUS_LABEL = { not_generated: "No invoice", generated: "Invoice 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filters, setFilters] = useState({ query: "", status: "all", method: "all", range: "all" });
   const [selected, setSelected] = useState([]);
   const [drawerId, setDrawerId] = useState(null);
@@ -36,10 +38,13 @@ export default function AdminOrders() {
 
   const load = async () => {
     setLoading(true);
+    setError(null);
     try {
       const list = await base44.entities.Order.list("-created_date", 500);
       setOrders(list || []);
-    } catch {}
+    } catch {
+      setError(true);
+    }
     setLoading(false);
   };
 
@@ -203,11 +208,16 @@ export default function AdminOrders() {
       )}
 
       {loading ? (
-        <div className="text-sm text-muted-foreground">Loading…</div>
+        <TableSkeleton rows={6} cols={9} />
+      ) : error ? (
+        <ErrorState onRetry={load} />
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-border p-10 text-center text-sm text-muted-foreground">
-          No orders match your filters.
-        </div>
+        <EmptyState
+          icon={Package}
+          title={orders.length === 0 ? "No orders yet" : "No orders match"}
+          description={orders.length === 0 ? "Orders customers place will appear here in real time." : "Try adjusting your filters."}
+          className="py-10"
+        />
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-border">
           <table className="w-full text-sm">

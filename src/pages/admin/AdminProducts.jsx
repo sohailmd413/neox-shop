@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Plus, Pencil, Trash2, Copy, Download, Percent, Archive, ArchiveRestore, EyeOff, RotateCcw, Rocket, Printer } from "lucide-react";
+import { Plus, Pencil, Trash2, Copy, Download, Percent, Archive, ArchiveRestore, EyeOff, RotateCcw, Rocket, Printer, Package } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import AdminBulkProductDialog from "@/components/admin/AdminBulkProductDialog";
 import AdminSaleDialog from "@/components/admin/AdminSaleDialog";
 import SaleCountdown from "@/components/admin/SaleCountdown";
 import { validateProduct, productCompletion } from "@/lib/productValidation";
+import { EmptyState, ErrorState, TableSkeleton } from "@/components/shared/StateViews";
 
 const rel = (iso) => {
   if (!iso) return "—";
@@ -39,6 +40,7 @@ export default function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filters, setFilters] = useState({ query: "", category: "all", brand: "all", status: "all", stock: "all" });
   const [editing, setEditing] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -89,6 +91,7 @@ export default function AdminProducts() {
 
   const load = async () => {
     setLoading(true);
+    setError(null);
     try {
       const [p, c] = await Promise.all([
         base44.entities.Product.list("-created_date", 500),
@@ -96,7 +99,9 @@ export default function AdminProducts() {
       ]);
       setProducts(p || []);
       setCategories(c || []);
-    } catch {}
+    } catch {
+      setError(true);
+    }
     setLoading(false);
   };
 
@@ -450,9 +455,19 @@ export default function AdminProducts() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={10} className="px-4 py-10 text-center text-muted-foreground">Loading…</td></tr>
+                <tr><td colSpan={10} className="p-0"><TableSkeleton rows={6} cols={10} className="rounded-none border-0" /></td></tr>
+              ) : error ? (
+                <tr><td colSpan={10}><ErrorState onRetry={load} /></td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={10} className="px-4 py-10 text-center text-muted-foreground">No products found.</td></tr>
+                <tr><td colSpan={10}>
+                  <EmptyState
+                    icon={Package}
+                    title="No products found"
+                    description="Add your first product or adjust your filters to see results here."
+                    action={<Button onClick={() => { setEditing(null); setDialogOpen(true); }}><Plus className="h-4 w-4" /> Add product</Button>}
+                    className="py-10"
+                  />
+                </td></tr>
               ) : filtered.map((p) => {
                 const isArchived = p.status === "archived";
                 const isDraft = p.status === "draft";

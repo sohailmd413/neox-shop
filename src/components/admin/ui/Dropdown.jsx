@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { motionPresets } from "@/lib/motion";
 import { Check, ChevronDown, X, Loader2, FolderTree, Layers, Inbox } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
@@ -267,7 +268,7 @@ export default function Dropdown({
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.15, ease: "easeOut" }}
+          transition={motionPresets.panel}
           style={{ width: "var(--radix-popover-trigger-width)" }}
           className="origin-[var(--radix-popover-content-transform-origin)]"
         >

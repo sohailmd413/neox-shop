@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 const speedSec = { slow: 14, medium: 9, fast: 5 };
 
-function isLight(hex) {
+export function isLight(hex) {
   if (!hex) return true;
   const c = hex.replace("#", "");
   if (c.length < 6) return true;
@@ -13,7 +13,7 @@ function isLight(hex) {
   return 0.299 * r + 0.587 * g + 0.114 * b > 150;
 }
 
-function Tagline({ text, p, color, weight, fs, align }) {
+export function PosterTagline({ text, p, color, weight, fs, align }) {
   const anim = p.animation || "none";
   const sec = speedSec[p.animation_speed] || 9;
   const base = { color, fontWeight: weight, fontSize: fs, textAlign: align, lineHeight: 1.2 };
@@ -82,7 +82,7 @@ export default function PosterPreview({ poster, device = "desktop" }) {
       )}
       <div className={cn("absolute inset-0 flex flex-col px-3 py-2", just)}>
         <div className={cn("w-full", p.strip_bg && "rounded-md bg-black/45 px-2 py-1")}>
-          {tagline && <Tagline text={tagline} p={p} color={color} weight={weight} fs={fs} align={align} />}
+          {tagline && <PosterTagline text={tagline} p={p} color={color} weight={weight} fs={fs} align={align} />}
           {p.cta_text && (
             <div style={{ textAlign: align }} className="mt-2">
               <span
