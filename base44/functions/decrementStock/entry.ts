@@ -34,7 +34,16 @@ export default async function(req) {
       updated += 1;
     }
 
-    return Response.json({ ok: true, updated });
+    // Increment coupon redemption count (Coupon is admin-only, so use service role).
+    if (order.coupon_code) {
+      const coupons = await base44.asServiceRole.entities.Coupon.filter({ code: order.coupon_code });
+      const cp = Array.isArray(coupons) ? coupons[0] : null;
+      if (cp) {
+        await base44.asServiceRole.entities.Coupon.update(cp.id, { times_used: (Number(cp.times_used) || 0) + 1 });
+      }
+    }
+
+    return Response.json({ ok: true, updated: updated });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

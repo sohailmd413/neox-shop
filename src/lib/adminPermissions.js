@@ -12,13 +12,14 @@ export const ADMIN_SECTIONS = [
   { id: 'customers', label: 'Customers' },
   { id: 'reviews', label: 'Reviews' },
   { id: 'posters', label: 'Marketing posters' },
+  { id: 'coupons', label: 'Coupons' },
 ];
 
 export const ROLE_DEFAULTS = {
-  admin: { dashboard: true, reports: true, products: true, categories: true, orders: true, customers: true, reviews: true, posters: true },
+  admin: { dashboard: true, reports: true, products: true, categories: true, orders: true, customers: true, reviews: true, posters: true, coupons: true },
   product_manager: { products: true, categories: true, reports: true },
   delivery_manager: { orders: true, reports: true },
-  marketing_manager: { reviews: true, posters: true },
+  marketing_manager: { reviews: true, posters: true, coupons: true },
   user: {},
 };
 

@@ -23,6 +23,7 @@ import AdminProducts from '@/pages/admin/AdminProducts';
 import AdminOrders from '@/pages/admin/AdminOrders';
 import AdminCustomers from '@/pages/admin/AdminCustomers';
 import CustomerDetail from '@/pages/admin/CustomerDetail';
+import AdminCoupons from '@/pages/admin/AdminCoupons';
 import AdminReviews from '@/pages/admin/AdminReviews';
 import AdminPosters from '@/pages/admin/AdminPosters';
 import AdminUsers from '@/pages/admin/AdminUsers';
@@ -96,6 +97,7 @@ const AuthenticatedApp = () => {
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="posters" element={<AdminPosters />} />
+            <Route path="coupons" element={<AdminCoupons />} />
             <Route path="roles" element={<AdminRoles />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="profile" element={<AdminProfile />} />

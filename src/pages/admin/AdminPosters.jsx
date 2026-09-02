@@ -3,14 +3,15 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, Pencil, Trash2, Copy, Loader2, Search, Image as ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Copy, Loader2, Search, Image as ImageIcon, GripVertical } from "lucide-react";
 import Dropdown from "@/components/admin/ui/Dropdown";
 import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
 import { showUndoToast } from "@/components/admin/ui/UndoToast";
 import PosterAnalytics from "@/components/admin/posters/PosterAnalytics";
 import PosterForm from "@/components/admin/posters/PosterForm";
+import SlotReorder from "@/components/admin/posters/SlotReorder";
 import {
-  PAGES, optionsOf, statusOf, placementLabel, ctr, fmtDate, pageLabel,
+  PAGES, DEVICES, optionsOf, statusOf, placementLabel, ctr, fmtDate, pageLabel,
 } from "@/components/admin/posters/posterConfig";
 
 const STATUS_STYLE = {
@@ -36,6 +37,8 @@ export default function AdminPosters() {
   const [fStatus, setFStatus] = useState("");
   const [sel, setSel] = useState(new Set());
   const [confirm, setConfirm] = useState(null);
+  const [fDevice, setFDevice] = useState("");
+  const [arrange, setArrange] = useState(false);
   const { toast } = useToast();
 
   const load = async () => {
@@ -59,9 +62,10 @@ export default function AdminPosters() {
         if (search && !`${p.title} ${p.tagline || ""}`.toLowerCase().includes(search.toLowerCase())) return false;
         if (fPage && p.page !== fPage) return false;
         if (fStatus && statusOf(p) !== fStatus) return false;
+        if (fDevice && p.device !== fDevice) return false;
         return true;
       }),
-    [posters, search, fPage, fStatus]
+    [posters, search, fPage, fStatus, fDevice]
   );
 
   const allSel = filtered.length > 0 && filtered.every((p) => sel.has(p.id));
@@ -197,13 +201,20 @@ export default function AdminPosters() {
           <h1 className="text-2xl font-semibold tracking-tight">Posters &amp; Banners</h1>
           <p className="text-sm text-muted-foreground">Upload banners, add animated taglines, and choose exact placements.</p>
         </div>
-        <Button onClick={() => setEditing("new")}>
-          <Plus className="h-4 w-4" /> New banner
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant={arrange ? "default" : "outline"} onClick={() => setArrange((v) => !v)}>
+            <GripVertical className="h-4 w-4" /> {arrange ? "Exit arrange" : "Arrange by slot"}
+          </Button>
+          <Button onClick={() => setEditing("new")}>
+            <Plus className="h-4 w-4" /> New banner
+          </Button>
+        </div>
       </div>
 
       <PosterAnalytics posters={posters} />
 
+      {arrange && <SlotReorder posters={posters} onSaved={load} />}
+      {!arrange && (<>
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[220px] flex-1">
@@ -215,6 +226,9 @@ export default function AdminPosters() {
         </div>
         <div className="w-[160px]">
           <Dropdown type="select" value={fStatus} onChange={setFStatus} options={STATUS_OPTS} placeholder="All statuses" clearable />
+        </div>
+        <div className="w-[160px]">
+          <Dropdown type="select" value={fDevice} onChange={setFDevice} options={optionsOf(DEVICES)} placeholder="All devices" clearable />
         </div>
       </div>
 
@@ -314,6 +328,7 @@ export default function AdminPosters() {
           </table>
         </div>
       )}
+      </>)}
 
       {editing && (
         <PosterForm

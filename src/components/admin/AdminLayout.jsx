@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact } from "lucide-react";
+import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { canAccess } from "@/lib/adminPermissions";
 
@@ -13,6 +13,7 @@ const NAV = [
   { section: "customers", label: "Customers", path: "/admin/customers", icon: Contact },
   { section: "reviews", label: "Reviews", path: "/admin/reviews", icon: Star },
   { section: "posters", label: "Posters", path: "/admin/posters", icon: ImageIcon },
+  { section: "coupons", label: "Coupons", path: "/admin/coupons", icon: TicketPercent },
 ];
 
 // Staff members groups the Members and Roles sub-pages; both are admin-only.
