@@ -6,6 +6,7 @@ import ImageUpload from "@/components/admin/ImageUpload";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 import { validateProduct, productCompletion, genSku, hasAnyData, REQUIRED_COUNT } from "@/lib/productValidation";
+import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
 
 const EMPTY = {
   name: "", name_ar: "", sku: "", slug: "",
@@ -54,6 +55,7 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
   const [dirty, setDirty] = useState(false);
   const [saveState, setSaveState] = useState("idle"); // idle | saving | saved | error
   const [publishing, setPublishing] = useState(false);
+  const [publishConfirm, setPublishConfirm] = useState(false);
   const persistedIdRef = useRef(product?.id || null);
   const { toast } = useToast();
 
@@ -163,18 +165,7 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
 
   const publish = async () => {
     const v = validateProduct(form);
-    if (v.valid) {
-      setPublishing(true);
-      try {
-        await persist("active");
-        toast({ title: "Product published" });
-        onSaved();
-      } catch {
-        toast({ title: "Could not publish", variant: "destructive" });
-        setPublishing(false);
-      }
-      return;
-    }
+    if (v.valid) { setPublishConfirm(true); return; }
     // Invalid → auto-save as draft, then surface what's missing
     setErrors(v.errors);
     setPublishAttempt(true);
@@ -194,6 +185,20 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
       const el = document.getElementById(`fld-${v.firstKey}`);
       el?.scrollIntoView({ block: "center", behavior: "smooth" });
     }, 60);
+  };
+
+  const doPublish = async () => {
+    setPublishing(true);
+    try {
+      await persist("active");
+      setPublishConfirm(false);
+      toast({ title: "Product published" });
+      onSaved();
+    } catch {
+      toast({ title: "Could not publish", variant: "destructive" });
+      setPublishing(false);
+      setPublishConfirm(false);
+    }
   };
 
   const handleClose = async () => {
@@ -384,6 +389,15 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        open={publishConfirm}
+        onClose={() => setPublishConfirm(false)}
+        variant="create"
+        title={product && product.status === "active" ? "Save & keep this product live?" : "Publish this product?"}
+        description="It will be visible to customers on the storefront. You can archive it later from the products list."
+        confirmLabel={product && product.status === "active" ? "Save" : "Publish"}
+        onConfirm={doPublish}
+      />
     </div>
   );
 }

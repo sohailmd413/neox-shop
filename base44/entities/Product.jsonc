@@ -64,10 +64,12 @@
       "type": "string",
       "enum": [
         "active",
+        "inactive",
         "draft",
         "archived"
       ],
-      "default": "active"
+      "default": "active",
+      "description": "active=live on storefront; inactive=temporarily hidden (reactivate later); draft=incomplete, never live; archived=removed from catalog, kept for history and can be restored."
     },
     "featured": {
       "type": "boolean",
@@ -126,6 +128,15 @@
       "type": "string",
       "format": "date-time",
       "description": "When the current sale ends. Used to show a countdown; clearing it ends the sale."
+    },
+    "archived_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the product was archived. Cleared on restore."
+    },
+    "archived_by": {
+      "type": "string",
+      "description": "Name of the admin who archived the product. Cleared on restore."
     }
   },
   "required": [
