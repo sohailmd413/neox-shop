@@ -23,6 +23,16 @@
       "type": "number",
       "default": 0
     },
+    "featured": {
+      "type": "boolean",
+      "default": false,
+      "description": "Show this category as featured on the homepage."
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Inactive categories are hidden from the storefront."
+    },
     "meta_title": {
       "type": "string"
     },
