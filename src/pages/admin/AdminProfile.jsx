@@ -98,7 +98,7 @@ export default function AdminProfile() {
           </Button>
           <div className="pt-1 text-xs">
             <Link to="/forgot-password" className="text-primary underline-offset-4 hover:underline">
-              Forgot password? Reset it
+              Reset my password
             </Link>
           </div>
         </div>
