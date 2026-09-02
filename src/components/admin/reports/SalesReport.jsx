@@ -192,7 +192,7 @@ export default function SalesReport({ orders, products, categories, bounds, comp
               <LineChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted/40" />
                 <XAxis dataKey="day" tickLine={false} axisLine={false} fontSize={11} />
-                <YAxis tickLine={false} axisLine={false} fontSize={11} tickFormatter={(v) => formatPrice(v)} />
+                <YAxis width={104} tickLine={false} axisLine={false} tick={<ChipTick />} tickFormatter={(v) => formatPrice(v)} />
                 <Tooltip formatter={(v) => formatPrice(v)} contentStyle={tt} />
                 <Line type="monotone" dataKey="revenue" stroke="#0ea5e9" strokeWidth={2} dot={false} />
               </LineChart>
@@ -366,4 +366,27 @@ function ChartCard({ title, children }) {
 }
 function Empty() {
   return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No data in range.</div>;
+}
+
+// Badge-chip styled tick for the Revenue Y-axis.
+function ChipTick({ x, y, payload }) {
+  return (
+    <foreignObject x={x - 108} y={y - 11} width={104} height={22} style={{ overflow: "visible" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", height: "22px" }}>
+        <span style={{
+          display: "inline-block",
+          padding: "2px 10px",
+          borderRadius: "9999px",
+          background: "linear-gradient(to right, #f7fafc, #e6fffa)",
+          color: "#334155",
+          fontSize: "10px",
+          fontWeight: 600,
+          lineHeight: "16px",
+          whiteSpace: "nowrap",
+        }}>
+          {payload.value}
+        </span>
+      </div>
+    </foreignObject>
+  );
 }
