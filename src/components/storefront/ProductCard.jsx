@@ -1,19 +1,24 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ShoppingBag, Star, Heart } from "lucide-react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { ShoppingBag, Star, Heart, Check } from "lucide-react";
 import { useCart } from "@/lib/CartContext";
+import { useCartFlyout } from "@/components/storefront/cart/CartFlyoutContext";
 import { useWishlist } from "@/lib/WishlistContext";
 import { formatPrice, lf } from "@/lib/format";
 import ProductImage from "@/components/storefront/ProductImage";
 import { useLanguage } from "@/lib/i18n";
-import { motionPresets } from "@/lib/motion";
+import { motionPresets, springPress, springPop } from "@/lib/motion";
 import SaleCountdown from "@/components/admin/SaleCountdown";
 
 export default function ProductCard({ product, index = 0 }) {
   const { addItem } = useCart();
   const { toggleItem, isInWishlist } = useWishlist();
+  const flyToCart = useCartFlyout()?.flyToCart;
   const { lang } = useLanguage();
+  const reduce = useReducedMotion();
+  const imgRef = useRef(null);
+  const [justAdded, setJustAdded] = useState(false);
   const outOfStock = product.stock <= 0;
   const wished = isInWishlist(product.id);
   const onSale = product.compare_at_price && product.compare_at_price > product.price;
@@ -30,23 +35,32 @@ export default function ProductCard({ product, index = 0 }) {
     e.preventDefault();
     e.stopPropagation();
     if (outOfStock) return;
-    addItem(product, 1);
+    addItem(product, 1); // instant — animation is decorative, never blocks the add
+    if (flyToCart && product.images?.[0]) flyToCart(product.images[0], imgRef.current);
+    if (!reduce) {
+      setJustAdded(true);
+      setTimeout(() => setJustAdded(false), 800);
+    }
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
+      whileInView={reduce ? { opacity: 1 } : { opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ ...motionPresets.card, delay: Math.min(index * 0.04, 0.3) }}
+      whileHover={reduce ? undefined : { y: -4, transition: springPress }}
     >
       <Link to={`/product/${product.id}`} className="group block">
-        <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted/40">
+        <div
+          ref={imgRef}
+          className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted/40 shadow-[0_1px_12px_-8px_rgba(0,0,0,0.16)] transition-shadow duration-500 group-hover:shadow-[0_24px_55px_-22px_rgba(0,0,0,0.26)]"
+        >
           <ProductImage
             src={product.images?.[0]}
             alt={product.name}
             fittingType="fill"
-            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
           />
 
           {onSale && (
@@ -60,22 +74,44 @@ export default function ProductCard({ product, index = 0 }) {
             </span>
           )}
 
-          <button
+          <motion.button
             onClick={toggleWish}
-            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur transition-all hover:bg-background"
+            whileTap={reduce ? undefined : { scale: 0.9 }}
+            transition={springPress}
+            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur transition-colors hover:bg-background"
             aria-label="Toggle wishlist"
           >
-            <Heart className={`h-4 w-4 transition-colors ${wished ? "fill-red-500 text-red-500" : ""}`} />
-          </button>
+            <motion.span
+              key={wished ? "on" : "off"}
+              initial={reduce ? false : { scale: 0.7, opacity: 0.6 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={springPop}
+              className="inline-flex"
+            >
+              <Heart className={`h-4 w-4 transition-colors ${wished ? "fill-red-500 text-red-500" : ""}`} />
+            </motion.span>
+          </motion.button>
 
-          <button
+          <motion.button
             onClick={handleAdd}
             disabled={outOfStock}
-            className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition-all duration-300 hover:bg-foreground hover:text-background disabled:opacity-40 disabled:hover:bg-background/90 disabled:hover:text-foreground"
+            whileTap={reduce ? undefined : { scale: 0.9 }}
+            transition={springPress}
+            className="absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition-colors duration-300 hover:bg-foreground hover:text-background disabled:opacity-40 disabled:hover:bg-background/90 disabled:hover:text-foreground"
             aria-label="Add to cart"
           >
-            <ShoppingBag className="h-4 w-4" />
-          </button>
+            <AnimatePresence mode="wait" initial={false}>
+              {justAdded ? (
+                <motion.span key="check" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={springPop}>
+                  <Check className="h-4 w-4" />
+                </motion.span>
+              ) : (
+                <motion.span key="bag" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={springPop}>
+                  <ShoppingBag className="h-4 w-4" />
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
         </div>
 
         <div className="mt-3.5 space-y-1">
@@ -84,7 +120,7 @@ export default function ProductCard({ product, index = 0 }) {
               {product.brand}
             </p>
           )}
-          <h3 className="line-clamp-1 text-sm font-medium text-foreground">{display}</h3>
+          <h3 className="line-clamp-1 font-heading text-sm font-medium text-foreground">{display}</h3>
           <div className="flex items-center gap-2">
             <span className={`text-sm font-semibold ${outOfStock ? "select-none text-transparent blur-[3px]" : ""}`}>{formatPrice(product.price)}</span>
             {product.compare_at_price && product.compare_at_price > product.price && (

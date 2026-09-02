@@ -16,7 +16,7 @@ export function isLight(hex) {
 export function PosterTagline({ text, p, color, weight, fs, align }) {
   const anim = p.animation || "none";
   const sec = speedSec[p.animation_speed] || 9;
-  const base = { color, fontWeight: weight, fontSize: fs, textAlign: align, lineHeight: 1.2 };
+  const base = { color, fontWeight: weight, fontSize: fs, textAlign: align, lineHeight: 1.2, fontFamily: "var(--font-display)" };
 
   if (anim === "marquee") {
     return (

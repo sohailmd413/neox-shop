@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { ArrowLeft, Check, Lock } from "lucide-react";
+import OrderSuccess from "@/components/storefront/OrderSuccess";
+import AnimatedNumber from "@/components/storefront/AnimatedNumber";
+import Pressable from "@/components/storefront/Pressable";
 import { useCart } from "@/lib/CartContext";
 import { formatPrice } from "@/lib/format";
 import { base44 } from "@/api/base44Client";
@@ -148,37 +150,7 @@ export default function Checkout() {
   };
 
   if (placed) {
-    return (
-      <div className="flex min-h-screen items-center justify-center px-5 pt-16">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-md text-center"
-        >
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-foreground text-background">
-            <Check className="h-7 w-7" />
-          </div>
-          <h1 className="mt-6 text-2xl font-semibold tracking-tight">Order confirmed</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Thank you for your purchase. A confirmation has been sent to {form.email}.
-          </p>
-          <div className="mt-6 rounded-2xl border border-border p-5 text-left">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Order number</span>
-              <span className="font-mono text-xs">{placed.id}</span>
-            </div>
-            <div className="mt-2 flex justify-between text-sm">
-              <span className="text-muted-foreground">Total</span>
-              <span className="font-semibold">{formatPrice(placed.total)}</span>
-            </div>
-          </div>
-          <Button asChild className="mt-6 w-full rounded-full">
-            <Link to="/shop">Continue shopping</Link>
-          </Button>
-        </motion.div>
-      </div>
-    );
+    return <OrderSuccess order={placed} email={form.email} />;
   }
 
   if (blocked) {
@@ -332,19 +304,21 @@ export default function Checkout() {
               </div>
 
               <div className="mt-4 space-y-2 text-sm">
-                <Row label="Subtotal" value={formatPrice(subtotal)} />
+                <Row label="Subtotal" value={<AnimatedNumber value={subtotal} format={formatPrice} />} />
                 {discount > 0 && <Row label="Discount" value={`−${formatPrice(discount)}`} />}
-                <Row label="Shipping" value={shipping === 0 ? "Free" : formatPrice(shipping)} />
-                <Row label="Tax" value={formatPrice(tax)} />
+                <Row label="Shipping" value={shipping === 0 ? "Free" : <AnimatedNumber value={shipping} format={formatPrice} />} />
+                <Row label="Tax" value={<AnimatedNumber value={tax} format={formatPrice} />} />
               </div>
               <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
                 <span className="font-medium">Total</span>
-                <span className="text-lg font-semibold">{formatPrice(total)}</span>
+                <span className="text-lg font-semibold font-display"><AnimatedNumber value={total} format={formatPrice} /></span>
               </div>
 
-              <Button type="submit" disabled={placing} className="mt-5 w-full rounded-full">
-                {placing ? "Placing order…" : `Pay ${formatPrice(total)}`}
-              </Button>
+              <Pressable className="mt-5 w-full">
+                <Button type="submit" disabled={placing} className="w-full rounded-full">
+                  {placing ? "Placing order…" : `Pay ${formatPrice(total)}`}
+                </Button>
+              </Pressable>
               <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
                 <Lock className="h-3 w-3" /> Secure checkout
               </p>

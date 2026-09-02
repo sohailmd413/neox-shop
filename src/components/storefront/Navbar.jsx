@@ -58,7 +58,7 @@ export default function Navbar() {
     <header
       className={`fixed inset-x-0 top-0 z-40 transition-all duration-300 ${
         scrolled
-          ? "border-b border-border bg-background/80 backdrop-blur-xl"
+          ? "border-b border-border/60 bg-background/70 backdrop-blur-xl shadow-[0_2px_30px_-18px_rgba(0,0,0,0.25)]"
           : "border-b border-transparent bg-background/0"
       }`}
     >
@@ -161,10 +161,19 @@ export default function Navbar() {
           </Link>
           <button
             onClick={() => setIsOpen(true)}
+            data-cart-icon
             className="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
             aria-label={t("nav.openCart")}
           >
-            <ShoppingBag className="h-5 w-5" />
+            <motion.span
+              key={`bag-${count}`}
+              initial={{ scale: 0.8, y: -2 }}
+              animate={{ scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 500, damping: 12 }}
+              className="inline-flex"
+            >
+              <ShoppingBag className="h-5 w-5" />
+            </motion.span>
             <AnimatePresence>
               {count > 0 && (
                 <motion.span

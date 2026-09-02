@@ -7,6 +7,7 @@ import { formatPrice, lf } from "@/lib/format";
 import ProductImage from "@/components/storefront/ProductImage";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n";
+import AnimatedNumber from "@/components/storefront/AnimatedNumber";
 
 export default function CartDrawer() {
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, subtotal, count } = useCart();
@@ -21,7 +22,7 @@ export default function CartDrawer() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-foreground/30 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-md"
             onClick={() => setIsOpen(false)}
           />
           <motion.aside
@@ -123,7 +124,7 @@ export default function CartDrawer() {
                 <div className="border-t border-border px-6 py-5">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span className="font-semibold">{formatPrice(subtotal)}</span>
+                    <span className="font-semibold"><AnimatedNumber value={subtotal} format={formatPrice} /></span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Shipping & taxes calculated at checkout.

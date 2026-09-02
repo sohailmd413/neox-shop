@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Image } from "@/components/ui/image";
 import PosterBanner from "@/components/storefront/PosterBanner";
+import Pressable from "@/components/storefront/Pressable";
 import { base44 } from "@/api/base44Client";
 import { motionPresets } from "@/lib/motion";
 
@@ -61,7 +62,7 @@ function CuratedHero() {
           <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
             Autumn / Winter 2026
           </span>
-          <h1 className="text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+          <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
             Objects of quiet
             <br />
             intention.
@@ -71,19 +72,23 @@ function CuratedHero() {
             made to endure.
           </p>
           <div className="flex items-center gap-3 pt-2">
-            <Link
-              to="/shop"
-              className="group inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90"
-            >
-              Explore the collection
-              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-            <Link
-              to="/shop?sort=newest"
-              className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-muted"
-            >
-              New arrivals
-            </Link>
+            <Pressable>
+              <Link
+                to="/shop"
+                className="group inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90"
+              >
+                Explore the collection
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </Pressable>
+            <Pressable>
+              <Link
+                to="/shop?sort=newest"
+                className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-muted"
+              >
+                New arrivals
+              </Link>
+            </Pressable>
           </div>
         </motion.div>
         <motion.div

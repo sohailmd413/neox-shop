@@ -6,6 +6,7 @@ import { base44 } from "@/api/base44Client";
 import ProductCard from "@/components/storefront/ProductCard";
 import { ProductGridSkeleton } from "@/components/storefront/Skeleton";
 import { Button } from "@/components/ui/button";
+import Pressable from "@/components/storefront/Pressable";
 import { lf } from "@/lib/format";
 import { useLanguage } from "@/lib/i18n";
 import SortDropdown from "@/components/storefront/SortDropdown";
@@ -114,13 +115,14 @@ export default function Catalog() {
   return (
     <div className="pt-16">
       {/* Header */}
-      <div className="border-b border-border">
-        <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
+      <div className="border-b border-border relative">
+        <div className="mf-hero-mesh pointer-events-none absolute inset-0 opacity-40" aria-hidden />
+        <div className="relative mx-auto max-w-7xl px-5 py-10 sm:px-8">
           <motion.h1
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={motionPresets.fade}
-            className="text-3xl font-semibold tracking-tight sm:text-4xl"
+            className="font-display text-3xl font-semibold tracking-tight sm:text-4xl"
           >
             {category
               ? lf(categories.find((c) => c.name === category), "name", lang) || category
@@ -142,9 +144,11 @@ export default function Catalog() {
           {/* Filters sidebar */}
           <aside className="lg:w-56 lg:flex-shrink-0">
             <div className="mb-4 flex items-center justify-between lg:hidden">
-              <Button variant="outline" size="sm" onClick={() => setFiltersOpen(true)} className="gap-2 rounded-full px-4">
-                <SlidersHorizontal className="h-4 w-4" /> Filters
-              </Button>
+              <Pressable>
+                <Button variant="outline" size="sm" onClick={() => setFiltersOpen(true)} className="gap-2 rounded-full px-4">
+                  <SlidersHorizontal className="h-4 w-4" /> Filters
+                </Button>
+              </Pressable>
               <SortDropdown
                 value={sort}
                 options={SORT_OPTIONS}
@@ -209,7 +213,7 @@ export default function Catalog() {
       {/* Mobile filter drawer */}
       {filtersOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-foreground/30 backdrop-blur-sm" onClick={() => setFiltersOpen(false)} />
+          <div className="absolute inset-0 bg-foreground/40 backdrop-blur-md" onClick={() => setFiltersOpen(false)} />
           <motion.div
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}

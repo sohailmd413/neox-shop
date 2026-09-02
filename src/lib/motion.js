@@ -29,3 +29,7 @@ export const cardItem = {
   animate: { opacity: 1, y: 0 },
   exit: { opacity: 0, y: -8 },
 };
+
+// CRED-style tactile spring presets
+export const springPress = { type: "spring", stiffness: 400, damping: 17 }; // button/element press-down
+export const springPop = { type: "spring", stiffness: 500, damping: 14 }; // icon pop / bounce-in
