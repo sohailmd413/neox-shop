@@ -11,6 +11,10 @@
     "rating": {
       "type": "number"
     },
+    "title": {
+      "type": "string",
+      "description": "Optional review headline"
+    },
     "comment": {
       "type": "string"
     },
@@ -43,12 +47,45 @@
       "default": false,
       "description": "True when a moderator soft-deleted the review; lives in the Deleted tab and is excluded from the storefront."
     },
+    "flagged": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the review was flagged/reported for review (spam, offensive, fake, irrelevant)."
+    },
+    "flag_reasons": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Report reasons e.g. spam, offensive, fake, irrelevant"
+    },
     "helpful_count": {
       "type": "number",
       "default": 0
     },
+    "not_helpful_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Count of not-helpful votes"
+    },
     "author": {
       "type": "string"
+    },
+    "admin_reply": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "author": {
+          "type": "string"
+        },
+        "created_date": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "description": "Public merchant reply to the review."
     }
   },
   "required": [
