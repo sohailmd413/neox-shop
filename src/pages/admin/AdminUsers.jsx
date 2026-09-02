@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { SelectNative } from "@/components/ui/select-native";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { ADMIN_SECTIONS, ROLE_DEFAULTS, ROLE_LABELS, ROLE_OPTIONS } from "@/lib/adminPermissions";
+import { ADMIN_SECTIONS, roleOptions, roleLabel, roleDefaults, defaultsAllowed } from "@/lib/adminPermissions";
 import StaffInviteDialog from "@/components/admin/StaffInviteDialog";
 import StaffDeleteDialog from "@/components/admin/StaffDeleteDialog";
 import { Loader2, Save, ShieldCheck, UserPlus, Trash2 } from "lucide-react";
@@ -24,6 +24,7 @@ export default function AdminUsers() {
   const [inviting, setInviting] = useState(false);
   const [removing, setRemoving] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [customRoles, setCustomRoles] = useState([]);
   const { toast } = useToast();
 
   const load = async () => {
@@ -31,7 +32,11 @@ export default function AdminUsers() {
     try {
       const me = await base44.auth.me().catch(() => null);
       if (me) setCurrentUserId(me.id);
-      const res = await base44.functions.invoke("manageStaffAccess", { action: "list" });
+      const [res, roles] = await Promise.all([
+        base44.functions.invoke("manageStaffAccess", { action: "list" }),
+        base44.entities.Role.list().catch(() => []),
+      ]);
+      setCustomRoles(roles || []);
       const list = res.data?.users || [];
       setUsers(list);
       const d = {};
@@ -126,7 +131,8 @@ export default function AdminUsers() {
         <div className="space-y-4">
           {users.map((u) => {
             const d = drafts[u.id] || { role: u.role, permissions: {} };
-            const defaults = ROLE_DEFAULTS[d.role] || {};
+            const defaults = roleDefaults(d.role, customRoles);
+            const allowed = defaultsAllowed(defaults);
             return (
               <div key={u.id} className="rounded-2xl border border-border bg-background p-5">
                 <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
@@ -141,7 +147,7 @@ export default function AdminUsers() {
                       onChange={(e) => setRole(u.id, e.target.value)}
                       className="h-9 w-48"
                     >
-                      {ROLE_OPTIONS.map((r) => (
+                      {roleOptions(customRoles).map((r) => (
                         <option key={r.value} value={r.value}>
                           {r.label}
                         </option>
@@ -153,7 +159,7 @@ export default function AdminUsers() {
                 <div className="mt-4 grid gap-2 sm:grid-cols-2">
                   {ADMIN_SECTIONS.map((s) => {
                     const currentValue = d.permissions?.[s.id] || "inherit";
-                    const effective = currentValue === "allow" || (currentValue === "inherit" && defaults[s.id]);
+                    const effective = currentValue === "allow" || (currentValue === "inherit" && allowed.includes(s.id));
                     return (
                       <div
                         key={s.id}
@@ -191,8 +197,8 @@ export default function AdminUsers() {
 
                 <div className="mt-4 flex items-center justify-between">
                   <p className="text-xs text-muted-foreground">
-                    Default access for <span className="font-medium text-foreground">{ROLE_LABELS[d.role]}</span>:{" "}
-                    {Object.keys(defaults).filter((k) => defaults[k]).length || "none"}
+                    Default access for <span className="font-medium text-foreground">{roleLabel(d.role, customRoles)}</span>:{" "}
+                    {allowed.length || "none"}
                   </p>
                   <div className="flex items-center gap-2">
                     <Button onClick={() => save(u)} disabled={!dirty(u) || savingId === u.id} size="sm">
@@ -229,7 +235,7 @@ export default function AdminUsers() {
       <div className="flex items-start gap-3 rounded-xl bg-muted/50 p-4 text-xs text-muted-foreground">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
         <p>
-          <span className="font-medium text-foreground">Staff & access</span> is only available to the main admin. The main admin cannot lock themselves out. Users join via invite; assign their role and section access here after they sign in once.
+          <span className="font-medium text-foreground">Staff members</span> is only available to the main admin. The main admin cannot lock themselves out. Staff join via invite; assign their role and section access here after they sign in once.
         </p>
       </div>
     </div>

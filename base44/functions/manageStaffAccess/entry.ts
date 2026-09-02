@@ -34,7 +34,9 @@ export default async function (req) {
       }
       const next = {};
       if (role !== undefined) {
-        if (!STAFF_ROLES.includes(role)) return Response.json({ error: 'invalid role' }, { status: 400 });
+        if (typeof role !== 'string' || !role || role === 'user' || /\s/.test(role)) {
+          return Response.json({ error: 'invalid role' }, { status: 400 });
+        }
         if (user_id === caller.id && role !== 'admin') {
           return Response.json({ error: 'You cannot remove your own admin role' }, { status: 400 });
         }
@@ -53,25 +55,59 @@ export default async function (req) {
     }
 
     if (action === 'invite') {
-      const { email, role, permissions } = body;
+      const { email, name, role, permissions, create_role } = body;
       if (!email || typeof email !== 'string' || !email.includes('@')) {
         return Response.json({ error: 'A valid email is required' }, { status: 400 });
       }
-      if (!STAFF_ROLES.includes(role)) return Response.json({ error: 'invalid role' }, { status: 400 });
+      if (!role || typeof role !== 'string' || role === 'user' || /\s/.test(role)) {
+        return Response.json({ error: 'invalid role' }, { status: 400 });
+      }
+
+      let finalRole = role;
+      if (create_role && create_role.name) {
+        const rname = String(create_role.name).trim().toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '');
+        if (!rname || rname === 'user' || rname === 'admin' || /\s/.test(rname)) {
+          return Response.json({ error: 'Role key must be a single lowercase token, not "user" or "admin"' }, { status: 400 });
+        }
+        const rperms = {};
+        for (const s of SECTIONS) {
+          const v = create_role.permissions && create_role.permissions[s];
+          if (v === 'allow' || v === 'deny') rperms[s] = v;
+        }
+        try {
+          await base44.asServiceRole.entities.Role.create({
+            name: rname,
+            label: String(create_role.label || rname).trim(),
+            description: String(create_role.description || '').trim(),
+            permissions: rperms,
+          });
+        } catch (_e) {
+          // role may already exist — fall through and still assign it
+        }
+        finalRole = rname;
+      }
+
       try {
-        await base44.asServiceRole.users.inviteUser(email, role);
+        await base44.asServiceRole.users.inviteUser(email, finalRole);
       } catch (_e) {
         // user may already exist — fall through and apply role/permissions below
       }
       const users = await base44.asServiceRole.entities.User.list('-created_date', 200);
       const u = (users || []).find((x) => x.email === email);
       if (!u) return Response.json({ error: 'Could not locate the invited user account' }, { status: 500 });
-      const clean = {};
-      for (const s of SECTIONS) {
-        const v = permissions && permissions[s];
-        if (v === 'allow' || v === 'deny') clean[s] = v;
+      const update = { role: finalRole };
+      if (typeof name === 'string' && name.trim()) update.full_name = name.trim();
+      if (create_role) {
+        update.permissions = {};
+      } else {
+        const clean = {};
+        for (const s of SECTIONS) {
+          const v = permissions && permissions[s];
+          if (v === 'allow' || v === 'deny') clean[s] = v;
+        }
+        update.permissions = clean;
       }
-      await base44.asServiceRole.entities.User.update(u.id, { role, permissions: clean });
+      await base44.asServiceRole.entities.User.update(u.id, update);
       return Response.json({ ok: true });
     }
 

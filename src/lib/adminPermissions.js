@@ -1,5 +1,7 @@
 // Admin panel role + per-section permission resolution. Used by the admin
-// layout (to gate navigation and routes) and the Staff & access page.
+// layout (to gate navigation and routes), the Staff members page, and the
+// add-staff dialog. Custom roles (created in the Roles section) are merged in
+// by passing a `customRoles` array (Role entity records) to the helpers.
 
 export const ADMIN_SECTIONS = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -11,7 +13,7 @@ export const ADMIN_SECTIONS = [
 ];
 
 export const ROLE_DEFAULTS = {
-  admin: { dashboard: true, products: true, categories: true, orders: true, reviews: true, posters: true, users: true },
+  admin: { dashboard: true, products: true, categories: true, orders: true, reviews: true, posters: true },
   product_manager: { products: true, categories: true },
   delivery_manager: { orders: true },
   marketing_manager: { reviews: true, posters: true },
@@ -34,21 +36,62 @@ export const ROLE_OPTIONS = [
   { value: 'user', label: 'Customer' },
 ];
 
-// The staff & access page itself is reserved for the main admin.
-export function canAccess(user, section) {
+export const BUILTIN_STAFF_ROLE_OPTIONS = ROLE_OPTIONS.filter((r) => r.value !== 'user');
+
+// True if a value stored on a defaults map means "allowed". Built-in defaults
+// use booleans; custom roles store 'allow'/'deny' strings.
+export function isDefaultAllowed(value) {
+  return value === true || value === 'allow';
+}
+
+// Section ids that a defaults map grants access to.
+export function defaultsAllowed(defaults = {}) {
+  return Object.keys(defaults).filter((k) => isDefaultAllowed(defaults[k]));
+}
+
+// Defaults for a role value: built-in booleans, or a custom role's permissions.
+export function roleDefaults(roleValue, customRoles = []) {
+  if (ROLE_DEFAULTS[roleValue]) return ROLE_DEFAULTS[roleValue];
+  const custom = (customRoles || []).find((r) => r.name === roleValue);
+  return (custom && custom.permissions) || {};
+}
+
+export function roleLabel(roleValue, customRoles = []) {
+  if (ROLE_LABELS[roleValue]) return ROLE_LABELS[roleValue];
+  const custom = (customRoles || []).find((r) => r.name === roleValue);
+  return (custom && custom.label) || roleValue || '—';
+}
+
+// Built-in staff roles + custom roles (excludes the customer 'user' role).
+export function roleOptions(customRoles = []) {
+  const built = BUILTIN_STAFF_ROLE_OPTIONS.slice();
+  const seen = new Set(built.map((r) => r.value));
+  const customs = (customRoles || [])
+    .filter((r) => r.name && !seen.has(r.name))
+    .map((r) => ({ value: r.name, label: r.label, custom: true }));
+  return [...built, ...customs];
+}
+
+// Staff & access + Roles pages themselves are reserved for the main admin.
+export function canAccess(user, section, customRoles = []) {
   if (!user) return false;
-  if (section === 'users') return user.role === 'admin';
+  if (section === 'users' || section === 'roles') return user.role === 'admin';
   if (user.role === 'admin') return true;
   const perms = user.permissions || {};
   const explicit = perms[section];
   if (explicit === 'deny') return false;
   if (explicit === 'allow') return true;
-  const defaults = ROLE_DEFAULTS[user.role] || {};
-  return !!defaults[section];
+  const defaults = roleDefaults(user.role, customRoles);
+  return defaultsAllowed(defaults).includes(section);
 }
 
-export function accessibleNavSections(user) {
-  return ADMIN_SECTIONS.filter((s) => canAccess(user, s.id)).concat(
-    user.role === 'admin' ? [{ id: 'users', label: 'Staff members' }] : []
-  );
+export function accessibleNavSections(user, customRoles = []) {
+  const sections = ADMIN_SECTIONS.filter((s) => canAccess(user, s.id, customRoles));
+  if (user.role === 'admin') {
+    return sections.concat([
+      { id: 'roles', label: 'Roles' },
+      { id: 'users', label: 'Staff members' },
+    ]);
+  }
+  return sections;
 }

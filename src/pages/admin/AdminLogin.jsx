@@ -6,8 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShieldCheck, Mail, Lock, Loader2, ArrowLeft } from "lucide-react";
 
-const STAFF_ROLES = ["admin", "product_manager", "delivery_manager", "marketing_manager"];
-
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,9 +19,9 @@ export default function AdminLogin() {
     try {
       await base44.auth.loginViaEmailPassword(email, password);
       const me = await base44.auth.me();
-      if (!STAFF_ROLES.includes(me?.role)) {
+      if (!me?.role || me.role === "user") {
         await base44.auth.logout();
-        setError("This account does not have staff access. Only admin, product, delivery, or marketing manager accounts can sign in here.");
+        setError("This account does not have staff access. Only staff accounts can sign in here.");
         return;
       }
       window.location.href = "/admin";
@@ -94,7 +92,7 @@ export default function AdminLogin() {
           </form>
 
           <div className="mt-6 rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
-            Sign in with a staff account. The app owner is the main admin by default; other staff are added via invite, then assigned a role and section access in <span className="font-medium text-foreground">Staff & access</span>.
+            Sign in with a staff account. The app owner is the main admin by default; other staff are added via invite, then assigned a role and section access in <span className="font-medium text-foreground">Staff members</span>.
           </div>
 
           <Link

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon } from "lucide-react";
+import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { canAccess } from "@/lib/adminPermissions";
 
@@ -11,19 +11,28 @@ const NAV = [
   { section: "orders", label: "Orders", path: "/admin/orders", icon: ClipboardList },
   { section: "reviews", label: "Reviews", path: "/admin/reviews", icon: Star },
   { section: "posters", label: "Posters", path: "/admin/posters", icon: ImageIcon },
+  { section: "roles", label: "Roles", path: "/admin/roles", icon: ShieldCheck },
   { section: "users", label: "Staff members", path: "/admin/users", icon: UsersIcon },
 ];
 
+const SECTION_LABEL = {
+  dashboard: "Dashboard", products: "Products", categories: "Categories",
+  orders: "Orders", reviews: "Reviews", posters: "Posters",
+  roles: "Roles", users: "Staff members",
+};
+
 export default function AdminLayout() {
   const [user, setUser] = useState(null);
+  const [customRoles, setCustomRoles] = useState([]);
   const [checking, setChecking] = useState(true);
   const location = useLocation();
 
   useEffect(() => {
     (async () => {
       try {
-        const me = await base44.auth.me();
+        const [me, roles] = await Promise.all([base44.auth.me(), base44.entities.Role.list().catch(() => [])]);
         setUser(me);
+        setCustomRoles(roles || []);
       } catch {}
       setChecking(false);
     })();
@@ -41,7 +50,7 @@ export default function AdminLayout() {
     return <Navigate to="/admin/login" replace />;
   }
 
-  const navItems = NAV.filter((n) => canAccess(user, n.section));
+  const navItems = NAV.filter((n) => canAccess(user, n.section, customRoles));
 
   // Customer accounts (or unknown roles) have no admin access at all.
   if (navItems.length === 0) {
@@ -70,11 +79,11 @@ export default function AdminLayout() {
   const currentSection = sectionFromPath();
 
   // Landing on dashboard without dashboard access -> redirect to first allowed section.
-  if (location.pathname === "/admin" && !canAccess(user, "dashboard")) {
+  if (location.pathname === "/admin" && !canAccess(user, "dashboard", customRoles)) {
     return <Navigate to={navItems[0].path} replace />;
   }
 
-  const sectionBlocked = !canAccess(user, currentSection);
+  const sectionBlocked = !canAccess(user, currentSection, customRoles);
 
   const linkClass = ({ isActive }) =>
     `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
