@@ -228,9 +228,9 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
   const fldCls = (key) => baseInput + (errors[key] ? errInput : "");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-foreground/30 p-4 backdrop-blur-sm sm:p-8">
-      <div className="w-full max-w-2xl rounded-2xl bg-background shadow-xl">
-        <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-2xl border-b border-border bg-background px-6 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-foreground/30 p-4 backdrop-blur-sm sm:p-8">
+      <div className="flex max-h-[calc(100vh-4rem)] w-full max-w-2xl flex-col rounded-2xl bg-background shadow-xl">
+        <div className="flex shrink-0 items-center justify-between rounded-t-2xl border-b border-border bg-background px-6 py-4">
           <div>
             <h2 className="text-lg font-semibold">{product ? "Edit product" : "New product"}</h2>
             <div className="mt-1 flex items-center gap-2">
@@ -246,6 +246,7 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
           </button>
         </div>
 
+        <div className="overflow-y-auto">
         {publishAttempt && Object.keys(errors).length > 0 && (
           <div className="border-b border-red-200 bg-red-50 px-6 py-3 text-sm text-red-700">
             <p className="font-medium">{Object.keys(errors).length} of {REQUIRED_COUNT} required fields missing — saved as draft.</p>
@@ -259,7 +260,7 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
           </div>
         )}
 
-        <div className="flex gap-1 overflow-x-auto border-b border-border px-4 py-2">
+        <div className="sticky top-0 z-10 flex gap-1 overflow-x-auto border-b border-border bg-background px-4 py-2">
           {TABS.map((t) => {
             const Icon = t.icon;
             const active = tab === t.id;
@@ -390,9 +391,10 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
               </Button>
             </div>
           </div>
-        </div>
-      </div>
-      <ConfirmDialog
+          </div>
+          </div>
+          </div>
+          <ConfirmDialog
         open={publishConfirm}
         onClose={() => setPublishConfirm(false)}
         variant="create"
