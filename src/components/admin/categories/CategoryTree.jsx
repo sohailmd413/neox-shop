@@ -1,13 +1,47 @@
 import React, { useState } from "react";
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { ChevronRight, ChevronDown, Plus, Pencil, Trash2, Layers, GripVertical, Power } from "lucide-react";
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+  closestCorners,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronRight, ChevronDown, Plus, Pencil, Trash2, Layers, GripVertical, Power, CornerDownRight } from "lucide-react";
 
-export default function CategoryTree({ categories, products, onSelect, selectedId, onEdit, onAddSub, onDelete, onToggleActive, onReorder }) {
+export default function CategoryTree({
+  categories,
+  products,
+  selectedId,
+  onSelect,
+  onEdit,
+  onAddSub,
+  onDelete,
+  onToggleActive,
+  onReorder,
+  onMove,
+}) {
   const [expanded, setExpanded] = useState(() => {
     const s = new Set();
     categories.filter((c) => !c.parent_id).forEach((c) => s.add(c.id));
     return s;
   });
+  const [activeId, setActiveId] = useState(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const childrenOf = (parentId) =>
     categories
@@ -16,73 +50,78 @@ export default function CategoryTree({ categories, products, onSelect, selectedI
 
   const count = (cat) => products.filter((p) => p.category === cat.name).length;
 
-  const onDragEnd = (result) => {
-    if (!result.destination || result.destination.index === result.source.index) return;
-    const parentId = result.source.droppableId;
-    const group = childrenOf(parentId === "root" ? null : parentId);
-    const [moved] = group.splice(result.source.index, 1);
-    group.splice(result.destination.index, 0, moved);
-    onReorder(group.map((c, i) => ({ id: c.id, sort_order: i })));
+  const toggleExpand = (id) =>
+    setExpanded((s) => {
+      const n = new Set(s);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+
+  const handleEnd = (e) => {
+    const { active, over } = e;
+    setActiveId(null);
+    if (!over) return;
+    const overId = String(over.id);
+    const activeCat = categories.find((c) => c.id === active.id);
+    if (!activeCat) return;
+
+    // Dropped on a "make child" drop-target → re-parent onto that category (or top level).
+    if (overId.startsWith("child:")) {
+      const target = overId.slice(6);
+      const newParent = target === "root" ? null : target;
+      if (newParent === activeCat.id) return;
+      onMove?.(active.id, newParent);
+      return;
+    }
+
+    // Dropped next to a sibling item.
+    if (active.id === over.id) return;
+    const overCat = categories.find((c) => c.id === over.id);
+    if (!overCat) return;
+    const overParent = overCat.parent_id || null;
+    const activeParent = activeCat.parent_id || null;
+
+    if (overParent === activeParent) {
+      const group = childrenOf(activeParent);
+      const oldIndex = group.findIndex((c) => c.id === active.id);
+      const newIndex = group.findIndex((c) => c.id === over.id);
+      if (oldIndex < 0 || newIndex < 0) return;
+      const reordered = arrayMove(group, oldIndex, newIndex);
+      onReorder?.(reordered.map((c, i) => ({ id: c.id, sort_order: i })));
+    } else {
+      onMove?.(active.id, overParent);
+    }
   };
 
   const renderGroup = (parentId, depth = 0) => {
     const list = childrenOf(parentId);
-    const droppableId = parentId === null ? "root" : parentId;
     return (
-      <Droppable droppableId={droppableId}>
-        {(provided) => (
-          <div ref={provided.innerRef} {...provided.droppableProps}>
-            {list.map((c, index) => {
-              const subs = childrenOf(c.id);
-              const isOpen = expanded.has(c.id);
-              return (
-                <div key={c.id}>
-                  <Draggable draggableId={c.id} index={index}>
-                    {(p) => (
-                      <div
-                        ref={p.innerRef}
-                        {...p.draggableProps}
-                        className={`group flex items-center gap-1.5 rounded-lg py-1.5 pr-2 ${selectedId === c.id ? "bg-foreground/5" : "hover:bg-muted/50"}`}
-                        style={{ ...p.draggableProps.style, paddingLeft: depth * 14 + 4 }}
-                      >
-                        <span {...p.dragHandleProps} className="cursor-grab text-muted-foreground/40 hover:text-foreground">
-                          <GripVertical className="h-4 w-4" />
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setExpanded((s) => { const n = new Set(s); n.has(c.id) ? n.delete(c.id) : n.add(c.id); return n; })}
-                          className="text-muted-foreground"
-                        >
-                          {subs.length > 0 ? (isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />) : <span className="inline-block w-4" />}
-                        </button>
-                        {c.image_url ? (
-                          <img src={c.image_url} alt="" className="h-6 w-6 rounded object-cover" />
-                        ) : (
-                          <div className="flex h-6 w-6 items-center justify-center rounded bg-muted"><Layers className="h-3.5 w-3.5 text-muted-foreground" /></div>
-                        )}
-                        <button type="button" onClick={() => onSelect(c)} className="flex-1 text-left">
-                          <span className="line-clamp-1 text-sm font-medium">{c.name}</span>
-                        </button>
-                        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">{count(c)}</span>
-                        {c.featured && <span className="h-1.5 w-1.5 rounded-full bg-amber-500" title="Featured" />}
-                        {c.active === false && <span className="text-[11px] text-muted-foreground">off</span>}
-                        <div className="ml-1 hidden items-center gap-0.5 group-hover:flex">
-                          <IconBtn title="Edit" onClick={() => onEdit(c)}><Pencil className="h-3.5 w-3.5" /></IconBtn>
-                          <IconBtn title="Add sub-category" onClick={() => onAddSub(c)}><Plus className="h-3.5 w-3.5" /></IconBtn>
-                          <IconBtn title={c.active === false ? "Activate" : "Deactivate"} onClick={() => onToggleActive(c)}><Power className="h-3.5 w-3.5" /></IconBtn>
-                          <IconBtn title="Delete" onClick={() => onDelete(c)} danger><Trash2 className="h-3.5 w-3.5" /></IconBtn>
-                        </div>
-                      </div>
-                    )}
-                  </Draggable>
-                  {isOpen && subs.length > 0 && <div style={{ marginLeft: 4 }}>{renderGroup(c.id, depth + 1)}</div>}
-                </div>
-              );
-            })}
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
+      <SortableContext items={list.map((c) => c.id)} strategy={verticalListSortingStrategy}>
+        {list.map((c) => {
+          const subs = childrenOf(c.id);
+          const isOpen = expanded.has(c.id);
+          return (
+            <TreeRow
+              key={c.id}
+              c={c}
+              depth={depth}
+              subs={subs}
+              isOpen={isOpen}
+              onToggleExpand={() => toggleExpand(c.id)}
+              onSelect={() => onSelect(c)}
+              selectedId={selectedId}
+              onEdit={() => onEdit(c)}
+              onAddSub={() => onAddSub(c)}
+              onDelete={() => onDelete(c)}
+              onToggleActive={() => onToggleActive(c)}
+              count={count(c)}
+              dragging={activeId != null}
+            >
+              {renderGroup(c.id, depth + 1)}
+            </TreeRow>
+          );
+        })}
+      </SortableContext>
     );
   };
 
@@ -97,9 +136,106 @@ export default function CategoryTree({ categories, products, onSelect, selectedI
         {categories.length === 0 ? (
           <p className="py-10 text-center text-sm text-muted-foreground">No categories yet.</p>
         ) : (
-          <DragDropContext onDragEnd={onDragEnd}>{renderGroup(null)}</DragDropContext>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={(e) => setActiveId(e.active.id)}
+            onDragEnd={handleEnd}
+            onDragCancel={() => setActiveId(null)}
+          >
+            {renderGroup(null)}
+            {activeId != null && <TopLevelDrop />}
+          </DndContext>
+        )}
+        {activeId != null && (
+          <p className="mt-2 px-1 text-[11px] text-muted-foreground">
+            Drag onto a row's <span className="font-medium">↳</span> tag to nest it as a sub-category.
+          </p>
         )}
       </div>
+    </div>
+  );
+}
+
+function TreeRow({ c, depth, subs, isOpen, onToggleExpand, onSelect, selectedId, onEdit, onAddSub, onDelete, onToggleActive, count, dragging, children }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: c.id });
+  const { setNodeRef: setChildRef, isOver: childOver } = useDroppable({ id: `child:${c.id}` });
+  const [hovered, setHovered] = useState(false);
+  const style = { transform: CSS.Transform.toString(transform), transition };
+
+  return (
+    <div>
+      <div
+        ref={setNodeRef}
+        style={style}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        className={`group flex items-center gap-1.5 rounded-lg py-1.5 pr-2 ${selectedId === c.id ? "bg-foreground/5" : "hover:bg-muted/50"} ${isDragging ? "opacity-40" : ""}`}
+      >
+        <span {...attributes} {...listeners} className="cursor-grab touch-none text-muted-foreground/40 hover:text-foreground">
+          <GripVertical className="h-4 w-4" />
+        </span>
+        <button type="button" onClick={onToggleExpand} className="text-muted-foreground">
+          {subs.length > 0 ? (isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />) : <span className="inline-block w-4" />}
+        </button>
+        {c.image_url ? (
+          <img src={c.image_url} alt="" className="h-6 w-6 rounded object-cover" />
+        ) : (
+          <div className="flex h-6 w-6 items-center justify-center rounded bg-muted"><Layers className="h-3.5 w-3.5 text-muted-foreground" /></div>
+        )}
+        <button type="button" onClick={onSelect} className="flex-1 text-left">
+          <span className="line-clamp-1 text-sm font-medium">{c.name}</span>
+        </button>
+        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">{count}</span>
+        {c.featured && <span className="h-1.5 w-1.5 rounded-full bg-amber-500" title="Featured" />}
+        {c.active === false && <span className="text-[11px] text-muted-foreground">off</span>}
+        <motion.div
+          className="ml-1 flex items-center gap-0.5"
+          initial={false}
+          animate={{ opacity: hovered ? 1 : 0 }}
+          transition={{ duration: 0.15 }}
+        >
+          <IconBtn title="Edit" onClick={onEdit}><Pencil className="h-3.5 w-3.5" /></IconBtn>
+          <IconBtn title="Add sub-category" onClick={onAddSub}><Plus className="h-3.5 w-3.5" /></IconBtn>
+          <IconBtn title={c.active === false ? "Activate" : "Archive"} onClick={onToggleActive}><Power className="h-3.5 w-3.5" /></IconBtn>
+          <IconBtn title="Delete" onClick={onDelete} danger><Trash2 className="h-3.5 w-3.5" /></IconBtn>
+        </motion.div>
+        {dragging && (
+          <button
+            type="button"
+            ref={setChildRef}
+            title={`Nest as sub-category of ${c.name}`}
+            className={`ml-1 flex items-center gap-0.5 rounded-md px-1.5 py-1 text-[11px] transition-colors ${childOver ? "bg-foreground text-background" : "border border-dashed border-border text-muted-foreground"}`}
+          >
+            <CornerDownRight className="h-3 w-3" />
+          </button>
+        )}
+      </div>
+      <AnimatePresence initial={false}>
+        {isOpen && subs.length > 0 && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            style={{ marginLeft: 4, overflow: "hidden" }}
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function TopLevelDrop() {
+  const { setNodeRef, isOver } = useDroppable({ id: "child:root" });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`mt-2 flex items-center justify-center rounded-lg border-2 border-dashed py-2 text-xs transition-colors ${isOver ? "border-foreground bg-muted text-foreground" : "border-border text-muted-foreground"}`}
+    >
+      <CornerDownRight className="mr-1 h-3.5 w-3.5" /> Drop to move to top level
     </div>
   );
 }

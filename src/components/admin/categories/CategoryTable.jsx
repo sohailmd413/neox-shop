@@ -1,14 +1,27 @@
 import React, { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { Search, Copy, Pencil, Trash2, Plus, GitMerge, Layers } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 
 const PAGE = 8;
 
 export default function CategoryTable({
-  categories, products, onEdit, onDelete, onDuplicate, onAddSub, onMerge,
-  selected, setSelected, onBulkActivate, onBulkDeactivate, onBulkDelete,
+  categories,
+  products,
+  onEdit,
+  onDelete,
+  onDuplicate,
+  onAddSub,
+  onMerge,
+  onToggleActive,
+  selected,
+  setSelected,
+  onBulkActivate,
+  onBulkDeactivate,
+  onBulkDelete,
 }) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("all");
@@ -18,7 +31,6 @@ export default function CategoryTable({
 
   const count = (cat) => products.filter((p) => p.category === cat.name).length;
   const nameOf = (id) => categories.find((c) => c.id === id)?.name;
-  const topCats = categories.filter((c) => !c.parent_id);
 
   const filtered = useMemo(() => {
     return categories.filter((c) => {
@@ -44,9 +56,12 @@ export default function CategoryTable({
     else rows.forEach((r) => next.add(r.id));
     setSelected(next);
   };
-  const toggleOne = (id) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
-
-  const ALL = "__all__";
+  const toggleOne = (id) =>
+    setSelected((s) => {
+      const n = new Set(s);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
 
   return (
     <div className="space-y-4">
@@ -100,6 +115,7 @@ export default function CategoryTable({
               <th className="px-3 py-3 font-medium">Name (EN / AR)</th>
               <th className="px-3 py-3 font-medium">Parent</th>
               <th className="px-3 py-3 text-right font-medium">Products</th>
+              <th className="px-3 py-3 font-medium">Status</th>
               <th className="px-3 py-3 font-medium">Featured</th>
               <th className="px-3 py-3 font-medium">Sort</th>
               <th className="px-3 py-3 font-medium">Updated</th>
@@ -107,9 +123,16 @@ export default function CategoryTable({
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 && <tr><td colSpan={9} className="px-3 py-10 text-center text-muted-foreground">No categories match.</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={10} className="px-3 py-10 text-center text-muted-foreground">No categories match.</td></tr>}
             {rows.map((c) => (
-              <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/30">
+              <motion.tr
+                key={c.id}
+                className="border-b border-border last:border-0"
+                whileHover={{ scale: 1.002, backgroundColor: "rgba(0,0,0,0.03)" }}
+                style={{ originX: 0 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                onHoverStart={() => {}}
+              >
                 <td className="px-3 py-3"><input type="checkbox" checked={selected.has(c.id)} onChange={() => toggleOne(c.id)} className="h-4 w-4 rounded border-border" /></td>
                 <td className="px-3 py-3">
                   {c.image_url ? <img src={c.image_url} alt="" className="h-8 w-8 rounded object-cover" />
@@ -121,6 +144,9 @@ export default function CategoryTable({
                 </td>
                 <td className="px-3 py-3 text-muted-foreground">{c.parent_id ? nameOf(c.parent_id) || "—" : "—"}</td>
                 <td className="px-3 py-3 text-right">{count(c)}</td>
+                <td className="px-3 py-3">
+                  <Switch checked={c.active !== false} onCheckedChange={() => onToggleActive(c)} aria-label="Toggle active" />
+                </td>
                 <td className="px-3 py-3">
                   <span className={`rounded-full px-2 py-0.5 text-xs ${c.featured ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300" : "bg-muted text-muted-foreground"}`}>
                     {c.featured ? "Yes" : "No"}
@@ -137,7 +163,7 @@ export default function CategoryTable({
                     <Act title="Delete" onClick={() => onDelete(c)} danger><Trash2 className="h-3.5 w-3.5" /></Act>
                   </div>
                 </td>
-              </tr>
+              </motion.tr>
             ))}
           </tbody>
         </table>

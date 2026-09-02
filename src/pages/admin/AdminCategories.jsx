@@ -141,6 +141,28 @@ export default function AdminCategories() {
 
   const toggleActive = (c) => (c.active === false ? activateCategory(c) : archiveCategory(c));
 
+  const moveCategory = async (id, newParentId) => {
+    const cat = categories.find((c) => c.id === id);
+    if (!cat) return;
+    if ((cat.parent_id || null) === newParentId) return;
+    // Prevent moving a category into its own sub-tree.
+    if (newParentId) {
+      let p = newParentId;
+      while (p) {
+        if (p === id) { toast({ title: "Can't move a category into its own sub-tree", variant: "destructive" }); return; }
+        p = categories.find((c) => c.id === p)?.parent_id || null;
+      }
+    }
+    const order = categories.filter((c) => (c.parent_id || null) === newParentId && c.id !== id).length;
+    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, parent_id: newParentId, sort_order: order } : c)));
+    try {
+      await base44.entities.Category.update(id, { parent_id: newParentId, sort_order: order });
+    } catch {
+      toast({ title: "Could not move category", variant: "destructive" });
+      load();
+    }
+  };
+
   const reorder = async (updates) => {
     setCategories((cs) => cs.map((c) => ({ ...c, sort_order: updates.find((u) => u.id === c.id)?.sort_order ?? c.sort_order })));
     try {
@@ -242,7 +264,8 @@ export default function AdminCategories() {
             onDelete={remove}
             onToggleActive={toggleActive}
             onReorder={reorder}
-          />
+            onMove={moveCategory}
+            />
         </div>
 
         {/* Right panel: form + table */}
@@ -275,6 +298,7 @@ export default function AdminCategories() {
                 onDuplicate={duplicate}
                 onAddSub={addSub}
                 onMerge={(c) => setMergeSrc(c)}
+                onToggleActive={toggleActive}
                 selected={selected}
                 setSelected={setSelected}
                 onBulkActivate={bulkActivate}

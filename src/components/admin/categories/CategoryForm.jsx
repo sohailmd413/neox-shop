@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import ImageUpload from "@/components/admin/ImageUpload";
+import Dropzone from "@/components/admin/ui/Dropzone";
 import ParentCombobox from "./ParentCombobox";
 import { slugify } from "@/lib/format";
 
@@ -75,14 +75,12 @@ export default function CategoryForm({ initial, categories, onSubmit, onCancel, 
 
       <div className="space-y-1.5">
         <span className="text-xs font-medium text-muted-foreground">Image / icon</span>
-        <ImageUpload value={form.image_url} onChange={(u) => set("image_url", u)} />
-        <span className="block text-xs text-muted-foreground">Recommended 400×400px, PNG/JPG, max 2MB.</span>
+        <Dropzone value={form.image_url} onChange={(u) => set("image_url", u)} hint="Recommended: 400×400px, JPG/PNG, max 2MB" />
       </div>
 
       <div className="space-y-1.5">
         <span className="text-xs font-medium text-muted-foreground">Banner image</span>
-        <ImageUpload value={form.banner_image_url} onChange={(u) => set("banner_image_url", u)} />
-        <span className="block text-xs text-muted-foreground">Hero banner for the category landing page.</span>
+        <Dropzone value={form.banner_image_url} onChange={(u) => set("banner_image_url", u)} hint="Recommended: 1600×400px, JPG/PNG, max 4MB" />
       </div>
 
       <Label className="space-y-1.5"><span className="text-xs font-medium text-muted-foreground">Short description</span>
@@ -111,10 +109,16 @@ export default function CategoryForm({ initial, categories, onSubmit, onCancel, 
         </button>
         {seoOpen && (
           <div className="space-y-4 border-t border-border p-4">
-            <Label className="space-y-1.5"><span className="text-xs font-medium text-muted-foreground">Meta title</span>
-              <Input value={form.meta_title} onChange={(e) => set("meta_title", e.target.value)} /></Label>
-            <Label className="space-y-1.5"><span className="text-xs font-medium text-muted-foreground">Meta description</span>
-              <Input value={form.meta_description} onChange={(e) => set("meta_description", e.target.value)} /></Label>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between"><span className="text-xs font-medium text-muted-foreground">Meta title</span>
+                <span className={`text-[11px] ${(form.meta_title || "").length > 60 ? "text-red-500" : "text-emerald-600"}`}>{(form.meta_title || "").length}/60</span></div>
+              <Input value={form.meta_title} onChange={(e) => set("meta_title", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between"><span className="text-xs font-medium text-muted-foreground">Meta description</span>
+                <span className={`text-[11px] ${(form.meta_description || "").length > 160 ? "text-red-500" : "text-emerald-600"}`}>{(form.meta_description || "").length}/160</span></div>
+              <Input value={form.meta_description} onChange={(e) => set("meta_description", e.target.value)} />
+            </div>
             <Label className="space-y-1.5"><span className="text-xs font-medium text-muted-foreground">Focus keyword</span>
               <Input value={form.focus_keyword} onChange={(e) => set("focus_keyword", e.target.value)} /></Label>
           </div>
