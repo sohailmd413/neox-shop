@@ -191,7 +191,7 @@ export default function SalesReport({ orders, products, categories, bounds, comp
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted/40" />
-                <XAxis dataKey="day" tickLine={false} axisLine={false} fontSize={11} />
+                <XAxis dataKey="day" tickLine={false} axisLine={false} tick={<ChipTick />} />
                 <YAxis width={104} tickLine={false} axisLine={false} tick={<ChipTick />} tickFormatter={(v) => formatPrice(v)} />
                 <Tooltip formatter={(v) => formatPrice(v)} contentStyle={tt} />
                 <Line type="monotone" dataKey="revenue" stroke="#0ea5e9" strokeWidth={2} dot={false} />
@@ -204,8 +204,8 @@ export default function SalesReport({ orders, products, categories, bounds, comp
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={ordersData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted/40" />
-                <XAxis dataKey="day" tickLine={false} axisLine={false} fontSize={11} />
-                <YAxis tickLine={false} axisLine={false} fontSize={11} />
+                <XAxis dataKey="day" tickLine={false} axisLine={false} tick={<ChipTick />} />
+                <YAxis width={44} tickLine={false} axisLine={false} tick={<ChipTick />} />
                 <Tooltip contentStyle={tt} />
                 <Bar dataKey="orders" fill="#a855f7" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -221,8 +221,8 @@ export default function SalesReport({ orders, products, categories, bounds, comp
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dowData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted/40" />
-                <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={11} />
-                <YAxis tickLine={false} axisLine={false} fontSize={11} />
+                <XAxis dataKey="name" tickLine={false} axisLine={false} tick={<ChipTick />} />
+                <YAxis width={44} tickLine={false} axisLine={false} tick={<ChipTick />} />
                 <Tooltip contentStyle={tt} />
                 <Bar dataKey="orders" fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
@@ -251,8 +251,8 @@ export default function SalesReport({ orders, products, categories, bounds, comp
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={categoryData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-muted/40" />
-                <XAxis type="number" tickLine={false} axisLine={false} fontSize={11} tickFormatter={(v) => formatPrice(v)} />
-                <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} fontSize={11} width={90} />
+                <XAxis type="number" tickLine={false} axisLine={false} tick={<ChipTick />} tickFormatter={(v) => formatPrice(v)} />
+                <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={104} tick={<ChipTick />} />
                 <Tooltip formatter={(v) => formatPrice(v)} contentStyle={tt} />
                 <Bar dataKey="value" fill="#f59e0b" radius={[0, 6, 6, 0]} />
               </BarChart>
@@ -264,8 +264,8 @@ export default function SalesReport({ orders, products, categories, bounds, comp
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={cityData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-muted/40" />
-                <XAxis type="number" tickLine={false} axisLine={false} fontSize={11} tickFormatter={(v) => formatPrice(v)} />
-                <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} fontSize={11} width={90} />
+                <XAxis type="number" tickLine={false} axisLine={false} tick={<ChipTick />} tickFormatter={(v) => formatPrice(v)} />
+                <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={104} tick={<ChipTick />} />
                 <Tooltip formatter={(v) => formatPrice(v)} contentStyle={tt} />
                 <Bar dataKey="value" fill="#6366f1" radius={[0, 6, 6, 0]} />
               </BarChart>
@@ -368,11 +368,20 @@ function Empty() {
   return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">No data in range.</div>;
 }
 
-// Badge-chip styled tick for the Revenue Y-axis.
-function ChipTick({ x, y, payload }) {
+// Badge-chip styled tick for any chart axis (adapts to left/bottom orientation).
+function ChipTick({ x, y, payload, orientation = "left" }) {
+  const txt = String(payload.value ?? "");
+  const w = Math.max(34, Math.ceil(txt.length * 5.6) + 20);
+  const h = 22;
+  const bottom = orientation === "bottom";
+  const top = orientation === "top";
+  const boxW = bottom || top ? Math.min(w, 80) : w;
+  const bx = bottom || top ? x - boxW / 2 : x - 4 - w;
+  const by = bottom ? y + 6 : top ? y - h - 6 : y - h / 2;
+  const justify = bottom || top ? "center" : "flex-end";
   return (
-    <foreignObject x={x - 108} y={y - 11} width={104} height={22} style={{ overflow: "visible" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", height: "22px" }}>
+    <foreignObject x={bx} y={by} width={boxW} height={h} style={{ overflow: "visible" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: justify, width: "100%", height: "100%" }}>
         <span style={{
           display: "inline-block",
           padding: "2px 10px",
@@ -384,7 +393,7 @@ function ChipTick({ x, y, payload }) {
           lineHeight: "16px",
           whiteSpace: "nowrap",
         }}>
-          {payload.value}
+          {txt}
         </span>
       </div>
     </foreignObject>
