@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { ADMIN_SECTIONS, ROLE_DEFAULTS, ROLE_LABELS, ROLE_OPTIONS } from "@/lib/adminPermissions";
 import StaffInviteDialog from "@/components/admin/StaffInviteDialog";
+import StaffDeleteDialog from "@/components/admin/StaffDeleteDialog";
 import { Loader2, Save, ShieldCheck, UserPlus, Trash2 } from "lucide-react";
 
 const TRI_STATES = [
@@ -21,6 +22,8 @@ export default function AdminUsers() {
   const [savingId, setSavingId] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [inviting, setInviting] = useState(false);
+  const [removing, setRemoving] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
 
   const load = async () => {
@@ -84,15 +87,19 @@ export default function AdminUsers() {
     setSavingId(null);
   };
 
-  const remove = async (u) => {
-    if (!confirm(`Remove ${u.email} from the staff team?`)) return;
+  const remove = (u) => setRemoving(u);
+  const confirmRemove = async () => {
+    if (!removing) return;
+    setDeleting(true);
     try {
-      await base44.functions.invoke("manageStaffAccess", { action: "delete", user_id: u.id });
+      await base44.functions.invoke("manageStaffAccess", { action: "delete", user_id: removing.id });
       toast({ title: "Staff member removed" });
+      setRemoving(null);
       load();
     } catch (e) {
       toast({ title: e.response?.data?.error || "Could not remove", variant: "destructive" });
     }
+    setDeleting(false);
   };
 
   return (
@@ -212,6 +219,12 @@ export default function AdminUsers() {
       {inviting && (
         <StaffInviteDialog onClose={() => setInviting(false)} onInvited={() => { setInviting(false); load(); }} />
       )}
+      <StaffDeleteDialog
+        staff={removing}
+        onClose={() => setRemoving(null)}
+        onConfirm={confirmRemove}
+        deleting={deleting}
+      />
 
       <div className="flex items-start gap-3 rounded-xl bg-muted/50 p-4 text-xs text-muted-foreground">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
