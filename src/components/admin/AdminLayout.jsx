@@ -103,8 +103,8 @@ export default function AdminLayout() {
     <div className="flex min-h-screen bg-muted/20">
       <aside className="hidden w-60 flex-shrink-0 flex-col border-r border-border bg-background md:flex">
         <div className="border-b border-border px-5 py-5">
-          <Link to="/" className="text-lg font-semibold tracking-tight">MAISON</Link>
-          <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Admin</p>
+          <Link to="/" className="text-lg font-semibold tracking-tight">Admin</Link>
+          <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Dashboard</p>
         </div>
         <nav className="flex-1 space-y-1 p-3">
           {navItems.map((item) => {
