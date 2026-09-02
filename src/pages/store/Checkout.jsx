@@ -53,24 +53,18 @@ export default function Checkout() {
     setCouponMsg("");
     if (!couponInput.trim()) return;
     try {
-      const found = await base44.entities.Coupon.filter({ code: couponInput.trim(), active: true }, "-created_date", 5);
-      const c = found?.[0];
-      if (!c) {
+      const res = await base44.functions.invoke("validateCoupon", {
+        code: couponInput.trim(),
+        cart_items: items.map((i) => ({ product_id: i.productId, quantity: i.quantity, price: i.price })),
+        subtotal,
+      });
+      const data = res?.data;
+      if (!data || !data.valid) {
         setCoupon(null);
-        setCouponMsg("Invalid coupon code.");
+        setCouponMsg(data?.reason || "Invalid coupon code.");
         return;
       }
-      if (c.expires_at && new Date(c.expires_at) < new Date()) {
-        setCoupon(null);
-        setCouponMsg("This coupon has expired.");
-        return;
-      }
-      if (c.usage_limit && c.times_used >= c.usage_limit) {
-        setCoupon(null);
-        setCouponMsg("This coupon has reached its usage limit.");
-        return;
-      }
-      setCoupon(c);
+      setCoupon({ code: data.code, discount_type: data.discount_type, discount_value: data.discount_value });
       setCouponMsg("Coupon applied!");
     } catch {
       setCouponMsg("Could not validate coupon.");

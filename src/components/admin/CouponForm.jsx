@@ -25,8 +25,11 @@ export default function CouponForm({ coupon = null, existing = [], onClose, onSa
     code: coupon?.code || "",
     discount_type: coupon?.discount_type || "percent",
     discount_value: coupon?.discount_value?.toString() || "",
+    starts_at: coupon?.starts_at ? toLocalInput(coupon.starts_at) : "",
     expires_at: coupon?.expires_at ? toLocalInput(coupon.expires_at) : "",
     usage_limit: coupon?.usage_limit?.toString() || "",
+    per_customer_limit: coupon?.per_customer_limit?.toString() || "",
+    min_order_value: coupon?.min_order_value?.toString() || "",
     active: coupon?.active !== false,
   }));
   const [err, setErr] = useState({});
@@ -44,6 +47,8 @@ export default function CouponForm({ coupon = null, existing = [], onClose, onSa
     if (!v || v <= 0) e.discount_value = "Enter a value greater than 0.";
     if (form.discount_type === "percent" && v > 100) e.discount_value = "Percentage must be 0–100.";
     if (form.usage_limit && (!/^\d+$/.test(form.usage_limit) || Number(form.usage_limit) < 1)) e.usage_limit = "Whole number ≥ 1.";
+    if (form.per_customer_limit && (!/^\d+$/.test(form.per_customer_limit) || Number(form.per_customer_limit) < 1)) e.per_customer_limit = "Whole number ≥ 1.";
+    if (form.min_order_value && Number(form.min_order_value) < 0) e.min_order_value = "Cannot be negative.";
     setErr(e);
     return Object.keys(e).length === 0;
   };
@@ -55,8 +60,11 @@ export default function CouponForm({ coupon = null, existing = [], onClose, onSa
       code: form.code.trim().toUpperCase(),
       discount_type: form.discount_type,
       discount_value: Number(form.discount_value),
+      starts_at: form.starts_at ? fromLocalInput(form.starts_at) : null,
       expires_at: form.expires_at ? fromLocalInput(form.expires_at) : null,
       usage_limit: form.usage_limit ? Number(form.usage_limit) : null,
+      per_customer_limit: form.per_customer_limit ? Number(form.per_customer_limit) : null,
+      min_order_value: form.min_order_value ? Number(form.min_order_value) : null,
       active: form.active,
       times_used: coupon?.times_used || 0,
     };
@@ -100,13 +108,30 @@ export default function CouponForm({ coupon = null, existing = [], onClose, onSa
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
+              <Label htmlFor="starts">Starts (optional)</Label>
+              <Input id="starts" type="datetime-local" value={form.starts_at} onChange={(e) => set("starts_at", e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
               <Label htmlFor="expires">Expires (optional)</Label>
               <Input id="expires" type="datetime-local" value={form.expires_at} onChange={(e) => set("expires_at", e.target.value)} />
             </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="limit">Usage limit (optional)</Label>
+              <Label htmlFor="limit">Usage limit</Label>
               <Input id="limit" type="number" value={form.usage_limit} onChange={(e) => set("usage_limit", e.target.value)} placeholder="∞" />
               {err.usage_limit && <p className="text-xs text-destructive">{err.usage_limit}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="percust">Per customer</Label>
+              <Input id="percust" type="number" value={form.per_customer_limit} onChange={(e) => set("per_customer_limit", e.target.value)} placeholder="∞" />
+              {err.per_customer_limit && <p className="text-xs text-destructive">{err.per_customer_limit}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="minorder">Min order</Label>
+              <Input id="minorder" type="number" value={form.min_order_value} onChange={(e) => set("min_order_value", e.target.value)} placeholder="0" />
+              {err.min_order_value && <p className="text-xs text-destructive">{err.min_order_value}</p>}
             </div>
           </div>
 
