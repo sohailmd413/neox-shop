@@ -6,13 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { ADMIN_SECTIONS } from "@/lib/adminPermissions";
-import { X, Loader2 } from "lucide-react";
-
-const TRI = [
-  { value: "inherit", label: "Inherit" },
-  { value: "allow", label: "Allow" },
-  { value: "deny", label: "Deny" },
-];
+import { X, Loader2, Check } from "lucide-react";
 
 export default function RoleDialog({ role, onClose, onSaved }) {
   const [name, setName] = useState(role?.name || "");
@@ -102,33 +96,25 @@ export default function RoleDialog({ role, onClose, onSaved }) {
           </div>
 
           <div>
-            <Label className="mb-2 block">Default section access</Label>
+            <Label className="mb-2 block">Permission</Label>
+            <p className="mb-2 text-xs text-muted-foreground">Pick the modules this role can access.</p>
             <div className="grid grid-cols-2 gap-2">
               {ADMIN_SECTIONS.map((s) => {
-                const current = permissions[s.id] || "inherit";
+                const eff = permissions[s.id] === "allow";
                 return (
-                  <div key={s.id} className="flex w-full items-center gap-2 rounded-lg border border-border px-3 py-2">
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setPerm(s.id, eff ? "inherit" : "allow")}
+                    className="flex w-full items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-left transition-colors hover:bg-muted/50"
+                  >
+                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
+                      eff ? "border-foreground bg-foreground text-background" : "border-border bg-background text-transparent"
+                    }`}>
+                      <Check className="h-3.5 w-3.5" />
+                    </span>
                     <span className="min-w-0 flex-1 truncate text-sm font-medium">{s.label}</span>
-                    <div className="flex shrink-0 items-center gap-1">
-                      {TRI.map((t) => (
-                        <button
-                          key={t.value}
-                          onClick={() => setPerm(s.id, t.value)}
-                          className={`w-[58px] rounded-md px-2 py-1 text-center text-[11px] font-medium transition-colors ${
-                            current === t.value
-                              ? t.value === "allow"
-                                ? "bg-foreground text-background"
-                                : t.value === "deny"
-                                ? "bg-destructive text-destructive-foreground"
-                                : "bg-muted text-foreground"
-                              : "text-muted-foreground hover:bg-muted"
-                          }`}
-                        >
-                          {t.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>

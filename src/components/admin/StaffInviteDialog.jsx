@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SelectNative } from "@/components/ui/select-native";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { ADMIN_SECTIONS, roleOptions, roleLabel, roleDefaults, defaultsAllowed } from "@/lib/adminPermissions";
 import { X, Loader2, UserPlus, Lock, Eye, EyeOff, Copy, Check } from "lucide-react";
@@ -169,11 +169,16 @@ export default function StaffInviteDialog({ onClose, onInvited }) {
 
           <div className="space-y-2">
             <Label>Role</Label>
-            <SelectNative value={role} onChange={(e) => { const v = e.target.value; setRole(v); if (v !== NEW_ROLE) setPermissions({}); }} className="h-9 w-full">
-              {options.map((r) => (
-                <option key={r.value} value={r.value}>{r.label}</option>
-              ))}
-            </SelectNative>
+            <Select value={role} onValueChange={(v) => { setRole(v); if (v !== NEW_ROLE) setPermissions({}); }}>
+              <SelectTrigger className="h-9 w-full">
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((r) => (
+                  <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {isCreatingRole && (
