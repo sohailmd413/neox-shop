@@ -121,10 +121,7 @@ export default function AdminUsers() {
               <div key={u.id} className="rounded-2xl border border-border bg-background p-5">
                 <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-2">
-                    <div>
-                      <p className="font-medium">{u.email}</p>
-                      <p className="text-xs text-muted-foreground">{u.full_name || "—"}</p>
-                    </div>
+                    <p className="font-medium">{u.email}</p>
                     {u.pending && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
                         <Clock className="h-3 w-3" /> Pending invite

@@ -5,14 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/lib/AuthContext";
 import { Loader2, User, Lock } from "lucide-react";
 
 export default function AdminProfile() {
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [userId, setUserId] = useState(null);
-  const [savingName, setSavingName] = useState(false);
 
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
@@ -20,31 +17,13 @@ export default function AdminProfile() {
   const [savingPw, setSavingPw] = useState(false);
 
   const { toast } = useToast();
-  const { checkUserAuth } = useAuth();
 
   useEffect(() => {
     base44.auth.me().then((u) => {
-      setName(u.full_name || "");
       setEmail(u.email || "");
       setUserId(u.id);
     });
   }, []);
-
-  const saveName = async () => {
-    if (!name.trim()) {
-      toast({ title: "Name cannot be empty", variant: "destructive" });
-      return;
-    }
-    setSavingName(true);
-    try {
-      await base44.auth.updateMe({ full_name: name.trim() });
-      await checkUserAuth();
-      toast({ title: "Profile updated" });
-    } catch (e) {
-      toast({ title: e.response?.data?.error || "Could not update profile", variant: "destructive" });
-    }
-    setSavingName(false);
-  };
 
   const changePw = async () => {
     if (!currentPw || !newPw) {
@@ -76,10 +55,10 @@ export default function AdminProfile() {
     <div className="max-w-xl space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">My profile</h1>
-        <p className="text-sm text-muted-foreground">Update your name and password. Permissions are managed by your role.</p>
+        <p className="text-sm text-muted-foreground">Change your password. Permissions are managed by your role.</p>
       </div>
 
-      {/* Name */}
+      {/* Account */}
       <div className="rounded-2xl border border-border bg-background p-5">
         <div className="mb-4 flex items-center gap-2">
           <User className="h-4 w-4 text-muted-foreground" />
@@ -87,18 +66,10 @@ export default function AdminProfile() {
         </div>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
-          </div>
-          <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
             <Input id="email" value={email} disabled className="bg-muted/40" />
-            <p className="text-xs text-muted-foreground">Email cannot be changed here.</p>
+            <p className="text-xs text-muted-foreground">Your email is set on your account and cannot be changed here.</p>
           </div>
-          <Button onClick={saveName} disabled={savingName}>
-            {savingName && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save name
-          </Button>
         </div>
       </div>
 
