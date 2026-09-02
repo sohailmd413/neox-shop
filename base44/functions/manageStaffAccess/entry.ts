@@ -129,7 +129,7 @@ export default async function (req) {
       let inviteOk = true;
       let invite_error = '';
       try {
-        await base44.asServiceRole.users.inviteUser(email, role);
+        await base44.users.inviteUser(email, role);
       } catch (e) {
         inviteOk = false;
         invite_error = (e && e.message) || 'Invite failed';
