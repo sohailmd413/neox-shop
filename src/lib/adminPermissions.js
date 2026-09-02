@@ -49,11 +49,13 @@ export function defaultsAllowed(defaults = {}) {
   return Object.keys(defaults).filter((k) => isDefaultAllowed(defaults[k]));
 }
 
-// Defaults for a role value: built-in booleans, or a custom role's permissions.
+// Defaults for a role value: a persisted override entity wins over the
+// built-in defaults, so admins can edit built-in roles from the Roles page.
 export function roleDefaults(roleValue, customRoles = []) {
-  if (ROLE_DEFAULTS[roleValue]) return ROLE_DEFAULTS[roleValue];
   const custom = (customRoles || []).find((r) => r.name === roleValue);
-  return (custom && custom.permissions) || {};
+  if (custom) return custom.permissions || {};
+  if (ROLE_DEFAULTS[roleValue]) return ROLE_DEFAULTS[roleValue];
+  return {};
 }
 
 export function roleLabel(roleValue, customRoles = []) {

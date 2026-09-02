@@ -8,14 +8,15 @@ import { useToast } from "@/components/ui/use-toast";
 import { ADMIN_SECTIONS } from "@/lib/adminPermissions";
 import { X, Loader2, Check } from "lucide-react";
 
-export default function RoleDialog({ role, onClose, onSaved }) {
+export default function RoleDialog({ role, onClose, onSaved, builtin }) {
   const [name, setName] = useState(role?.name || "");
   const [label, setLabel] = useState(role?.label || "");
   const [description, setDescription] = useState(role?.description || "");
   const [permissions, setPermissions] = useState(role?.permissions || {});
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
-  const editing = !!role;
+  const editing = !!role?.id;
+  const lockName = editing || builtin;
 
   const setPerm = (section, value) =>
     setPermissions((p) => {
@@ -31,7 +32,7 @@ export default function RoleDialog({ role, onClose, onSaved }) {
       return;
     }
     let key = (name || "").trim().toLowerCase().replace(/[^a-z0-9_]+/g, "_").replace(/^_+|_+$/g, "");
-    if (!editing && !key) {
+    if (!editing && !builtin && !key) {
       toast({ title: "Enter a role key (lowercase, no spaces)", variant: "destructive" });
       return;
     }
@@ -67,7 +68,7 @@ export default function RoleDialog({ role, onClose, onSaved }) {
       <div className="absolute inset-0 bg-foreground/30 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-lg rounded-2xl border border-border bg-background p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{editing ? "Edit role" : "Create role"}</h2>
+          <h2 className="text-lg font-semibold">{editing || builtin ? "Edit role" : "Create role"}</h2>
           <button onClick={onClose} className="rounded-full p-1.5 hover:bg-muted">
             <X className="h-4 w-4" />
           </button>
@@ -80,7 +81,7 @@ export default function RoleDialog({ role, onClose, onSaved }) {
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                disabled={editing}
+                disabled={lockName}
                 placeholder="e.g. support_agent"
                 className="font-mono"
               />
@@ -124,7 +125,7 @@ export default function RoleDialog({ role, onClose, onSaved }) {
         <div className="mt-6 flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button onClick={save} disabled={saving}>
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} {editing ? "Save role" : "Create role"}
+            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} {editing || builtin ? "Save role" : "Create role"}
           </Button>
         </div>
       </div>
