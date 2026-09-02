@@ -1,0 +1,148 @@
+{
+  "name": "Setting",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "Singleton key, e.g. 'store'. Always 'store' for the single settings record."
+    },
+    "store_name": {
+      "type": "string",
+      "description": "Store display name (English)."
+    },
+    "store_name_ar": {
+      "type": "string",
+      "description": "Store display name (Arabic)."
+    },
+    "logo_url": {
+      "type": "string"
+    },
+    "contact_email": {
+      "type": "string"
+    },
+    "contact_phone": {
+      "type": "string"
+    },
+    "business_address": {
+      "type": "string"
+    },
+    "business_hours": {
+      "type": "string",
+      "description": "Free-text business hours, e.g. 'Sat\u2013Thu, 9am\u20139pm'."
+    },
+    "currency": {
+      "type": "string",
+      "default": "SAR",
+      "description": "ISO currency code used for price formatting."
+    },
+    "currency_symbol": {
+      "type": "string",
+      "default": "\ufdfc"
+    },
+    "default_language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "ar"
+      ],
+      "default": "en"
+    },
+    "payment_methods_enabled": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "card",
+          "cod",
+          "wallet",
+          "upi",
+          "net_banking"
+        ]
+      },
+      "default": [
+        "card",
+        "cod"
+      ]
+    },
+    "shipping_zones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "regions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rate": {
+            "type": "number"
+          },
+          "free_shipping_threshold": {
+            "type": "number"
+          }
+        }
+      },
+      "default": []
+    },
+    "tax_rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "type": "string"
+          },
+          "rate": {
+            "type": "number"
+          },
+          "inclusive": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "default": []
+    },
+    "terms_policy": {
+      "type": "string",
+      "description": "Terms of Service HTML content."
+    },
+    "privacy_policy": {
+      "type": "string",
+      "description": "Privacy Policy HTML content."
+    },
+    "return_policy": {
+      "type": "string",
+      "description": "Return Policy HTML content."
+    },
+    "shipping_policy": {
+      "type": "string",
+      "description": "Shipping Policy HTML content."
+    }
+  },
+  "required": [
+    "key"
+  ],
+  "rls": {
+    "read": true,
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

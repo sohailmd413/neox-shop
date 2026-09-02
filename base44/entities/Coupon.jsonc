@@ -16,12 +16,40 @@
     "discount_value": {
       "type": "number"
     },
+    "starts_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional activation date. Coupon is not redeemable before this time."
+    },
     "expires_at": {
       "type": "string",
       "format": "date-time"
     },
     "usage_limit": {
-      "type": "number"
+      "type": "number",
+      "description": "Total redemptions allowed across all customers. Blank = unlimited."
+    },
+    "per_customer_limit": {
+      "type": "number",
+      "description": "Max redemptions per individual customer. Blank = unlimited per customer."
+    },
+    "min_order_value": {
+      "type": "number",
+      "description": "Minimum cart subtotal required to redeem. Blank = no minimum."
+    },
+    "applicable_product_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "If set, the coupon only applies when the cart contains at least one of these products."
+    },
+    "applicable_category_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "If set, the coupon only applies when the cart contains at least one product in these categories."
     },
     "times_used": {
       "type": "number",
