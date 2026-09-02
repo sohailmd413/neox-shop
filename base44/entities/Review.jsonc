@@ -28,6 +28,11 @@
       "type": "boolean",
       "default": false
     },
+    "rejected": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when a moderator rejected the review; excluded from the storefront."
+    },
     "helpful_count": {
       "type": "number",
       "default": 0
