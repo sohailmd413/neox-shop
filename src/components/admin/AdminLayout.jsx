@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown } from "lucide-react";
+import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { canAccess } from "@/lib/adminPermissions";
 
 const NAV = [
   { section: "dashboard", label: "Dashboard", path: "/admin", icon: LayoutDashboard, end: true },
+  { section: "reports", label: "Reports", path: "/admin/reports", icon: BarChart3 },
   { section: "products", label: "Products", path: "/admin/products", icon: Package },
   { section: "categories", label: "Categories", path: "/admin/categories", icon: Layers },
   { section: "orders", label: "Orders", path: "/admin/orders", icon: ClipboardList },

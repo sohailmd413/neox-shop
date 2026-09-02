@@ -27,6 +27,7 @@ import AdminRoles from '@/pages/admin/AdminRoles';
 import AdminProfile from '@/pages/admin/AdminProfile';
 import AdminLogin from '@/pages/admin/AdminLogin';
 import AdminCategories from '@/pages/admin/AdminCategories';
+import AdminReports from '@/pages/admin/AdminReports';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -85,6 +86,7 @@ const AuthenticatedApp = () => {
             <Route path="categories" element={<AdminCategories />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="reviews" element={<AdminReviews />} />
+            <Route path="reports" element={<AdminReports />} />
             <Route path="posters" element={<AdminPosters />} />
             <Route path="roles" element={<AdminRoles />} />
             <Route path="users" element={<AdminUsers />} />
