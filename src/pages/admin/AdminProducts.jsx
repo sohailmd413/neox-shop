@@ -564,7 +564,7 @@ export default function AdminProducts() {
         />
       )}
       {bulkOpen && (
-        <AdminBulkProductDialog categories={categories} onClose={() => setBulkOpen(false)} onDone={() => { setBulkOpen(false); load(); }} />
+        <AdminBulkProductDialog categories={categories} products={products} onClose={() => setBulkOpen(false)} onDone={() => { setBulkOpen(false); load(); }} />
       )}
       {saleOpen && (
         <AdminSaleDialog products={selectedProducts} onClose={() => setSaleOpen(false)} onDone={() => { setSaleOpen(false); load(); }} />
