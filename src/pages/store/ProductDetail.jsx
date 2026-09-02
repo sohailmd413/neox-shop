@@ -25,6 +25,7 @@ export default function ProductDetail() {
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
   const [submitting, setSubmitting] = useState(false);
   const [canReview, setCanReview] = useState(false);
+  const [userName, setUserName] = useState("");
   const [reviewEligibleChecked, setReviewEligibleChecked] = useState(false);
   const [categories, setCategories] = useState([]);
   const { toast } = useToast();
@@ -43,7 +44,7 @@ export default function ProductDetail() {
         comment: reviewForm.comment.trim(),
         approved: false,
         verified_purchase: true,
-        author: "Customer",
+        author: userName || "Verified buyer",
       });
       toast({ title: "Review submitted for moderation" });
       setReviewForm({ rating: 5, comment: "" });
@@ -82,6 +83,7 @@ export default function ProductDetail() {
           let user = null;
           try { user = await base44.auth.me(); } catch {}
           if (user) {
+            if (user.full_name) setUserName(user.full_name);
             const orders = await base44.entities.Order.filter({}, "-created_date", 50);
             const delivered = (orders || []).some(
               (o) => o.status === "delivered" && (o.items || []).some((it) => it.product_id === id)
