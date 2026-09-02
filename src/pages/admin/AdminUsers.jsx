@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { SelectNative } from "@/components/ui/select-native";
+import Dropdown from "@/components/admin/ui/Dropdown";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { roleOptions, roleLabel } from "@/lib/adminPermissions";
@@ -155,18 +155,15 @@ export default function AdminUsers() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">Role</span>
-                    <SelectNative
+                    <Dropdown
+                      type="search"
+                      options={roleOptions(customRoles)}
                       value={d.role}
-                      onChange={(e) => setRole(u.id, e.target.value)}
+                      onChange={(v) => setRole(u.id, v)}
                       disabled={locked}
-                      className="h-9 w-48"
-                    >
-                      {roleOptions(customRoles).map((r) => (
-                        <option key={r.value} value={r.value}>
-                          {r.label}
-                        </option>
-                      ))}
-                    </SelectNative>
+                      placeholder="Role"
+                      className="w-48"
+                    />
                   </div>
                 </div>
 

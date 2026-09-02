@@ -3,7 +3,7 @@ import { Eye, Download, CheckSquare, Square, FileText } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { SelectNative } from "@/components/ui/select-native";
+import Dropdown from "@/components/admin/ui/Dropdown";
 import { useToast } from "@/components/ui/use-toast";
 import OrderAnalytics from "@/components/admin/OrderAnalytics";
 import OrderFilters from "@/components/admin/OrderFilters";
@@ -187,12 +187,15 @@ export default function AdminOrders() {
           <span className="text-sm font-medium">{selected.length} selected</span>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Set status</span>
-            <SelectNative onChange={(e) => bulkUpdate(e.target.value)} value="" className="!w-auto !py-1.5 text-sm">
-              <option value="" disabled>Choose…</option>
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </SelectNative>
+            <Dropdown
+              type="select"
+              options={STATUSES.map((s) => ({ label: s, value: s }))}
+              value=""
+              onChange={bulkUpdate}
+              placeholder="Choose…"
+              size="sm"
+              className="w-[150px]"
+            />
           </div>
           <Button size="sm" variant="outline" onClick={bulkDownloadInvoices} disabled={invoiceBusy}><Download className="mr-1.5 h-3.5 w-3.5" /> Download invoices</Button>
           <Button variant="ghost" size="sm" onClick={() => setSelected([])}>Clear</Button>
@@ -246,15 +249,16 @@ export default function AdminOrders() {
                     <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{METHOD_LABEL[o.payment_method || "card"] || "Card"}</span>
                   </td>
                   <td className="px-3 py-3">
-                    <SelectNative
+                    <Dropdown
+                      type="select"
+                      bare
+                      options={STATUSES.map((s) => ({ label: s, value: s }))}
                       value={o.status}
-                      onChange={(e) => updateStatus(o.id, e.target.value)}
-                      className={`!w-auto !py-1 !pl-2 text-xs font-medium !border-transparent !bg-transparent ${STATUS_STYLES[o.status]}`}
-                    >
-                      {STATUSES.map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </SelectNative>
+                      onChange={(v) => updateStatus(o.id, v)}
+                      placeholder={o.status}
+                      className={`capitalize ${STATUS_STYLES[o.status]}`}
+                      panelClassName="w-[150px]"
+                    />
                   </td>
                   <td className="px-3 py-3">
                     <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${INVOICE_STATUS[o.invoice_status || "not_generated"]}`}>{INVOICE_STATUS_LABEL[o.invoice_status || "not_generated"]}</span>

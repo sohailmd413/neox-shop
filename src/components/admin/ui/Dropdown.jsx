@@ -1,18 +1,28 @@
 import React, { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { Check, ChevronDown, X, Loader2, FolderTree, Layers, Inbox } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 /**
- * Unified admin dropdown.
- * props:
- *  - options: [{ label, value, icon?, parentId?, disabled?, group? }]
- *  - value: string | string[] | undefined
- *  - onChange: (next) => void  (string for single variants; string[] for multi)
- *  - type: "select" | "search" | "multi" | "tree"
- *  - placeholder, loading, emptyText, clearable
- *  - className (trigger width), panelClassName, contentMaxHeight
+ * Unified admin dropdown. One component, four interchangeable variants:
+ *   type="select"  StandardSelect  — trigger + list, type-ahead, no search input
+ *   type="search"  SearchableSelect — search input live-filters options
+ *   type="multi"   MultiSelectChips — selected values shown as removable chips
+ *   type="tree"    TreeSelect — nested, indented options for hierarchical data
+ *
+ * Option shape (shared by all variants): { label, value, icon?, parentId?|parent_id?, disabled? }
+ *
+ * Behavior:
+ *  - Click-outside / Escape closes (Popover/Drawer + Command handle this)
+ *  - Arrow Up/Down navigates, Enter selects, type-ahead jump (cmdk provides these)
+ *  - `loading` renders a skeleton state inside the panel
+ *  - `disabled` greys the trigger and blocks opening
+ *  - framer-motion open (fade + scale 0.97 → 1, 150ms); 180° chevron rotation
+ *  - On mobile (<768px) the panel renders as a vaul bottom sheet with ≥44px rows
  */
 export default function Dropdown({
   options = [],
@@ -23,12 +33,18 @@ export default function Dropdown({
   loading = false,
   emptyText = "No results found.",
   clearable = false,
+  disabled = false,
+  size = "default",
+  bare = false,
+  sheet = true,
   className = "",
   panelClassName = "",
 }) {
   const [open, setOpen] = useState(false);
+  const isMobile = useIsMobile();
   const multi = type === "multi";
   const searchable = type === "search" || type === "multi" || type === "tree";
+  const useSheet = sheet && !bare && isMobile;
 
   const optByVal = useMemo(() => {
     const m = new Map();
@@ -66,7 +82,7 @@ export default function Dropdown({
 
   const triggerLabel = () => {
     if (loading) return null;
-    if (multi) return null; // chips (with placeholder) render in the block below
+    if (multi) return null; // chips + placeholder rendered separately
     if (value === undefined || value === "" || value === null) return placeholder;
     return pathLabel(value) ?? placeholder;
   };
@@ -92,18 +108,27 @@ export default function Dropdown({
     setOpen(false);
   };
 
-  const renderList = () => {
+  const renderList = (mobile = false) => {
     if (loading) {
       return (
-        <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+        <div className="p-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-2.5 px-2 py-2.5">
+              <div className="h-4 w-4 shrink-0 rounded-full bg-muted animate-pulse" />
+              <div className="h-3 flex-1 rounded bg-muted animate-pulse" style={{ width: `${60 + ((i * 7) % 35)}%` }} />
+            </div>
+          ))}
+          <div className="flex items-center justify-center gap-2 py-2 text-xs text-muted-foreground">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading…
+          </div>
         </div>
       );
     }
+    const itemCls = mobile ? "min-h-[44px] py-2.5" : "py-2";
     return (
       <Command loop shouldFilter={searchable}>
         {searchable && (
-          <CommandInput placeholder={type === "tree" ? "Search categories…" : "Search…"} autoFocus />
+          <CommandInput placeholder={type === "tree" ? "Search categories…" : "Search…"} autoFocus={!mobile} />
         )}
         <CommandList>
           <CommandEmpty>
@@ -122,6 +147,7 @@ export default function Dropdown({
                     disabled={o.disabled}
                     onSelect={() => !o.disabled && selectOne(o.value)}
                     data-disabled={o.disabled}
+                    className={itemCls}
                   >
                     <span className="flex items-center gap-2" style={{ paddingLeft: o._depth * 14 }}>
                       <Icon className="h-4 w-4 text-muted-foreground" />
@@ -143,6 +169,7 @@ export default function Dropdown({
                     disabled={o.disabled}
                     onSelect={() => !o.disabled && selectOne(o.value)}
                     data-disabled={o.disabled}
+                    className={itemCls}
                   >
                     {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
                     <span>{o.label}</span>
@@ -157,48 +184,95 @@ export default function Dropdown({
     );
   };
 
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          role="combobox"
-          aria-expanded={open}
-          aria-haspopup="listbox"
-          disabled={loading && !options.length}
+  const triggerClass = bare
+    ? cn(
+        "inline-flex h-auto w-auto items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
+        disabled && "cursor-not-allowed opacity-50",
+        className
+      )
+    : cn(
+        "flex w-full items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-left text-sm shadow-sm transition-colors hover:border-foreground/30 focus:outline-none focus-visible:border-foreground/60 focus-visible:ring-2 focus-visible:ring-ring/30",
+        size === "sm" ? "min-h-8" : "min-h-9",
+        disabled && "cursor-not-allowed opacity-50",
+        className
+      );
+
+  const renderTrigger = (extra) => (
+    <button
+      type="button"
+      role="combobox"
+      aria-expanded={open}
+      aria-haspopup="listbox"
+      disabled={disabled}
+      className={triggerClass}
+      {...extra}
+    >
+      {triggerLabel() !== null && (
+        <span
           className={cn(
-            "flex min-h-9 w-full items-center gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-left text-sm shadow-sm transition-colors",
-            "hover:border-foreground/30 focus:border-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring/30",
-            "disabled:cursor-not-allowed disabled:opacity-50",
-            className
+            "flex-1 truncate",
+            (value === "" || value === undefined || value === null || (multi && !value?.length)) && "text-muted-foreground"
           )}
         >
-          {triggerLabel() !== null && (
-            <span className={cn("flex-1 truncate", (value === "" || value === undefined || value === null || (multi && !value?.length)) && "text-muted-foreground")}>
-              {triggerLabel()}
-            </span>
-          )}
-          {multi && (
-            <span className="flex flex-1 flex-wrap items-center gap-1">
-              {Array.isArray(value) && value.map((v) => (
-                <span key={v} className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs">
-                  {optByVal.get(v)?.label ?? v}
-                  <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={(e) => removeChip(v, e)} className="text-muted-foreground hover:text-foreground">
+          {triggerLabel()}
+        </span>
+      )}
+      {multi && (
+        <span className="flex flex-1 flex-wrap items-center gap-1">
+          {Array.isArray(value) &&
+            value.map((v) => (
+              <span key={v} className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs">
+                {optByVal.get(v)?.label ?? v}
+                {!disabled && (
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={(e) => removeChip(v, e)}
+                    className="text-muted-foreground transition-transform duration-150 hover:scale-110 hover:text-foreground"
+                    aria-label={`Remove ${optByVal.get(v)?.label ?? v}`}
+                  >
                     <X className="h-3 w-3" />
                   </button>
-                </span>
-              ))}
-              {(!value || value.length === 0) && <span className="text-muted-foreground">{placeholder}</span>}
-            </span>
-          )}
-          {clearable && !multi && value && (
-            <X onClick={clear} className="h-4 w-4 shrink-0 text-muted-foreground hover:text-foreground" />
-          )}
-          <ChevronDown className={cn("ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className={cn("w-[var(--radix-popover-trigger-width)] min-w-[200px] p-0", panelClassName)} align="start">
-        {renderList()}
+                )}
+              </span>
+            ))}
+          {(!value || value.length === 0) && <span className="text-muted-foreground">{placeholder}</span>}
+        </span>
+      )}
+      {clearable && !multi && value && !disabled && (
+        <X onClick={clear} className="h-4 w-4 shrink-0 text-muted-foreground hover:text-foreground" />
+      )}
+      <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200", open && "rotate-180", multi && "ml-auto")} />
+    </button>
+  );
+
+  if (useSheet) {
+    return (
+      <>
+        {renderTrigger({ onClick: disabled ? undefined : () => setOpen(true) })}
+        <Drawer open={open} onOpenChange={setOpen}>
+          <DrawerContent className="max-h-[85vh]">
+            <div className="mx-auto mb-2 h-1.5 w-10 rounded-full bg-muted" />
+            <div className="px-2 pb-6">{renderList(true)}</div>
+          </DrawerContent>
+        </Drawer>
+      </>
+    );
+  }
+
+  return (
+    <Popover open={disabled ? false : open} onOpenChange={disabled ? () => {} : setOpen}>
+      <PopoverTrigger asChild>{renderTrigger()}</PopoverTrigger>
+      <PopoverContent className={cn("min-w-[200px] p-0", panelClassName)} align="start" collisionPadding={8}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
+          style={{ width: "var(--radix-popover-trigger-width)" }}
+          className="origin-[var(--radix-popover-content-transform-origin)]"
+        >
+          {renderList(false)}
+        </motion.div>
       </PopoverContent>
     </Popover>
   );

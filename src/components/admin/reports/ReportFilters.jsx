@@ -1,5 +1,5 @@
 import React from "react";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import Dropdown from "@/components/admin/ui/Dropdown";
 import { RANGES } from "@/lib/reportUtils";
 
 const ALL = "__all__";
@@ -7,24 +7,23 @@ const ALL = "__all__";
 export default function ReportFilters({ range, setRange, compare, setCompare, category, setCategory, categories }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Select value={range} onValueChange={setRange}>
-        <SelectTrigger className="h-9 w-[160px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {RANGES.map((r) => (<SelectItem key={r.id} value={r.id}>{r.label}</SelectItem>))}
-        </SelectContent>
-      </Select>
+      <Dropdown
+        type="select"
+        options={RANGES.map((r) => ({ label: r.label, value: r.id }))}
+        value={range}
+        onChange={setRange}
+        placeholder="Date range"
+        className="w-[160px]"
+      />
 
-      <Select value={category || ALL} onValueChange={(v) => setCategory(v === ALL ? "" : v)}>
-        <SelectTrigger className="h-9 w-[180px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL}>All categories</SelectItem>
-          {categories.map((c) => (<SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>))}
-        </SelectContent>
-      </Select>
+      <Dropdown
+        type="search"
+        options={[{ label: "All categories", value: ALL }, ...categories.map((c) => ({ label: c.name, value: c.name }))]}
+        value={category || ALL}
+        onChange={(v) => setCategory(v === ALL ? "" : v)}
+        placeholder="All categories"
+        className="w-[200px]"
+      />
 
       <label className="inline-flex h-9 items-center gap-2 rounded-md border border-input bg-transparent px-3 text-sm shadow-sm">
         <input type="checkbox" checked={compare} onChange={(e) => setCompare(e.target.checked)} className="h-4 w-4 rounded border-border" />

@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Dropdown from "@/components/admin/ui/Dropdown";
 import { useToast } from "@/components/ui/use-toast";
 import { roleOptions, roleLabel } from "@/lib/adminPermissions";
 import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
@@ -138,14 +138,13 @@ export default function StaffInviteDialog({ onClose, onInvited, existingStaff = 
 
           <div className="space-y-2">
             <Label>Role</Label>
-            <Select value={role} onValueChange={setRole}>
-              <SelectTrigger className="h-9 w-full"><SelectValue placeholder="Select a role" /></SelectTrigger>
-              <SelectContent>
-                {options.map((r) => (
-                  <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Dropdown
+              type="search"
+              options={options}
+              value={role}
+              onChange={setRole}
+              placeholder="Select a role"
+            />
             <p className="text-xs text-muted-foreground">
               They'll set their own password from the invite email. Permissions are managed on the role.
             </p>
