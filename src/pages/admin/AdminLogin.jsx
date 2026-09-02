@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ShieldCheck, Mail, Lock, Loader2, ArrowLeft } from "lucide-react";
 
+const STAFF_ROLES = ["admin", "product_manager", "delivery_manager", "marketing_manager"];
+
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,14 +21,14 @@ export default function AdminLogin() {
     try {
       await base44.auth.loginViaEmailPassword(email, password);
       const me = await base44.auth.me();
-      if (me?.role !== "admin") {
+      if (!STAFF_ROLES.includes(me?.role)) {
         await base44.auth.logout();
-        setError("This account is not an administrator. Access is restricted to admin accounts only.");
+        setError("This account does not have staff access. Only admin, product, delivery, or marketing manager accounts can sign in here.");
         return;
       }
       window.location.href = "/admin";
     } catch (err) {
-      setError(err.message || "Invalid admin credentials");
+      setError(err.message || "Invalid staff credentials");
     } finally {
       setLoading(false);
     }
@@ -40,8 +42,8 @@ export default function AdminLogin() {
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background">
               <ShieldCheck className="h-6 w-6" />
             </div>
-            <h1 className="mt-4 text-xl font-semibold tracking-tight">Admin sign in</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Restricted to administrators only.</p>
+            <h1 className="mt-4 text-xl font-semibold tracking-tight">Admin staff sign in</h1>
+            <p className="mt-1 text-sm text-muted-foreground">For admin, product, delivery & marketing managers.</p>
           </div>
 
           {error && (
@@ -50,7 +52,7 @@ export default function AdminLogin() {
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Admin email</Label>
+              <Label htmlFor="email">Staff email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -74,7 +76,7 @@ export default function AdminLogin() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-9 h-11"
+                  className="pl-11 h-11"
                   placeholder="••••••••"
                   required
                 />
@@ -92,7 +94,7 @@ export default function AdminLogin() {
           </form>
 
           <div className="mt-6 rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
-            Sign in with an admin account. Only users with the <span className="font-medium text-foreground">admin</span> role can enter — regular customer accounts are rejected. The app owner is an admin by default; other admins are added via invite.
+            Sign in with a staff account. The app owner is the main admin by default; other staff are added via invite, then assigned a role and section access in <span className="font-medium text-foreground">Staff & access</span>.
           </div>
 
           <Link

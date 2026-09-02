@@ -1,17 +1,21 @@
 {
+  "name": "User",
+  "type": "object",
   "properties": {
     "role": {
       "type": "string",
-      "description": "The role of the user in the app",
       "enum": [
         "admin",
+        "product_manager",
+        "delivery_manager",
+        "marketing_manager",
         "user"
-      ]
+      ],
+      "default": "user"
+    },
+    "permissions": {
+      "type": "object",
+      "description": "Per-section admin access overrides. Keys are section ids (dashboard, products, categories, orders, reviews, posters); values are 'allow' or 'deny'. The role provides defaults; explicit entries override them."
     }
-  },
-  "required": [
-    "role"
-  ],
-  "name": "User",
-  "type": "object"
+  }
 }

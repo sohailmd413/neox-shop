@@ -1,0 +1,73 @@
+{
+  "name": "Poster",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "link_url": {
+      "type": "string",
+      "description": "Optional URL the poster links to."
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "sort_order": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "title",
+    "image_url"
+  ],
+  "rls": {
+    "read": true,
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    }
+  }
+}

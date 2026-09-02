@@ -21,6 +21,8 @@ import AdminDashboard from '@/pages/admin/AdminDashboard';
 import AdminProducts from '@/pages/admin/AdminProducts';
 import AdminOrders from '@/pages/admin/AdminOrders';
 import AdminReviews from '@/pages/admin/AdminReviews';
+import AdminPosters from '@/pages/admin/AdminPosters';
+import AdminUsers from '@/pages/admin/AdminUsers';
 import AdminLogin from '@/pages/admin/AdminLogin';
 import AdminCategories from '@/pages/admin/AdminCategories';
 import Login from '@/pages/Login';
@@ -81,6 +83,8 @@ const AuthenticatedApp = () => {
             <Route path="categories" element={<AdminCategories />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="reviews" element={<AdminReviews />} />
+            <Route path="posters" element={<AdminPosters />} />
+            <Route path="users" element={<AdminUsers />} />
           </Route>
           <Route path="*" element={<PageNotFound />} />
         </Routes>

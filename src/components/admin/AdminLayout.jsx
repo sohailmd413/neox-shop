@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { Link, NavLink, Outlet, Navigate } from "react-router-dom";
-import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers } from "lucide-react";
+import { Link, NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
+import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { canAccess } from "@/lib/adminPermissions";
 
 const NAV = [
-  { label: "Dashboard", path: "/admin", icon: LayoutDashboard, end: true },
-  { label: "Products", path: "/admin/products", icon: Package },
-  { label: "Categories", path: "/admin/categories", icon: Layers },
-  { label: "Orders", path: "/admin/orders", icon: ClipboardList },
-  { label: "Reviews", path: "/admin/reviews", icon: Star },
+  { section: "dashboard", label: "Dashboard", path: "/admin", icon: LayoutDashboard, end: true },
+  { section: "products", label: "Products", path: "/admin/products", icon: Package },
+  { section: "categories", label: "Categories", path: "/admin/categories", icon: Layers },
+  { section: "orders", label: "Orders", path: "/admin/orders", icon: ClipboardList },
+  { section: "reviews", label: "Reviews", path: "/admin/reviews", icon: Star },
+  { section: "posters", label: "Posters", path: "/admin/posters", icon: ImageIcon },
+  { section: "users", label: "Staff & access", path: "/admin/users", icon: UsersIcon },
 ];
 
 export default function AdminLayout() {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
     (async () => {
@@ -37,16 +41,19 @@ export default function AdminLayout() {
     return <Navigate to="/admin/login" replace />;
   }
 
-  if (user.role !== "admin") {
+  const navItems = NAV.filter((n) => canAccess(user, n.section));
+
+  // Customer accounts (or unknown roles) have no admin access at all.
+  if (navItems.length === 0) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-5 text-center">
         <ShieldAlert className="h-10 w-10 text-muted-foreground" />
-        <h1 className="text-xl font-semibold">Admin access required</h1>
+        <h1 className="text-xl font-semibold">Staff access required</h1>
         <p className="max-w-sm text-sm text-muted-foreground">
-          Only admin accounts can access this area. Contact your store administrator if you believe this is an error.
+          You don't have access to the admin panel. Contact the store administrator if you believe this is an error.
         </p>
         <Link to="/admin/login" className="mt-2 inline-flex items-center gap-1.5 text-sm underline">
-          Admin sign in
+          Staff sign in
         </Link>
         <Link to="/" className="inline-flex items-center gap-1.5 text-sm underline">
           <ArrowLeft className="h-4 w-4" /> Back to store
@@ -55,10 +62,26 @@ export default function AdminLayout() {
     );
   }
 
+  // Map the current route to a section and guard direct URL access.
+  const sectionFromPath = () => {
+    if (location.pathname === "/admin" || location.pathname === "/admin/") return "dashboard";
+    return location.pathname.split("/")[2];
+  };
+  const currentSection = sectionFromPath();
+
+  // Landing on dashboard without dashboard access -> redirect to first allowed section.
+  if (location.pathname === "/admin" && !canAccess(user, "dashboard")) {
+    return <Navigate to={navItems[0].path} replace />;
+  }
+
+  const sectionBlocked = !canAccess(user, currentSection);
+
   const linkClass = ({ isActive }) =>
     `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
       isActive ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted hover:text-foreground"
     }`;
+  const mobileLinkClass = ({ isActive }) =>
+    `whitespace-nowrap rounded-lg px-3 py-1.5 text-xs ${isActive ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted"}`;
 
   return (
     <div className="flex min-h-screen bg-muted/20">
@@ -68,7 +91,7 @@ export default function AdminLayout() {
           <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Admin</p>
         </div>
         <nav className="flex-1 space-y-1 p-3">
-          {NAV.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             return (
               <NavLink key={item.path} to={item.path} end={item.end} className={linkClass}>
@@ -87,8 +110,8 @@ export default function AdminLayout() {
       <div className="flex-1">
         <header className="flex items-center justify-between border-b border-border bg-background px-5 py-3 md:px-8">
           <nav className="flex gap-1 overflow-x-auto md:hidden">
-            {NAV.map((item) => (
-              <NavLink key={item.path} to={item.path} end={item.end} className={({ isActive }) => `whitespace-nowrap rounded-lg px-3 py-1.5 text-xs ${isActive ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted"}`}>
+            {navItems.map((item) => (
+              <NavLink key={item.path} to={item.path} end={item.end} className={mobileLinkClass}>
                 {item.label}
               </NavLink>
             ))}
@@ -98,7 +121,17 @@ export default function AdminLayout() {
           </div>
         </header>
         <main className="p-5 md:p-8">
-          <Outlet />
+          {sectionBlocked ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
+              <ShieldAlert className="h-8 w-8 text-muted-foreground" />
+              <p className="text-lg font-medium">Access denied</p>
+              <p className="max-w-sm text-sm text-muted-foreground">
+                You don't have access to this section. Choose an allowed option from the sidebar.
+              </p>
+            </div>
+          ) : (
+            <Outlet />
+          )}
         </main>
       </div>
     </div>
