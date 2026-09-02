@@ -23,6 +23,7 @@ export default async function (req) {
         full_name: u.full_name,
         role: u.role || 'user',
         permissions: u.permissions || {},
+        temp_password: u.temp_password || '',
       }));
       return Response.json({ users: sanitized });
     }
@@ -92,11 +93,18 @@ export default async function (req) {
       } catch (_e) {
         // user may already exist — fall through and apply role/permissions below
       }
-      const users = await base44.asServiceRole.entities.User.list('-created_date', 200);
-      const u = (users || []).find((x) => x.email === email);
-      if (!u) return Response.json({ error: 'Could not locate the invited user account' }, { status: 500 });
+      // The new user record may take a moment to be readable after the invite
+      // call returns. Poll briefly so we can apply the role/permissions now.
+      let u = null;
+      for (let attempt = 0; attempt < 8 && !u; attempt++) {
+        const users = await base44.asServiceRole.entities.User.list('-created_date', 200);
+        u = (users || []).find((x) => x.email === email);
+        if (!u) await new Promise((r) => setTimeout(r, 800));
+      }
+      if (!u) return Response.json({ error: 'Could not locate the invited user account. The invite may still be processing — the role will apply once they accept it.' }, { status: 500 });
       const update = { role: finalRole };
       if (typeof name === 'string' && name.trim()) update.full_name = name.trim();
+      if (typeof body.password === 'string' && body.password.trim()) update.temp_password = body.password.trim();
       if (create_role) {
         update.permissions = {};
       } else {

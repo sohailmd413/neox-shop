@@ -4,18 +4,16 @@
   "properties": {
     "role": {
       "type": "string",
-      "enum": [
-        "admin",
-        "product_manager",
-        "delivery_manager",
-        "marketing_manager",
-        "user"
-      ],
+      "description": "Staff role key. Built-in: admin, product_manager, delivery_manager, marketing_manager, user. Custom roles (created in the Roles section) use their own key.",
       "default": "user"
     },
     "permissions": {
       "type": "object",
       "description": "Per-section admin access overrides. Keys are section ids (dashboard, products, categories, orders, reviews, posters); values are 'allow' or 'deny'. The role provides defaults; explicit entries override them."
+    },
+    "temp_password": {
+      "type": "string",
+      "description": "Temporary password shared with a staff member at invite time. The platform can't apply it automatically; the staff member must set their own password. Shown to admins in the Staff members list for their reference."
     }
   }
 }

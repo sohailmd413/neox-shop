@@ -7,7 +7,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ADMIN_SECTIONS, roleOptions, roleLabel, roleDefaults, defaultsAllowed } from "@/lib/adminPermissions";
 import StaffInviteDialog from "@/components/admin/StaffInviteDialog";
 import StaffDeleteDialog from "@/components/admin/StaffDeleteDialog";
-import { Loader2, Save, ShieldCheck, UserPlus, Trash2 } from "lucide-react";
+import { Loader2, Save, ShieldCheck, UserPlus, Trash2, KeyRound, Eye, EyeOff } from "lucide-react";
 
 const TRI_STATES = [
   { value: "inherit", label: "Inherit" },
@@ -156,6 +156,12 @@ export default function AdminUsers() {
                   </div>
                 </div>
 
+                {u.temp_password ? (
+                  <div className="mt-3 flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2">
+                    <StaffTempPassword value={u.temp_password} />
+                  </div>
+                ) : null}
+
                 <div className="mt-4 grid gap-2 sm:grid-cols-2">
                   {ADMIN_SECTIONS.map((s) => {
                     const currentValue = d.permissions?.[s.id] || "inherit";
@@ -238,6 +244,35 @@ export default function AdminUsers() {
           <span className="font-medium text-foreground">Staff members</span> is only available to the main admin. The main admin cannot lock themselves out. Staff join via invite; assign their role and section access here after they sign in once.
         </p>
       </div>
+    </div>
+  );
+}
+
+function StaffTempPassword({ value }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="flex flex-1 items-center gap-2">
+      <KeyRound className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <span className="text-xs text-muted-foreground">Temp password</span>
+      <code className="flex-1 truncate font-mono text-sm font-medium">
+        {show ? value : "••••••••"}
+      </code>
+      <button
+        type="button"
+        onClick={() => setShow((v) => !v)}
+        className="text-muted-foreground hover:text-foreground"
+        aria-label={show ? "Hide password" : "Show password"}
+      >
+        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+      <button
+        type="button"
+        onClick={() => navigator.clipboard?.writeText(value)}
+        className="text-muted-foreground hover:text-foreground"
+        aria-label="Copy password"
+      >
+        <span className="text-xs underline">Copy</span>
+      </button>
     </div>
   );
 }

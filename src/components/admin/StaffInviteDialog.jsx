@@ -23,6 +23,7 @@ export default function StaffInviteDialog({ onClose, onInvited }) {
   const [role, setRole] = useState("product_manager");
   const [showPw, setShowPw] = useState(false);
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [newRoleName, setNewRoleName] = useState("");
   const [newRoleLabel, setNewRoleLabel] = useState("");
   const [permissions, setPermissions] = useState({});
@@ -52,6 +53,10 @@ export default function StaffInviteDialog({ onClose, onInvited }) {
       toast({ title: "Enter a valid email", variant: "destructive" });
       return;
     }
+    if (password && password !== confirmPassword) {
+      toast({ title: "Passwords do not match", variant: "destructive" });
+      return;
+    }
     let finalRole = role;
     let createRole = null;
     let finalPerms = permissions;
@@ -78,6 +83,7 @@ export default function StaffInviteDialog({ onClose, onInvited }) {
         name,
         role: finalRole,
         permissions: finalPerms,
+        password,
       };
       if (createRole) payload.create_role = createRole;
       await base44.functions.invoke("manageStaffAccess", payload);
@@ -149,6 +155,21 @@ export default function StaffInviteDialog({ onClose, onInvited }) {
             <p className="text-xs text-muted-foreground">
               The platform can't apply this password automatically. Share it out-of-band; the staff member must set their own password from the invite email to actually sign in.
             </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Confirm password</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type={showPw ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter password"
+                className="pl-9"
+                autoComplete="new-password"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
