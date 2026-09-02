@@ -24,6 +24,7 @@ import AdminOrders from '@/pages/admin/AdminOrders';
 import AdminCustomers from '@/pages/admin/AdminCustomers';
 import CustomerDetail from '@/pages/admin/CustomerDetail';
 import AdminCoupons from '@/pages/admin/AdminCoupons';
+import AdminSettings from '@/pages/admin/AdminSettings';
 import AdminReviews from '@/pages/admin/AdminReviews';
 import AdminPosters from '@/pages/admin/AdminPosters';
 import AdminUsers from '@/pages/admin/AdminUsers';
@@ -33,6 +34,7 @@ import AdminLogin from '@/pages/admin/AdminLogin';
 import PrintBarcodes from '@/pages/admin/PrintBarcodes';
 import AdminCategories from '@/pages/admin/AdminCategories';
 import AdminReports from '@/pages/admin/AdminReports';
+import PolicyPage from '@/pages/store/PolicyPage';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -85,6 +87,7 @@ const AuthenticatedApp = () => {
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/orders" element={<Orders />} />
+            <Route path="/policies/:type" element={<PolicyPage />} />
           </Route>
           {/* Admin */}
           <Route path="/admin" element={<AdminLayout />}>
@@ -98,6 +101,7 @@ const AuthenticatedApp = () => {
             <Route path="reports" element={<AdminReports />} />
             <Route path="posters" element={<AdminPosters />} />
             <Route path="coupons" element={<AdminCoupons />} />
+            <Route path="settings" element={<AdminSettings />} />
             <Route path="roles" element={<AdminRoles />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="profile" element={<AdminProfile />} />

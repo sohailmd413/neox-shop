@@ -41,6 +41,10 @@ export default function StorefrontLayout() {
                 <li>{t("footer.shipping")}</li>
                 <li>{t("footer.contact")}</li>
                 <li>{t("footer.faq")}</li>
+                <li className="pt-1"><Link to="/policies/terms" className="hover:text-foreground hover:underline">Terms of Service</Link></li>
+                <li><Link to="/policies/privacy" className="hover:text-foreground hover:underline">Privacy Policy</Link></li>
+                <li><Link to="/policies/return" className="hover:text-foreground hover:underline">Return Policy</Link></li>
+                <li><Link to="/policies/shipping" className="hover:text-foreground hover:underline">Shipping Policy</Link></li>
               </ul>
             </div>
             <div>
