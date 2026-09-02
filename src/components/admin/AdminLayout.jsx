@@ -102,7 +102,7 @@ export default function AdminLayout() {
 
   return (
     <div className="flex min-h-screen bg-muted/20">
-      <aside className="hidden w-60 flex-shrink-0 flex-col border-r border-border bg-background md:flex">
+      <aside className="sticky top-0 hidden h-screen w-60 flex-shrink-0 flex-col overflow-y-auto border-r border-border bg-background md:flex">
         <div className="border-b border-border px-5 py-5">
           <Link to="/" className="text-lg font-semibold tracking-tight">Admin</Link>
           <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Dashboard</p>
