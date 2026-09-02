@@ -92,22 +92,20 @@ export default function StaffInviteDialog({ onClose, onInvited }) {
 
           <div>
             <Label className="mb-2 block">Section access</Label>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-2">
               {ADMIN_SECTIONS.map((s) => {
                 const current = permissions[s.id] || "inherit";
                 const effective = current === "allow" || (current === "inherit" && defaults[s.id]);
                 return (
-                  <div key={s.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <span className={`h-2 w-2 rounded-full ${effective ? "bg-foreground" : "bg-muted-foreground/30"}`} />
-                      <span className="text-sm font-medium">{s.label}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
+                  <div key={s.id} className="flex w-full items-center gap-2 rounded-lg border border-border px-3 py-2">
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${effective ? "bg-foreground" : "bg-muted-foreground/30"}`} />
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{s.label}</span>
+                    <div className="flex shrink-0 items-center gap-1">
                       {TRI.map((t) => (
                         <button
                           key={t.value}
                           onClick={() => setPerm(s.id, t.value)}
-                          className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                          className={`w-[58px] rounded-md px-2 py-1 text-center text-[11px] font-medium transition-colors ${
                             current === t.value
                               ? t.value === "allow"
                                 ? "bg-foreground text-background"
