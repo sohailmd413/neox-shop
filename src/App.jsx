@@ -21,6 +21,8 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import AdminProducts from '@/pages/admin/AdminProducts';
 import AdminOrders from '@/pages/admin/AdminOrders';
+import AdminCustomers from '@/pages/admin/AdminCustomers';
+import CustomerDetail from '@/pages/admin/CustomerDetail';
 import AdminReviews from '@/pages/admin/AdminReviews';
 import AdminPosters from '@/pages/admin/AdminPosters';
 import AdminUsers from '@/pages/admin/AdminUsers';
@@ -89,6 +91,8 @@ const AuthenticatedApp = () => {
             <Route path="products" element={<AdminProducts />} />
             <Route path="categories" element={<AdminCategories />} />
             <Route path="orders" element={<AdminOrders />} />
+            <Route path="customers" element={<AdminCustomers />} />
+            <Route path="customers/:id" element={<CustomerDetail />} />
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="posters" element={<AdminPosters />} />

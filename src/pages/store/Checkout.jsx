@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Check, Lock } from "lucide-react";
@@ -21,6 +21,13 @@ export default function Checkout() {
   const [couponInput, setCouponInput] = useState("");
   const [coupon, setCoupon] = useState(null);
   const [couponMsg, setCouponMsg] = useState("");
+  const [blocked, setBlocked] = useState(false);
+
+  useEffect(() => {
+    base44.functions.invoke("getCustomerAccess", {})
+      .then((r) => setBlocked(!!r?.data?.blocked))
+      .catch(() => {});
+  }, []);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -157,6 +164,17 @@ export default function Checkout() {
             <Link to="/shop">Continue shopping</Link>
           </Button>
         </motion.div>
+      </div>
+    );
+  }
+
+  if (blocked) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-5 pt-16 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-100 text-red-600"><Lock className="h-6 w-6" /></div>
+        <h1 className="text-2xl font-semibold tracking-tight">Your account is blocked</h1>
+        <p className="max-w-sm text-sm text-muted-foreground">You can't place new orders. Please contact the store for help.</p>
+        <Button asChild className="rounded-full"><Link to="/shop">Back to store</Link></Button>
       </div>
     );
   }

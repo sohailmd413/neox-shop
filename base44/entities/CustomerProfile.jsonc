@@ -1,0 +1,52 @@
+{
+  "name": "CustomerProfile",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "The app user id this profile belongs to."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "blocked"
+      ],
+      "default": "active",
+      "description": "Blocked customers cannot place new orders."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Internal admin notes about the customer (admin-visible only)."
+    },
+    "phone": {
+      "type": "string",
+      "description": "Optional phone number captured by admin."
+    }
+  },
+  "required": [
+    "user_id"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

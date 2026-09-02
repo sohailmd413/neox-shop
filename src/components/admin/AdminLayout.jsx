@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { canAccess } from "@/lib/adminPermissions";
 
@@ -10,6 +10,7 @@ const NAV = [
   { section: "products", label: "Products", path: "/admin/products", icon: Package },
   { section: "categories", label: "Categories", path: "/admin/categories", icon: Layers },
   { section: "orders", label: "Orders", path: "/admin/orders", icon: ClipboardList },
+  { section: "customers", label: "Customers", path: "/admin/customers", icon: Contact },
   { section: "reviews", label: "Reviews", path: "/admin/reviews", icon: Star },
   { section: "posters", label: "Posters", path: "/admin/posters", icon: ImageIcon },
 ];
