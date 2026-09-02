@@ -5,7 +5,8 @@ import { SelectNative } from "@/components/ui/select-native";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { ADMIN_SECTIONS, ROLE_DEFAULTS, ROLE_LABELS, ROLE_OPTIONS } from "@/lib/adminPermissions";
-import { Loader2, Save, ShieldCheck } from "lucide-react";
+import StaffInviteDialog from "@/components/admin/StaffInviteDialog";
+import { Loader2, Save, ShieldCheck, UserPlus, Trash2 } from "lucide-react";
 
 const TRI_STATES = [
   { value: "inherit", label: "Inherit" },
@@ -18,11 +19,15 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [drafts, setDrafts] = useState({});
   const [savingId, setSavingId] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [inviting, setInviting] = useState(false);
   const { toast } = useToast();
 
   const load = async () => {
     setLoading(true);
     try {
+      const me = await base44.auth.me().catch(() => null);
+      if (me) setCurrentUserId(me.id);
       const res = await base44.functions.invoke("manageStaffAccess", { action: "list" });
       const list = res.data?.users || [];
       setUsers(list);
@@ -79,13 +84,29 @@ export default function AdminUsers() {
     setSavingId(null);
   };
 
+  const remove = async (u) => {
+    if (!confirm(`Remove ${u.email} from the staff team?`)) return;
+    try {
+      await base44.functions.invoke("manageStaffAccess", { action: "delete", user_id: u.id });
+      toast({ title: "Staff member removed" });
+      load();
+    } catch (e) {
+      toast({ title: e.response?.data?.error || "Could not remove", variant: "destructive" });
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Staff & access</h1>
-        <p className="text-sm text-muted-foreground">
-          Assign each staff member a role, then grant or deny access to individual sections. Roles set the defaults; the toggles below override them per user.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Staff members</h1>
+          <p className="text-sm text-muted-foreground">
+            Add new staff, assign roles, and grant or deny access to individual sections. Roles set the defaults; the toggles below override them per person.
+          </p>
+        </div>
+        <Button onClick={() => setInviting(true)} className="self-start">
+          <UserPlus className="h-4 w-4" /> Add staff member
+        </Button>
       </div>
 
       {loading ? (
@@ -166,15 +187,30 @@ export default function AdminUsers() {
                     Default access for <span className="font-medium text-foreground">{ROLE_LABELS[d.role]}</span>:{" "}
                     {Object.keys(defaults).filter((k) => defaults[k]).length || "none"}
                   </p>
-                  <Button onClick={() => save(u)} disabled={!dirty(u) || savingId === u.id} size="sm">
-                    {savingId === u.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    Save access
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button onClick={() => save(u)} disabled={!dirty(u) || savingId === u.id} size="sm">
+                      {savingId === u.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                      Save access
+                    </Button>
+                    <Button
+                      onClick={() => remove(u)}
+                      disabled={u.id === currentUserId}
+                      size="sm"
+                      variant="outline"
+                      className="text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" /> Remove
+                    </Button>
+                  </div>
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {inviting && (
+        <StaffInviteDialog onClose={() => setInviting(false)} onInvited={() => { setInviting(false); load(); }} />
       )}
 
       <div className="flex items-start gap-3 rounded-xl bg-muted/50 p-4 text-xs text-muted-foreground">

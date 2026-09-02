@@ -49,6 +49,6 @@ export function canAccess(user, section) {
 
 export function accessibleNavSections(user) {
   return ADMIN_SECTIONS.filter((s) => canAccess(user, s.id)).concat(
-    user.role === 'admin' ? [{ id: 'users', label: 'Staff & access' }] : []
+    user.role === 'admin' ? [{ id: 'users', label: 'Staff members' }] : []
   );
 }
