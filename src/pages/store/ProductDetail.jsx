@@ -5,7 +5,7 @@ import { ShoppingBag, Star, Minus, Plus, ChevronRight, Truck, RefreshCw, ShieldC
 import { base44 } from "@/api/base44Client";
 import { useCart } from "@/lib/CartContext";
 import { formatPrice, lf } from "@/lib/format";
-import { Image } from "@/components/ui/image";
+import ProductImage from "@/components/storefront/ProductImage";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/lib/i18n";
@@ -183,18 +183,12 @@ export default function ProductDetail() {
               transition={{ duration: 0.3 }}
               className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-muted/40"
             >
-              {images[activeImage] ? (
-                <Image
-                  src={images[activeImage]}
-                  alt={product.name}
-                  fittingType="fill"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">
-                  <ShoppingBag className="h-10 w-10" />
-                </div>
-              )}
+              <ProductImage
+                src={images[activeImage]}
+                alt={product.name}
+                fittingType="fill"
+                className="h-full w-full object-cover"
+              />
               {onSale && (
                 <span className="absolute left-4 top-4 rounded-full bg-foreground px-3 py-1 text-[11px] font-medium text-background">
                   {salePct}% off
@@ -211,7 +205,7 @@ export default function ProductDetail() {
                       activeImage === i ? "ring-2 ring-foreground ring-offset-2 ring-offset-background" : "opacity-60 hover:opacity-100"
                     }`}
                   >
-                    <Image src={img} alt={`${product.name} ${i + 1}`} fittingType="fill" className="h-full w-full object-cover" />
+                    <ProductImage src={img} alt={`${product.name} ${i + 1}`} fittingType="fill" size="sm" className="h-full w-full object-cover" />
                   </button>
                 ))}
               </div>

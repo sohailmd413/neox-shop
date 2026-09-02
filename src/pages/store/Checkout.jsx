@@ -5,7 +5,7 @@ import { ArrowLeft, Check, Lock } from "lucide-react";
 import { useCart } from "@/lib/CartContext";
 import { formatPrice } from "@/lib/format";
 import { base44 } from "@/api/base44Client";
-import { Image } from "@/components/ui/image";
+import ProductImage from "@/components/storefront/ProductImage";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useStoreSetting } from "@/lib/useStoreSetting";
@@ -282,9 +282,7 @@ export default function Checkout() {
                 {items.map((item) => (
                   <li key={item.productId} className="flex gap-3">
                     <div className="relative h-16 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-muted/40">
-                      {item.image && (
-                        <Image src={item.image} alt={item.name} fittingType="fill" className="h-full w-full object-cover" />
-                      )}
+                      <ProductImage src={item.image} alt={item.name} fittingType="fill" size="sm" className="h-full w-full object-cover" />
                       <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-foreground px-1 text-[10px] font-semibold text-background">
                         {item.quantity}
                       </span>

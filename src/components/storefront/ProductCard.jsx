@@ -5,7 +5,7 @@ import { ShoppingBag, Star, Heart } from "lucide-react";
 import { useCart } from "@/lib/CartContext";
 import { useWishlist } from "@/lib/WishlistContext";
 import { formatPrice, lf } from "@/lib/format";
-import { Image } from "@/components/ui/image";
+import ProductImage from "@/components/storefront/ProductImage";
 import { useLanguage } from "@/lib/i18n";
 import SaleCountdown from "@/components/admin/SaleCountdown";
 
@@ -41,18 +41,12 @@ export default function ProductCard({ product, index = 0 }) {
     >
       <Link to={`/product/${product.id}`} className="group block">
         <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted/40">
-          {product.images?.[0] ? (
-            <Image
-              src={product.images[0]}
-              alt={product.name}
-              fittingType="fill"
-              className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">
-              <ShoppingBag className="h-8 w-8" />
-            </div>
-          )}
+          <ProductImage
+            src={product.images?.[0]}
+            alt={product.name}
+            fittingType="fill"
+            className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+          />
 
           {onSale && (
             <span className="absolute left-3 top-3 rounded-full bg-foreground px-2.5 py-1 text-[11px] font-medium tracking-wide text-background">

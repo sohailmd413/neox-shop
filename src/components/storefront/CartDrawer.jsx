@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X, ShoppingBag, Plus, Minus, Trash2 } from "lucide-react";
 import { useCart } from "@/lib/CartContext";
 import { formatPrice, lf } from "@/lib/format";
-import { Image } from "@/components/ui/image";
+import ProductImage from "@/components/storefront/ProductImage";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n";
 
@@ -61,14 +61,13 @@ export default function CartDrawer() {
                     {items.map((item) => (
                       <li key={item.productId} className="flex gap-4">
                         <div className="h-20 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-muted/40">
-                          {item.image && (
-                            <Image
-                              src={item.image}
-                              alt={item.name}
-                              fittingType="fill"
-                              className="h-full w-full object-cover"
-                            />
-                          )}
+                          <ProductImage
+                            src={item.image}
+                            alt={item.name}
+                            fittingType="fill"
+                            size="sm"
+                            className="h-full w-full object-cover"
+                          />
                         </div>
                         <div className="flex flex-1 flex-col">
                           <div className="flex justify-between gap-2">
