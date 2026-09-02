@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { X, Save, Printer, User, Package, CreditCard, Truck, History, StickyNote } from "lucide-react";
+import { X, Save, Printer, User, Package, CreditCard, Truck, History, StickyNote, FileText } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Dropdown from "@/components/admin/ui/Dropdown";
 import { useToast } from "@/components/ui/use-toast";
+import { downloadInvoicePDF } from "@/lib/invoice";
 
 const STATUSES = ["pending", "paid", "packed", "shipped", "delivered", "cancelled", "refunded"];
 const METHODS = [
@@ -35,6 +36,7 @@ export default function OrderDetailDrawer({ order, onClose, onChanged, adminName
   });
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [invoiceBusy, setInvoiceBusy] = useState(false);
   const { toast } = useToast();
 
   if (!order) return null;
@@ -77,41 +79,18 @@ export default function OrderDetailDrawer({ order, onClose, onChanged, adminName
     }
   };
 
-  const printInvoice = () => {
-    const w = window.open("", "_blank", "width=800,height=900");
-    if (!w) return;
-    const rows = (order.items || [])
-      .map(
-        (i) => `<tr><td style="padding:6px 0">${i.name}</td><td style="text-align:center">${i.quantity}</td><td style="text-align:right">${formatPrice(i.price)}</td><td style="text-align:right">${formatPrice(i.price * i.quantity)}</td></tr>`
-      )
-      .join("");
-    const a = order.shipping_address || {};
-    w.document.write(`<!doctype html><html><head><title>Invoice #${order.id?.slice(-8).toUpperCase()}</title>
-    <style>body{font-family:system-ui,sans-serif;padding:40px;color:#111}h1{font-size:20px;margin:0}table{width:100%;border-collapse:collapse;margin-top:16px}th,td{font-size:13px}th{text-align:left;border-bottom:1px solid #ddd;padding-bottom:6px}.muted{color:#777}.tot{display:flex;justify-content:space-between;font-size:13px;margin-top:4px}</style></head>
-    <body>
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><h1>MarketFlow</h1><p class="muted">Invoice #${order.id?.slice(-8).toUpperCase()}</p></div>
-        <div style="text-align:right" class="muted"><p>${new Date(order.created_date).toLocaleString()}</p><p>Status: ${order.status}</p></div>
-      </div>
-      <hr style="margin:16px 0;border:none;border-top:1px solid #eee"/>
-      <div style="display:flex;gap:40px">
-        <div><p class="muted" style="font-size:12px">Bill to</p><p>${a.name || "—"}</p><p class="muted">${order.customer_email || ""}</p><p class="muted">${a.phone || ""}</p></div>
-        <div><p class="muted" style="font-size:12px">Ship to</p><p>${a.line1 || ""}</p><p class="muted">${a.city || ""} ${a.state || ""} ${a.postal_code || ""}</p><p class="muted">${a.country || ""}</p></div>
-      </div>
-      <table><thead><tr><th>Item</th><th style="text-align:center">Qty</th><th style="text-align:right">Price</th><th style="text-align:right">Total</th></tr></thead><tbody>${rows}</tbody></table>
-      <div style="margin-top:16px;margin-left:auto;width:260px">
-        <div class="tot"><span class="muted">Subtotal</span><span>${formatPrice(order.subtotal)}</span></div>
-        <div class="tot"><span class="muted">Shipping</span><span>${order.shipping_fee === 0 ? "Free" : formatPrice(order.shipping_fee)}</span></div>
-        <div class="tot"><span class="muted">Tax</span><span>${formatPrice(order.tax)}</span></div>
-        ${order.discount ? `<div class="tot"><span class="muted">Discount</span><span>−${formatPrice(order.discount)}</span></div>` : ""}
-        <div class="tot" style="font-weight:600;border-top:1px solid #ddd;padding-top:6px;margin-top:6px"><span>Grand total</span><span>${formatPrice(order.total)}</span></div>
-        <p style="margin:0">${order.courier ? `Courier: ${order.courier}` : ""}<br/>${order.tracking_number ? `Tracking: ${order.tracking_number}` : ""}</p>
-      </div>
-      <p class="muted" style="margin-top:40px;font-size:11px">Thank you for your purchase.</p>
-    </body></html>`);
-    w.document.close();
-    w.focus();
-    w.print();
+  const downloadInvoice = async () => {
+    setInvoiceBusy(true);
+    try {
+      const all = await base44.entities.Order.list("-created_date", 500);
+      await downloadInvoicePDF(order, all || []);
+      toast({ title: "Invoice downloaded" });
+      onChanged();
+    } catch {
+      toast({ title: "Could not generate invoice", variant: "destructive" });
+    } finally {
+      setInvoiceBusy(false);
+    }
   };
 
   return (
@@ -120,12 +99,13 @@ export default function OrderDetailDrawer({ order, onClose, onChanged, adminName
       <div className="relative h-full w-full max-w-2xl overflow-y-auto bg-background shadow-xl">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background px-6 py-4">
           <div>
-            <p className="text-sm font-medium">#{order.id?.slice(-8).toUpperCase()}</p>
+            <p className="text-sm font-medium">#{order.id?.slice(-8).toUpperCase()}{order.invoice_number && <span className="ml-2 text-xs font-normal text-muted-foreground">{order.invoice_number}</span>}</p>
             <p className="text-xs text-muted-foreground">{new Date(order.created_date).toLocaleString()}</p>
+            <p className="mt-1 text-xs">Invoice: <span className="font-medium capitalize">{order.invoice_status === "sent" ? "Sent" : order.invoice_status === "generated" ? "Generated" : "Not generated"}</span></p>
           </div>
           <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={printInvoice}>
-              <Printer className="mr-1.5 h-3.5 w-3.5" /> Invoice
+            <Button size="sm" variant="outline" onClick={downloadInvoice} disabled={invoiceBusy}>
+              <FileText className="mr-1.5 h-3.5 w-3.5" /> {invoiceBusy ? "Generating…" : "Download invoice"}
             </Button>
             <button onClick={onClose} className="rounded-lg p-2 hover:bg-muted" aria-label="Close">
               <X className="h-4 w-4" />
@@ -185,6 +165,14 @@ export default function OrderDetailDrawer({ order, onClose, onChanged, adminName
                 <p className="text-muted-foreground">{order.shipping_address?.country}</p>
                 {order.coupon_code && <p className="mt-2 text-xs">Coupon used: <span className="font-medium">{order.coupon_code}</span></p>}
               </div>
+              {order.billing_address && order.billing_address.line1 && (
+                <div className="rounded-xl border border-border p-4">
+                  <p className="mb-1 text-xs font-medium text-muted-foreground">Billing address</p>
+                  <p>{order.billing_address.line1}</p>
+                  <p className="text-muted-foreground">{order.billing_address.city}, {order.billing_address.state} {order.billing_address.postal_code}</p>
+                  <p className="text-muted-foreground">{order.billing_address.country}</p>
+                </div>
+              )}
             </div>
           )}
 

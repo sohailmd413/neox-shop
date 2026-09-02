@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Plus, Pencil, Trash2, Copy, Download, Percent, Archive, ArchiveRestore, EyeOff, RotateCcw, Rocket } from "lucide-react";
+import { Plus, Pencil, Trash2, Copy, Download, Percent, Archive, ArchiveRestore, EyeOff, RotateCcw, Rocket, Printer } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -104,7 +104,7 @@ export default function AdminProducts() {
   const filtered = products.filter((p) => {
     if (filters.status !== "archived" && p.status === "archived") return false;
     const q = filters.query.trim().toLowerCase();
-    if (q && ![p.name, p.sku, p.brand, p.slug].filter(Boolean).join(" ").toLowerCase().includes(q)) return false;
+    if (q && ![p.name, p.sku, p.brand, p.slug, p.barcode].filter(Boolean).join(" ").toLowerCase().includes(q)) return false;
     if (filters.category !== "all" && p.category !== filters.category) return false;
     if (filters.brand !== "all" && p.brand !== filters.brand) return false;
     if (filters.status !== "all" && p.status !== filters.status) return false;
@@ -208,6 +208,12 @@ export default function AdminProducts() {
   };
 
   const selectedProducts = products.filter((p) => selected.has(p.id));
+
+  const printBarcode = (p) => window.open(`/print/barcodes?ids=${p.id}`, "_blank", "noopener");
+  const bulkPrintBarcodes = () => {
+    if (!selectedProducts.length) return;
+    window.open(`/print/barcodes?ids=${selectedProducts.map((p) => p.id).join(",")}`, "_blank", "noopener");
+  };
 
   const bulkArchive = () => {
     if (!selectedProducts.length) return;
@@ -390,6 +396,7 @@ export default function AdminProducts() {
           <Button size="sm" variant="outline" onClick={bulkArchive}><Archive className="mr-1.5 h-3.5 w-3.5" /> Archive</Button>
           <Button size="sm" variant="outline" onClick={bulkInactive}><EyeOff className="mr-1.5 h-3.5 w-3.5" /> Set inactive</Button>
           {selectedHasArchived && <Button size="sm" variant="outline" onClick={bulkRestore}><ArchiveRestore className="mr-1.5 h-3.5 w-3.5" /> Restore</Button>}
+          <Button size="sm" variant="outline" onClick={bulkPrintBarcodes}><Printer className="mr-1.5 h-3.5 w-3.5" /> Print barcodes</Button>
           <Button size="sm" variant="destructive" onClick={bulkDelete}><Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete</Button>
           <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>Clear</Button>
         </div>
@@ -496,6 +503,7 @@ export default function AdminProducts() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-1">
+                        <button onClick={() => printBarcode(p)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Print barcode" title="Print barcode"><Printer className="h-4 w-4" /></button>
                         {isArchived ? (
                           <>
                             <button onClick={() => restore(p)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Restore" title="Restore"><RotateCcw className="h-4 w-4" /></button>

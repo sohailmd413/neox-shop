@@ -15,6 +15,19 @@
     "sku": {
       "type": "string"
     },
+    "barcode": {
+      "type": "string",
+      "description": "Scannable barcode value. Auto-generated on create if left empty."
+    },
+    "barcode_type": {
+      "type": "string",
+      "enum": [
+        "CODE128",
+        "EAN13"
+      ],
+      "default": "CODE128",
+      "description": "Barcode symbology. CODE128 is auto-generated; EAN13 must be entered manually."
+    },
     "description": {
       "type": "string"
     },

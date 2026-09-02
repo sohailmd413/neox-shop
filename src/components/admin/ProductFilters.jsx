@@ -27,7 +27,7 @@ export default function ProductFilters({ products, filters, setFilters }) {
         <input
           value={filters.query}
           onChange={(e) => set("query")(e.target.value)}
-          placeholder="Search name, SKU, brand…"
+          placeholder="Search name, SKU, barcode, brand…"
           className="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 text-sm shadow-sm outline-none focus:border-foreground/40"
         />
       </div>

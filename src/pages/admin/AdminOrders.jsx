@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Eye, Download, CheckSquare, Square } from "lucide-react";
+import { Eye, Download, CheckSquare, Square, FileText } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import OrderAnalytics from "@/components/admin/OrderAnalytics";
 import OrderFilters from "@/components/admin/OrderFilters";
 import OrderDetailDrawer from "@/components/admin/OrderDetailDrawer";
+import { downloadInvoicePDF, downloadMultipleInvoices } from "@/lib/invoice";
 
 const STATUSES = ["pending", "paid", "packed", "shipped", "delivered", "cancelled", "refunded"];
 const STATUS_STYLES = {
@@ -20,6 +21,8 @@ const STATUS_STYLES = {
   refunded: "bg-gray-200 text-gray-700",
 };
 const METHOD_LABEL = { card: "Card", cod: "COD", wallet: "Wallet", upi: "UPI", net_banking: "Net banking" };
+const INVOICE_STATUS = { not_generated: "bg-zinc-100 text-zinc-500", generated: "bg-emerald-100 text-emerald-700", sent: "bg-blue-100 text-blue-700" };
+const INVOICE_STATUS_LABEL = { not_generated: "No invoice", generated: "Invoice ready", sent: "Sent" };
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
@@ -28,6 +31,7 @@ export default function AdminOrders() {
   const [selected, setSelected] = useState([]);
   const [drawerId, setDrawerId] = useState(null);
   const [adminName, setAdminName] = useState("");
+  const [invoiceBusy, setInvoiceBusy] = useState(false);
   const { toast } = useToast();
 
   const load = async () => {
@@ -79,6 +83,35 @@ export default function AdminOrders() {
     }
   };
 
+  const downloadOneInvoice = async (order) => {
+    setInvoiceBusy(true);
+    try {
+      await downloadInvoicePDF(order, orders);
+      toast({ title: "Invoice downloaded" });
+      load();
+    } catch {
+      toast({ title: "Could not generate invoice", variant: "destructive" });
+    } finally {
+      setInvoiceBusy(false);
+    }
+  };
+
+  const bulkDownloadInvoices = async () => {
+    if (!selected.length) return;
+    setInvoiceBusy(true);
+    try {
+      const selectedOrders = orders.filter((o) => selected.includes(o.id));
+      await downloadMultipleInvoices(selectedOrders, orders);
+      toast({ title: `${selected.length} invoice(s) downloaded` });
+      setSelected([]);
+      load();
+    } catch {
+      toast({ title: "Could not generate invoices", variant: "destructive" });
+    } finally {
+      setInvoiceBusy(false);
+    }
+  };
+
   const exportCSV = () => {
     const rows = [["Order", "Date", "Customer", "Email", "Status", "Payment", "Items", "Total"]];
     filtered.forEach((o) => {
@@ -119,7 +152,7 @@ export default function AdminOrders() {
       if (!inRange(o.created_date, filters.range)) return false;
       if (q) {
         const addr = o.shipping_address || {};
-        const hay = [o.id, addr.name, o.customer_email, addr.phone, `#${o.id?.slice(-8).toUpperCase()}`].join(" ").toLowerCase();
+        const hay = [o.id, o.invoice_number, addr.name, o.customer_email, addr.phone, `#${o.id?.slice(-8).toUpperCase()}`].join(" ").toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -161,6 +194,7 @@ export default function AdminOrders() {
               ))}
             </SelectNative>
           </div>
+          <Button size="sm" variant="outline" onClick={bulkDownloadInvoices} disabled={invoiceBusy}><Download className="mr-1.5 h-3.5 w-3.5" /> Download invoices</Button>
           <Button variant="ghost" size="sm" onClick={() => setSelected([])}>Clear</Button>
         </div>
       )}
@@ -184,6 +218,7 @@ export default function AdminOrders() {
                 <th className="px-3 py-3">Date</th>
                 <th className="px-3 py-3">Payment</th>
                 <th className="px-3 py-3">Status</th>
+                <th className="px-3 py-3">Invoice</th>
                 <th className="px-3 py-3 text-right">Total</th>
                 <th className="px-3 py-3 text-right">Actions</th>
               </tr>
@@ -221,11 +256,15 @@ export default function AdminOrders() {
                       ))}
                     </SelectNative>
                   </td>
+                  <td className="px-3 py-3">
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-xs ${INVOICE_STATUS[o.invoice_status || "not_generated"]}`}>{INVOICE_STATUS_LABEL[o.invoice_status || "not_generated"]}</span>
+                  </td>
                   <td className="px-3 py-3 text-right font-semibold">{formatPrice(o.total)}</td>
                   <td className="px-3 py-3 text-right">
-                    <button onClick={() => setDrawerId(o.id)} className="rounded-lg p-2 hover:bg-muted" aria-label="View">
-                      <Eye className="h-4 w-4" />
-                    </button>
+                    <div className="flex justify-end gap-1">
+                      <button onClick={() => downloadOneInvoice(o)} disabled={invoiceBusy} className="rounded-lg p-2 hover:bg-muted" aria-label="Download invoice" title="Download invoice"><FileText className="h-4 w-4" /></button>
+                      <button onClick={() => setDrawerId(o.id)} className="rounded-lg p-2 hover:bg-muted" aria-label="View"><Eye className="h-4 w-4" /></button>
+                    </div>
                   </td>
                 </tr>
               ))}

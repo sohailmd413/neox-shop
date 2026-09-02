@@ -7,10 +7,12 @@ import ImageUpload from "@/components/admin/ImageUpload";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 import { validateProduct, productCompletion, genSku, hasAnyData, REQUIRED_COUNT } from "@/lib/productValidation";
+import BarcodeView from "@/components/admin/BarcodeView";
+import { generateUniqueBarcode } from "@/lib/barcode";
 import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
 
 const EMPTY = {
-  name: "", name_ar: "", sku: "", slug: "",
+  name: "", name_ar: "", sku: "", slug: "", barcode: "", barcode_type: "CODE128",
   description: "", description_ar: "", short_description: "", short_description_ar: "",
   price: "", compare_at_price: "", stock: "", stock_status: "in_stock",
   category: "", brand: "", tags: [],
@@ -95,6 +97,8 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
     name: form.name.trim(),
     name_ar: form.name_ar?.trim() || "",
     sku: form.sku?.trim() || genSku(),
+    barcode: form.barcode?.trim() || null,
+    barcode_type: form.barcode_type || "CODE128",
     slug: form.slug?.trim() || "",
     description: form.description || "",
     description_ar: form.description_ar || "",
@@ -129,6 +133,9 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
     const isExisting = !!persistedIdRef.current;
     const status = statusOverride !== undefined ? statusOverride : product ? form.status : "draft";
     const payload = buildPayload(status);
+    if (!isExisting && !payload.barcode && (payload.barcode_type || "CODE128") === "CODE128") {
+      payload.barcode = await generateUniqueBarcode("CODE128");
+    }
     let rec;
     if (isExisting) rec = await base44.entities.Product.update(persistedIdRef.current, payload);
     else rec = await base44.entities.Product.create(payload);
@@ -349,6 +356,20 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
                 <input type="checkbox" checked={form.stock_status === "preorder"} onChange={(e) => setVal("stock_status")(e.target.checked ? "preorder" : "in_stock")} className="h-4 w-4 rounded border-border" />
                 Allow backorders (customers can order even when stock is 0)
               </label>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Barcode" hint="Auto-generated on save if left empty">
+                  <input value={form.barcode || ""} onChange={set("barcode")} className={baseInput} placeholder="MF-XXXX-XXXX" />
+                </Field>
+                <Field label="Barcode type">
+                  <Dropdown type="select" options={[{ label: "CODE128 (auto)", value: "CODE128" }, { label: "EAN13 (13 digits, manual)", value: "EAN13" }]} value={form.barcode_type || "CODE128"} onChange={setVal("barcode_type")} placeholder="CODE128" />
+                </Field>
+              </div>
+              {form.barcode && (
+                <div className="flex items-center justify-center rounded-lg border border-border bg-white p-3">
+                  <BarcodeView value={form.barcode} type={form.barcode_type || "CODE128"} />
+                </div>
+              )}
             </>
           )}
 

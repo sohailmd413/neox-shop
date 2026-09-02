@@ -26,6 +26,7 @@ import AdminUsers from '@/pages/admin/AdminUsers';
 import AdminRoles from '@/pages/admin/AdminRoles';
 import AdminProfile from '@/pages/admin/AdminProfile';
 import AdminLogin from '@/pages/admin/AdminLogin';
+import PrintBarcodes from '@/pages/admin/PrintBarcodes';
 import AdminCategories from '@/pages/admin/AdminCategories';
 import AdminReports from '@/pages/admin/AdminReports';
 import Login from '@/pages/Login';
@@ -70,6 +71,8 @@ const AuthenticatedApp = () => {
           <Route path="/reset-password" element={<ResetPassword />} />
           {/* Admin login (separate, admin-only) */}
           <Route path="/admin/login" element={<AdminLogin />} />
+          {/* Standalone print page (no layout) */}
+          <Route path="/print/barcodes" element={<PrintBarcodes />} />
           {/* Storefront */}
           <Route element={<StorefrontLayout />}>
             <Route path="/" element={<Home />} />

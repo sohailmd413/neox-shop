@@ -29,6 +29,14 @@
           "name": {
             "type": "string"
           },
+          "name_ar": {
+            "type": "string",
+            "description": "Arabic product name snapshot at purchase time, used for bilingual invoices."
+          },
+          "sku": {
+            "type": "string",
+            "description": "Product SKU snapshot at purchase time."
+          },
           "image": {
             "type": "string"
           },
@@ -87,6 +95,33 @@
         }
       }
     },
+    "billing_address": {
+      "type": "object",
+      "description": "Billing address. Falls back to the shipping address when not provided.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "line1": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "postal_code": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        }
+      }
+    },
     "coupon_code": {
       "type": "string"
     },
@@ -115,6 +150,28 @@
     "tracking_number": {
       "type": "string",
       "description": "Shipment tracking number assigned by admin."
+    },
+    "invoice_number": {
+      "type": "string",
+      "description": "Sequential invoice number, e.g. INV-2026-000123. Assigned on first invoice generation."
+    },
+    "invoice_status": {
+      "type": "string",
+      "enum": [
+        "not_generated",
+        "generated",
+        "sent"
+      ],
+      "default": "not_generated",
+      "description": "Tracks whether an invoice PDF has been generated and/or sent to the customer."
+    },
+    "invoice_generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "invoice_sent_at": {
+      "type": "string",
+      "format": "date-time"
     },
     "tags": {
       "type": "array",
