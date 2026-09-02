@@ -107,14 +107,28 @@
           "user_condition": {
             "role": "admin"
           }
+        },
+        {
+          "user_condition": {
+            "role": "delivery_manager"
+          }
         }
       ]
     },
     "create": true,
     "update": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "delivery_manager"
+          }
+        }
+      ]
     },
     "delete": {
       "user_condition": {
