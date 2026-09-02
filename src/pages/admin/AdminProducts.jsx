@@ -6,6 +6,7 @@ import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import Dropdown from "@/components/admin/ui/Dropdown";
 import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
+import { showUndoToast } from "@/components/admin/ui/UndoToast";
 import { useToast } from "@/components/ui/use-toast";
 import ProductAnalytics from "@/components/admin/ProductAnalytics";
 import ProductFilters from "@/components/admin/ProductFilters";
@@ -142,7 +143,16 @@ export default function AdminProducts() {
       title: `Archive "${p.name || "Untitled product"}"?`,
       description: "It will be hidden from the storefront but can be restored anytime from the Archived tab.",
       confirmLabel: "Archive",
-      onConfirm: () => setStatusAndToast(p.id, { status: "archived", archived_at: new Date().toISOString(), archived_by: adminName }, "Product archived"),
+      onConfirm: async () => {
+        const prev = p.status;
+        await base44.entities.Product.update(p.id, { status: "archived", archived_at: new Date().toISOString(), archived_by: adminName });
+        load();
+        showUndoToast({ message: `"${p.name || "Product"}" archived`, onUndo: async () => {
+          await base44.entities.Product.update(p.id, { status: prev, archived_at: null, archived_by: null });
+          toast({ title: "Restored" });
+          load();
+        }});
+      },
     });
 
   const setInactive = (p) =>
@@ -224,10 +234,15 @@ export default function AdminProducts() {
       description: "They will be hidden from the storefront and can be restored anytime from the Archived tab.",
       confirmLabel: "Archive",
       onConfirm: async () => {
+        const snapshot = selectedProducts.map((p) => ({ id: p.id, status: p.status }));
         await base44.entities.Product.bulkUpdate(selectedProducts.map((p) => ({ id: p.id, status: "archived", archived_at: new Date().toISOString(), archived_by: adminName })));
-        toast({ title: `${n} product(s) archived` });
         setSelected(new Set());
         load();
+        showUndoToast({ message: `${n} product(s) archived`, onUndo: async () => {
+          await base44.entities.Product.bulkUpdate(snapshot.map((s) => ({ id: s.id, status: s.status, archived_at: null, archived_by: null })));
+          toast({ title: "Restored" });
+          load();
+        }});
       },
     });
   };

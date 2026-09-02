@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { roleOptions, roleLabel } from "@/lib/adminPermissions";
 import StaffInviteDialog from "@/components/admin/StaffInviteDialog";
-import StaffDeleteDialog from "@/components/admin/StaffDeleteDialog";
+import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
 import { Loader2, Save, ShieldCheck, UserPlus, Trash2, Send, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 export default function AdminUsers() {
@@ -15,8 +15,7 @@ export default function AdminUsers() {
   const [savingId, setSavingId] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [inviting, setInviting] = useState(false);
-  const [removing, setRemoving] = useState(null);
-  const [deleting, setDeleting] = useState(false);
+  const [confirm, setConfirm] = useState(null);
   const [resending, setResending] = useState(null);
   const [customRoles, setCustomRoles] = useState([]);
   const { toast } = useToast();
@@ -86,23 +85,28 @@ export default function AdminUsers() {
     setResending(null);
   };
 
-  const remove = (u) => setRemoving(u);
-  const confirmRemove = async () => {
-    if (!removing) return;
-    setDeleting(true);
-    try {
-      const payload = removing.pending
-        ? { action: "delete", invite_id: removing.invite_id }
-        : { action: "delete", user_id: removing.id };
-      await base44.functions.invoke("manageStaffAccess", payload);
-      toast({ title: removing.pending ? "Invite cancelled" : "Staff member removed" });
-      setRemoving(null);
-      load();
-    } catch (e) {
-      toast({ title: e.response?.data?.error || "Could not remove", variant: "destructive" });
-    }
-    setDeleting(false);
-  };
+  const remove = (u) => setConfirm({
+    variant: "danger",
+    title: u.pending ? "Cancel this invite?" : `Remove ${u.email}?`,
+    description: u.pending
+      ? "The pending invitation will be cancelled. You can re-invite them anytime."
+      : "This permanently removes their access to the admin panel. This action cannot be undone.",
+    confirmLabel: u.pending ? "Cancel invite" : "Remove staff",
+    requireTyping: !u.pending,
+    requireTypeName: u.pending ? null : u.email,
+    onConfirm: async () => {
+      try {
+        const payload = u.pending
+          ? { action: "delete", invite_id: u.invite_id }
+          : { action: "delete", user_id: u.id };
+        await base44.functions.invoke("manageStaffAccess", payload);
+        toast({ title: u.pending ? "Invite cancelled" : "Staff member removed" });
+        load();
+      } catch (e) {
+        toast({ title: e.response?.data?.error || "Could not remove", variant: "destructive" });
+      }
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -208,12 +212,19 @@ export default function AdminUsers() {
           onInvited={() => { setInviting(false); load(); }}
         />
       )}
-      <StaffDeleteDialog
-        staff={removing}
-        onClose={() => setRemoving(null)}
-        onConfirm={confirmRemove}
-        deleting={deleting}
-      />
+      {confirm && (
+        <ConfirmDialog
+          open
+          onClose={() => setConfirm(null)}
+          variant={confirm.variant}
+          title={confirm.title}
+          description={confirm.description}
+          confirmLabel={confirm.confirmLabel}
+          requireTyping={confirm.requireTyping}
+          requireTypeName={confirm.requireTypeName}
+          onConfirm={confirm.onConfirm}
+        />
+      )}
 
       <div className="flex items-start gap-3 rounded-xl bg-muted/50 p-4 text-xs text-muted-foreground">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />

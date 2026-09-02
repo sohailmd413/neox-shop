@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { Plus, Pencil, Trash2, Copy, Loader2, Search, Image as ImageIcon } from "lucide-react";
 import Dropdown from "@/components/admin/ui/Dropdown";
+import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
+import { showUndoToast } from "@/components/admin/ui/UndoToast";
 import PosterAnalytics from "@/components/admin/posters/PosterAnalytics";
 import PosterForm from "@/components/admin/posters/PosterForm";
 import {
@@ -33,6 +35,7 @@ export default function AdminPosters() {
   const [fPage, setFPage] = useState("");
   const [fStatus, setFStatus] = useState("");
   const [sel, setSel] = useState(new Set());
+  const [confirm, setConfirm] = useState(null);
   const { toast } = useToast();
 
   const load = async () => {
@@ -72,24 +75,55 @@ export default function AdminPosters() {
 
   const patch = (id, data) => setPosters((prev) => prev.map((p) => (p.id === id ? { ...p, ...data } : p)));
 
-  const toggleActive = async (p) => {
+  const activatePoster = async (p) => {
     try {
-      await base44.entities.Poster.update(p.id, { active: !p.active });
-      patch(p.id, { active: !p.active });
+      await base44.entities.Poster.update(p.id, { active: true });
+      patch(p.id, { active: true });
     } catch {
       toast({ title: "Update failed", variant: "destructive" });
     }
   };
 
-  const remove = async (p) => {
-    if (!confirm("Delete this banner?")) return;
-    try {
-      await base44.entities.Poster.delete(p.id);
-      setPosters((prev) => prev.filter((x) => x.id !== p.id));
-      toast({ title: "Banner deleted" });
-    } catch {
-      toast({ title: "Delete failed", variant: "destructive" });
-    }
+  const archivePoster = (p) => {
+    setConfirm({
+      variant: "warning",
+      title: `Archive "${p.title}"?`,
+      description: "It will be hidden from the storefront but can be restored anytime by reactivating it.",
+      confirmLabel: "Archive",
+      onConfirm: async () => {
+        try {
+          await base44.entities.Poster.update(p.id, { active: false });
+          patch(p.id, { active: false });
+          showUndoToast({ message: `"${p.title}" archived`, onUndo: async () => {
+            await base44.entities.Poster.update(p.id, { active: true });
+            patch(p.id, { active: true });
+            toast({ title: "Restored" });
+          }});
+        } catch {
+          toast({ title: "Update failed", variant: "destructive" });
+        }
+      },
+    });
+  };
+
+  const toggleActive = (p) => (p.active ? archivePoster(p) : activatePoster(p));
+
+  const remove = (p) => {
+    setConfirm({
+      variant: "danger",
+      title: `Delete "${p.title}"?`,
+      description: "This action cannot be undone.",
+      confirmLabel: "Delete",
+      onConfirm: async () => {
+        try {
+          await base44.entities.Poster.delete(p.id);
+          setPosters((prev) => prev.filter((x) => x.id !== p.id));
+          toast({ title: "Banner deleted" });
+        } catch {
+          toast({ title: "Delete failed", variant: "destructive" });
+        }
+      },
+    });
   };
 
   const duplicate = async (p) => {
@@ -103,7 +137,7 @@ export default function AdminPosters() {
     }
   };
 
-  const bulkSet = async (active) => {
+  const doBulkSet = async (active) => {
     const ids = [...sel];
     try {
       await base44.entities.Poster.updateMany({ id: { $in: ids } }, { $set: { active } });
@@ -114,17 +148,46 @@ export default function AdminPosters() {
     }
   };
 
-  const bulkDelete = async () => {
-    if (!confirm(`Delete ${sel.size} banner(s)?`)) return;
+  const bulkSet = (active) => {
     const ids = [...sel];
-    try {
-      await base44.entities.Poster.deleteMany({ id: { $in: ids } });
-      setPosters((prev) => prev.filter((p) => !sel.has(p.id)));
-      setSel(new Set());
-      toast({ title: "Banners deleted" });
-    } catch {
-      toast({ title: "Action failed", variant: "destructive" });
-    }
+    if (!ids.length) return;
+    if (active) return doBulkSet(true);
+    setConfirm({
+      variant: "warning",
+      title: `Archive ${ids.length} selected banner${ids.length > 1 ? "s" : ""}?`,
+      description: "They will be hidden from the storefront but can be restored anytime by reactivating them.",
+      confirmLabel: "Archive",
+      onConfirm: async () => {
+        await doBulkSet(false);
+        setSel(new Set());
+        showUndoToast({ message: `${ids.length} banner(s) archived`, onUndo: async () => {
+          await base44.entities.Poster.updateMany({ id: { $in: ids } }, { $set: { active: true } });
+          setPosters((prev) => prev.map((p) => (ids.includes(p.id) ? { ...p, active: true } : p)));
+          toast({ title: "Restored" });
+        }});
+      },
+    });
+  };
+
+  const bulkDelete = () => {
+    const ids = [...sel];
+    if (!ids.length) return;
+    setConfirm({
+      variant: "danger",
+      title: `Delete ${ids.length} selected banner${ids.length > 1 ? "s" : ""}?`,
+      description: "This action cannot be undone.",
+      confirmLabel: "Delete",
+      onConfirm: async () => {
+        try {
+          await base44.entities.Poster.deleteMany({ id: { $in: ids } });
+          setPosters((prev) => prev.filter((p) => !ids.includes(p.id)));
+          setSel(new Set());
+          toast({ title: `${ids.length} banner(s) deleted` });
+        } catch {
+          toast({ title: "Action failed", variant: "destructive" });
+        }
+      },
+    });
   };
 
   return (
@@ -260,6 +323,18 @@ export default function AdminPosters() {
             setEditing(null);
             load();
           }}
+        />
+      )}
+
+      {confirm && (
+        <ConfirmDialog
+          open
+          onClose={() => setConfirm(null)}
+          variant={confirm.variant}
+          title={confirm.title}
+          description={confirm.description}
+          confirmLabel={confirm.confirmLabel}
+          onConfirm={confirm.onConfirm}
         />
       )}
     </div>

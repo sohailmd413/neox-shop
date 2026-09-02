@@ -9,6 +9,8 @@ import CategoryForm from "@/components/admin/categories/CategoryForm";
 import CategoryTable from "@/components/admin/categories/CategoryTable";
 import BulkAddGrid from "@/components/admin/categories/BulkAddGrid";
 import MergeDialog from "@/components/admin/categories/MergeDialog";
+import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
+import { showUndoToast } from "@/components/admin/ui/UndoToast";
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState([]);
@@ -20,6 +22,7 @@ export default function AdminCategories() {
   const [saving, setSaving] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [mergeSrc, setMergeSrc] = useState(null);
+  const [confirm, setConfirm] = useState(null);
   const { toast } = useToast();
 
   const load = async () => {
@@ -39,18 +42,11 @@ export default function AdminCategories() {
 
   useEffect(() => { load(); }, []);
 
-  const submit = async (data) => {
+  const createCategory = async (data) => {
     setSaving(true);
     try {
-      if (editing?.id) {
-        await base44.entities.Category.update(editing.id, data);
-        toast({ title: "Category updated" });
-      } else {
-        const dup = categories.some((c) => c.name.toLowerCase() === data.name.toLowerCase());
-        if (dup && !confirm("A category with this name already exists. Add anyway?")) { setSaving(false); return; }
-        await base44.entities.Category.create(data);
-        toast({ title: "Category added" });
-      }
+      await base44.entities.Category.create(data);
+      toast({ title: "Category added" });
       setEditing(null);
       await load();
     } catch {
@@ -59,16 +55,43 @@ export default function AdminCategories() {
     setSaving(false);
   };
 
-  const remove = async (c) => {
-    if (!confirm(`Delete category "${c.name}"? Products keep their category label.`)) return;
-    try {
-      await base44.entities.Category.delete(c.id);
-      toast({ title: "Category deleted" });
-      if (editing?.id === c.id) setEditing(null);
-      load();
-    } catch {
-      toast({ title: "Could not delete", variant: "destructive" });
+  const submit = (data) => {
+    if (editing?.id) {
+      setSaving(true);
+      base44.entities.Category.update(editing.id, data)
+        .then(() => { toast({ title: "Category updated" }); setEditing(null); load(); })
+        .catch(() => toast({ title: "Could not save category", variant: "destructive" }))
+        .finally(() => setSaving(false));
+      return;
     }
+    setConfirm({
+      variant: "default",
+      title: `Create category "${data.name}"?`,
+      description: "It will be added to your catalog and can be edited or removed later.",
+      confirmLabel: "Create category",
+      onConfirm: () => createCategory(data),
+    });
+  };
+
+  const remove = (c) => {
+    const depCount = products.filter((p) => p.category === c.name || p.category === c.id).length;
+    setConfirm({
+      variant: "danger",
+      title: `Delete "${c.name}"?`,
+      description: "This action cannot be undone.",
+      confirmLabel: "Delete",
+      dependencyWarning: depCount > 0 ? `${depCount} product(s) use this category. They keep their category label but it will no longer appear in storefront filters.` : undefined,
+      onConfirm: async () => {
+        try {
+          await base44.entities.Category.delete(c.id);
+          toast({ title: "Category deleted" });
+          if (editing?.id === c.id) setEditing(null);
+          load();
+        } catch {
+          toast({ title: "Could not delete", variant: "destructive" });
+        }
+      },
+    });
   };
 
   const duplicate = async (c) => {
@@ -85,14 +108,38 @@ export default function AdminCategories() {
     }
   };
 
-  const toggleActive = async (c) => {
+  const activateCategory = async (c) => {
     try {
-      await base44.entities.Category.update(c.id, { active: c.active === false });
+      await base44.entities.Category.update(c.id, { active: true });
       load();
     } catch {
       toast({ title: "Could not update", variant: "destructive" });
     }
   };
+
+  const archiveCategory = (c) => {
+    setConfirm({
+      variant: "warning",
+      title: `Archive "${c.name}"?`,
+      description: "It will be hidden from the storefront but can be restored anytime by reactivating it.",
+      confirmLabel: "Archive",
+      onConfirm: async () => {
+        try {
+          await base44.entities.Category.update(c.id, { active: false });
+          load();
+          showUndoToast({ message: `"${c.name}" archived`, onUndo: async () => {
+            await base44.entities.Category.update(c.id, { active: true });
+            toast({ title: "Restored" });
+            load();
+          }});
+        } catch {
+          toast({ title: "Could not update", variant: "destructive" });
+        }
+      },
+    });
+  };
+
+  const toggleActive = (c) => (c.active === false ? activateCategory(c) : archiveCategory(c));
 
   const reorder = async (updates) => {
     setCategories((cs) => cs.map((c) => ({ ...c, sort_order: updates.find((u) => u.id === c.id)?.sort_order ?? c.sort_order })));
@@ -129,22 +176,45 @@ export default function AdminCategories() {
       load();
     } catch { toast({ title: "Could not update", variant: "destructive" }); }
   };
-  const bulkDeactivate = async () => {
-    try {
-      await base44.entities.Category.bulkUpdate([...selected].map((id) => ({ id, active: false })));
-      toast({ title: "Categories deactivated" });
-      setSelected(new Set());
-      load();
-    } catch { toast({ title: "Could not update", variant: "destructive" }); }
+  const bulkDeactivate = () => {
+    const ids = [...selected];
+    if (!ids.length) return;
+    setConfirm({
+      variant: "warning",
+      title: `Archive ${ids.length} selected categor${ids.length > 1 ? "ies" : "y"}?`,
+      description: "They will be hidden from the storefront but can be restored anytime by reactivating them.",
+      confirmLabel: "Archive",
+      onConfirm: async () => {
+        try {
+          await base44.entities.Category.bulkUpdate(ids.map((id) => ({ id, active: false })));
+          setSelected(new Set());
+          load();
+          showUndoToast({ message: `${ids.length} categor${ids.length > 1 ? "ies" : "y"} archived`, onUndo: async () => {
+            await base44.entities.Category.bulkUpdate(ids.map((id) => ({ id, active: true })));
+            toast({ title: "Restored" });
+            load();
+          }});
+        } catch { toast({ title: "Could not update", variant: "destructive" }); }
+      },
+    });
   };
-  const bulkDelete = async () => {
-    if (!confirm(`Delete ${selected.size} categories?`)) return;
-    try {
-      await base44.entities.Category.deleteMany({ id: { $in: [...selected] } });
-      toast({ title: "Categories deleted" });
-      setSelected(new Set());
-      load();
-    } catch { toast({ title: "Could not delete", variant: "destructive" }); }
+  const bulkDelete = () => {
+    const n = selected.size;
+    if (!n) return;
+    setConfirm({
+      variant: "danger",
+      title: `Delete ${n} selected categor${n > 1 ? "ies" : "y"}?`,
+      description: "This action cannot be undone.",
+      confirmLabel: "Delete",
+      onConfirm: async () => {
+        try {
+          await base44.entities.Category.deleteMany({ id: { $in: [...selected] } });
+          toast({ title: `${n} categor${n > 1 ? "ies" : "y"} deleted` });
+          setSelected(new Set());
+          load();
+        } catch { toast({ title: "Could not delete", variant: "destructive" }); }
+      },
+    });
   };
 
   // normalize a "sub" placeholder into a blank form with parent_id preset
@@ -233,6 +303,21 @@ export default function AdminCategories() {
 
       {mergeSrc && (
         <MergeDialog source={mergeSrc} categories={categories} products={products} onClose={() => setMergeSrc(null)} onDone={load} />
+      )}
+
+      {confirm && (
+        <ConfirmDialog
+          open
+          onClose={() => setConfirm(null)}
+          variant={confirm.variant}
+          title={confirm.title}
+          description={confirm.description}
+          confirmLabel={confirm.confirmLabel}
+          dependencyWarning={confirm.dependencyWarning}
+          requireTyping={confirm.requireTyping}
+          requireTypeName={confirm.requireTypeName}
+          onConfirm={confirm.onConfirm}
+        />
       )}
     </div>
   );

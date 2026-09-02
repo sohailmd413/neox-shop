@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import ReviewAnalytics from "@/components/admin/ReviewAnalytics";
 import ReviewReplyDialog from "@/components/admin/ReviewReplyDialog";
 import ReviewDetailDrawer from "@/components/admin/ReviewDetailDrawer";
+import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
+import { showUndoToast } from "@/components/admin/ui/UndoToast";
 
 const TABS = [
   { id: "pending", label: "Pending", icon: Clock },
@@ -33,6 +35,7 @@ export default function AdminReviews() {
   const [selected, setSelected] = useState([]);
   const [replyTarget, setReplyTarget] = useState(null);
   const [detail, setDetail] = useState(null);
+  const [confirm, setConfirm] = useState(null);
   const { toast } = useToast();
 
   const load = async () => {
@@ -74,6 +77,17 @@ export default function AdminReviews() {
   const republish = (id) => save(id, { approved: true, unpublished: false }, "Review republished");
   const softDelete = async (id) => save(id, { approved: false, unpublished: false, rejected: false, deleted: true }, "Moved to deleted");
   const restoreDeleted = (id) => save(id, { deleted: false }, "Restored to pending");
+
+  const confirmSoftDelete = (r) => setConfirm({
+    variant: "danger",
+    title: "Delete this review?",
+    description: "This action cannot be undone from the storefront. The review moves to the Deleted tab, where it can be restored for a short while.",
+    confirmLabel: "Delete",
+    onConfirm: async () => {
+      await softDelete(r.id);
+      showUndoToast({ message: "Review moved to deleted", onUndo: async () => { await restoreDeleted(r.id); toast({ title: "Review restored" }); } });
+    },
+  });
   const toggleFlag = (r) => save(r.id, { flagged: !r.flagged }, r.flagged ? "Unflagged" : "Review flagged");
   const sendReply = async (id, text, author) => {
     await save(id, { admin_reply: { text, author: author || "Admin", created_date: new Date().toISOString() } }, "Reply posted");
@@ -88,6 +102,35 @@ export default function AdminReviews() {
     } catch {
       toast({ title: "Could not delete", variant: "destructive" });
     }
+  };
+
+  const confirmPermanentDelete = (r) => setConfirm({
+    variant: "danger",
+    title: "Permanently delete this review?",
+    description: "This action cannot be undone. The review will be removed from records entirely.",
+    confirmLabel: "Delete forever",
+    requireTyping: true,
+    onConfirm: () => permanentDelete(r.id),
+  });
+
+  const confirmBulkDelete = () => {
+    if (!selected.length) return;
+    const n = selected.length;
+    setConfirm({
+      variant: "danger",
+      title: `Delete ${n} selected review${n > 1 ? "s" : ""}?`,
+      description: "This action cannot be undone. The reviews move to the Deleted tab.",
+      confirmLabel: "Delete",
+      onConfirm: async () => {
+        const ids = [...selected];
+        for (const id of ids) await softDelete(id);
+        setSelected([]);
+        showUndoToast({ message: `${n} review(s) moved to deleted`, onUndo: async () => {
+          for (const id of ids) await restoreDeleted(id);
+          toast({ title: `${n} review(s) restored` });
+        }});
+      },
+    });
   };
 
   const counts = useMemo(() => ({
@@ -214,7 +257,7 @@ export default function AdminReviews() {
             {tab !== "approved" && <BulkBtn onClick={() => bulk("approve")} icon={Check} label="Approve" />}
             {tab !== "rejected" && <BulkBtn onClick={() => bulk("reject")} icon={X} label="Reject" variant="destructive" />}
             <BulkBtn onClick={() => bulk("flag")} icon={Flag} label="Flag" />
-            {tab !== "deleted" && <BulkBtn onClick={() => bulk("delete")} icon={Trash2} label="Delete" variant="destructive" />}
+            {tab !== "deleted" && <BulkBtn onClick={confirmBulkDelete} icon={Trash2} label="Delete" variant="destructive" />}
           </div>
         </div>
       )}
@@ -295,13 +338,13 @@ export default function AdminReviews() {
                         {tab === "deleted" ? (
                           <>
                             <IconBtn onClick={() => restoreDeleted(r.id)} title="Restore"><RotateCcw className="h-4 w-4" /></IconBtn>
-                            <IconBtn onClick={() => permanentDelete(r.id)} title="Delete forever"><AlertTriangle className="h-4 w-4 text-destructive" /></IconBtn>
+                            <IconBtn onClick={() => confirmPermanentDelete(r)} title="Delete forever"><AlertTriangle className="h-4 w-4 text-destructive" /></IconBtn>
                           </>
                         ) : (
                           <>
                             <IconBtn onClick={() => setReplyTarget(r)} title="Reply"><MessageSquare className="h-4 w-4" /></IconBtn>
                             <IconBtn onClick={() => toggleFlag(r)} title="Flag"><Flag className={`h-4 w-4 ${r.flagged ? "text-amber-600" : ""}`} /></IconBtn>
-                            <IconBtn onClick={() => softDelete(r.id)} title="Delete"><Trash2 className="h-4 w-4 text-destructive" /></IconBtn>
+                            <IconBtn onClick={() => confirmSoftDelete(r)} title="Delete"><Trash2 className="h-4 w-4 text-destructive" /></IconBtn>
                           </>
                         )}
                       </div>
@@ -329,7 +372,21 @@ export default function AdminReviews() {
           onClose={() => setDetail(null)}
           onReply={(r) => { setDetail(null); setReplyTarget(r); }}
           onFlag={(r) => { setDetail(null); toggleFlag(r); }}
-          onDelete={(r) => { setDetail(null); softDelete(r.id); }}
+          onDelete={(r) => { setDetail(null); confirmSoftDelete(r); }}
+        />
+      )}
+
+      {confirm && (
+        <ConfirmDialog
+          open
+          onClose={() => setConfirm(null)}
+          variant={confirm.variant}
+          title={confirm.title}
+          description={confirm.description}
+          confirmLabel={confirm.confirmLabel}
+          requireTyping={confirm.requireTyping}
+          requireTypeName={confirm.requireTypeName}
+          onConfirm={confirm.onConfirm}
         />
       )}
     </div>
