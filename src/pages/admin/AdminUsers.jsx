@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { roleOptions, roleLabel } from "@/lib/adminPermissions";
 import StaffInviteDialog from "@/components/admin/StaffInviteDialog";
 import StaffDeleteDialog from "@/components/admin/StaffDeleteDialog";
-import { Loader2, Save, ShieldCheck, UserPlus, Trash2, Send, AlertTriangle, Clock } from "lucide-react";
+import { Loader2, Save, ShieldCheck, UserPlus, Trash2, Send, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -136,19 +136,12 @@ export default function AdminUsers() {
                   <div className="flex items-center gap-2">
                     <p className="font-medium">{u.email}</p>
                     {u.pending && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-                        <Clock className="h-3 w-3" /> Invited · Pending
-                      </span>
-                    )}
-                    {u.pending && (u.last_sent_at || u.created_date) && (
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                        Invited {invitedLabel(u.last_sent_at || u.created_date)}
-                        {isStale(u.last_sent_at || u.created_date) && (
-                          <span className="inline-flex items-center text-amber-600" title="Invite pending for over 7 days">
-                            <AlertTriangle className="h-3 w-3" />
-                          </span>
-                        )}
-                      </span>
+                      <InviteStatusBadge
+                        status={u.invite_status}
+                        error={u.invite_error}
+                        sentAt={u.invite_sent_at || u.last_sent_at || u.created_date}
+                        expiresAt={u.invite_expires_at}
+                      />
                     )}
                     {isAdmin && !u.pending && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-2 py-0.5 text-xs text-background">
@@ -210,7 +203,7 @@ export default function AdminUsers() {
 
       {inviting && (
         <StaffInviteDialog
-          existingStaff={users.map((u) => ({ email: u.email, role: u.role, label: roleLabel(u.role, customRoles), pending: u.pending }))}
+          existingStaff={users.map((u) => ({ email: u.email, role: u.role, label: roleLabel(u.role, customRoles), pending: u.pending, invite_status: u.invite_status }))}
           onClose={() => setInviting(false)}
           onInvited={() => { setInviting(false); load(); }}
         />
@@ -246,4 +239,63 @@ function invitedLabel(iso) {
 function isStale(iso) {
   if (!iso) return false;
   return Date.now() - new Date(iso).getTime() > 7 * 24 * 60 * 60 * 1000;
+}
+
+function InviteStatusBadge({ status, error, sentAt, expiresAt }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(t);
+  }, []);
+  const map = {
+    sending: { label: "Sending…", cls: "bg-blue-100 text-blue-700", Icon: Loader2, spin: true },
+    sent: { label: "Sent", cls: "bg-zinc-200 text-zinc-700", Icon: Send },
+    delivered: { label: "Delivered", cls: "bg-emerald-100 text-emerald-700", Icon: CheckCircle2 },
+    failed: { label: "Failed", cls: "bg-red-100 text-red-700", Icon: AlertTriangle },
+  };
+  const m = map[status] || map.sent;
+  const Icon = m.Icon;
+  const expired = expiresAt && new Date(expiresAt).getTime() < now;
+  return (
+    <div className="inline-flex items-center gap-2">
+      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${m.cls}`}>
+        <Icon className={`h-3 w-3 ${m.spin ? "animate-spin" : ""}`} /> {m.label}
+      </span>
+      {status === "failed" ? (
+        error && (
+          <span className="inline-flex items-center text-red-600" title={error}>
+            <AlertTriangle className="h-3.5 w-3.5" />
+          </span>
+        )
+      ) : (
+        sentAt && (
+          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+            {relAgo(sentAt, now)}
+            {expired && (
+              <span className="inline-flex items-center text-amber-600" title="Invite expired">
+                <AlertTriangle className="h-3 w-3" />
+              </span>
+            )}
+            {!expired && isStale(sentAt) && (
+              <span className="inline-flex items-center text-amber-600" title="Invite pending for over 7 days">
+                <AlertTriangle className="h-3 w-3" />
+              </span>
+            )}
+          </span>
+        )
+      )}
+    </div>
+  );
+}
+
+function relAgo(iso, now = Date.now()) {
+  if (!iso) return "Invited";
+  const s = Math.floor((now - new Date(iso).getTime()) / 1000);
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
 }

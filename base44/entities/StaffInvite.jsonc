@@ -26,6 +26,31 @@
       "type": "string",
       "format": "date-time",
       "description": "When the invite email was last (re)sent. Falls back to created_date for display."
+    },
+    "invite_status": {
+      "type": "string",
+      "enum": [
+        "sending",
+        "sent",
+        "delivered",
+        "failed"
+      ],
+      "default": "sending",
+      "description": "Real status of the invite send, set by the backend from the inviteUser result. 'delivered' only via a delivery webhook (none connected), so normally stays 'sent'."
+    },
+    "invite_sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Server timestamp set when the invite is actually triggered."
+    },
+    "invite_expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the invite expires (invite_sent_at + 7 days)."
+    },
+    "invite_error": {
+      "type": "string",
+      "description": "Error reason when invite_status is 'failed'."
     }
   },
   "required": [

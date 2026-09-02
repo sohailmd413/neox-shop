@@ -33,6 +33,10 @@ export default async function (req) {
           pending: true,
           created_date: i.created_date,
           last_sent_at: i.last_sent_at || i.created_date,
+          invite_status: i.invite_status || 'sent',
+          invite_sent_at: i.invite_sent_at || i.last_sent_at || i.created_date,
+          invite_expires_at: i.invite_expires_at || '',
+          invite_error: i.invite_error || '',
         }));
       const sanitized = (users || []).map((u) => ({
         id: u.id,
@@ -76,8 +80,8 @@ export default async function (req) {
       return Response.json({ ok: true });
     }
 
-    if (action === 'invite') {
-      const { email, name, role, permissions, password, create_role } = body;
+    if (action === 'invite' || action === 'resend') {
+      const { email, name, role, permissions, create_role } = body;
       if (!email || typeof email !== 'string' || !email.includes('@')) {
         return Response.json({ error: 'A valid email is required' }, { status: 400 });
       }
@@ -85,78 +89,99 @@ export default async function (req) {
         return Response.json({ error: 'invalid role' }, { status: 400 });
       }
 
-      // Persist a pending invite so the staff member appears in the list
-      // immediately, before they accept the email and their user record exists.
+      const now = new Date().toISOString();
+      const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      const providedName = typeof name === 'string' ? name.trim() : '';
+
+      // Upsert the StaffInvite record in 'sending' state so the list reflects
+      // the in-flight invite before the email provider responds.
+      let inviteId = null;
       try {
         const existing = await base44.asServiceRole.entities.StaffInvite.list('-created_date', 200).catch(() => []);
         const prev = (existing || []).find(
           (i) => (i.email || '').toLowerCase() === email.toLowerCase() && i.status !== 'accepted'
         );
-        const payload = {
-          email,
-          name: typeof name === 'string' ? name.trim() : '',
-          role,
-          temp_password: typeof password === 'string' ? password.trim() : '',
+        const sendingFields = {
           status: 'pending',
+          invite_status: 'sending',
+          invite_sent_at: now,
+          invite_expires_at: expires,
+          invite_error: '',
+          last_sent_at: now,
         };
-        if (prev) await base44.asServiceRole.entities.StaffInvite.update(prev.id, payload);
-        else await base44.asServiceRole.entities.StaffInvite.create(payload);
+        if (prev) {
+          inviteId = prev.id;
+          const upd = { ...sendingFields };
+          if (providedName) upd.name = providedName;
+          await base44.asServiceRole.entities.StaffInvite.update(prev.id, upd);
+        } else {
+          const created = await base44.asServiceRole.entities.StaffInvite.create({
+            email, name: providedName, role, temp_password: '', ...sendingFields,
+          });
+          inviteId = created && created.id;
+        }
       } catch (_e) {
         // non-fatal
       }
 
+      // Actually send the invite through the platform's invite system — this is
+      // the real email send. Capture the result instead of swallowing it.
+      let inviteOk = true;
+      let invite_error = '';
       try {
         await base44.asServiceRole.users.inviteUser(email, role);
-      } catch (_e) {
-        // user may already exist — fall through
+      } catch (e) {
+        inviteOk = false;
+        invite_error = (e && e.message) || 'Invite failed';
       }
 
+      // If the send threw, check whether the user already exists (already
+      // invited/registered) — that still counts as 'sent' (an invitation is
+      // active). Only a genuine failure with no user record is 'failed'.
       let u = null;
-      for (let attempt = 0; attempt < 8 && !u; attempt++) {
-        const users = await base44.asServiceRole.entities.User.list('-created_date', 200);
-        u = (users || []).find((x) => x.email === email);
-        if (!u) await new Promise((r) => setTimeout(r, 800));
-      }
-      if (!u) {
-        return Response.json({ ok: true, pending: true });
-      }
-      // The user record now exists — mark the invite accepted.
       try {
-        const invites = await base44.asServiceRole.entities.StaffInvite.list('-created_date', 200).catch(() => []);
-        const match = (invites || []).find((i) => (i.email || '').toLowerCase() === email.toLowerCase());
-        if (match) await base44.asServiceRole.entities.StaffInvite.update(match.id, { status: 'accepted' });
+        const users = await base44.asServiceRole.entities.User.list('-created_date', 200).catch(() => []);
+        u = (users || []).find((x) => (x.email || '').toLowerCase() === email.toLowerCase()) || null;
       } catch (_e) {}
 
-      const update = { role };
-      if (typeof name === 'string' && name.trim()) update.full_name = name.trim();
-      if (typeof body.password === 'string' && body.password.trim()) update.temp_password = body.password.trim();
-      if (create_role) {
-        update.permissions = {};
-      } else {
-        const clean = {};
-        for (const s of SECTIONS) {
-          const v = permissions && permissions[s];
-          if (v === 'allow' || v === 'deny') clean[s] = v;
-        }
-        update.permissions = clean;
-      }
-      await base44.asServiceRole.entities.User.update(u.id, update);
-      return Response.json({ ok: true });
-    }
+      const invite_status = inviteOk || u ? 'sent' : 'failed';
+      if (inviteOk) invite_error = '';
 
-    if (action === 'resend') {
-      const { email, role } = body;
-      if (!email || typeof email !== 'string' || !email.includes('@')) {
-        return Response.json({ error: 'A valid email is required' }, { status: 400 });
+      if (inviteId) {
+        try {
+          await base44.asServiceRole.entities.StaffInvite.update(inviteId, { invite_status, invite_error });
+        } catch (_e) {}
       }
-      const safeRole = role && typeof role === 'string' && role !== 'user' && !/\s/.test(role) ? role : 'user';
-      try { await base44.asServiceRole.users.inviteUser(email, safeRole); } catch (_e) { /* may already exist */ }
-      try {
-        const invites = await base44.asServiceRole.entities.StaffInvite.list('-created_date', 200).catch(() => []);
-        const match = (invites || []).find((i) => (i.email || '').toLowerCase() === email.toLowerCase());
-        if (match) await base44.asServiceRole.entities.StaffInvite.update(match.id, { last_sent_at: new Date().toISOString(), status: 'pending' });
-      } catch (_e) {}
-      return Response.json({ ok: true });
+
+      // Best-effort: apply role/permissions/full_name if the user record exists.
+      if (u) {
+        try {
+          const upd = { role };
+          if (providedName) upd.full_name = providedName;
+          if (create_role) {
+            upd.permissions = {};
+          } else {
+            const clean = {};
+            for (const s of SECTIONS) {
+              const v = permissions && permissions[s];
+              if (v === 'allow' || v === 'deny') clean[s] = v;
+            }
+            upd.permissions = clean;
+          }
+          await base44.asServiceRole.entities.User.update(u.id, upd);
+        } catch (_e) {}
+      }
+
+      return Response.json({
+        ok: true,
+        invite: {
+          email,
+          invite_status,
+          invite_sent_at: now,
+          invite_expires_at: expires,
+          invite_error,
+        },
+      });
     }
 
     if (action === 'delete') {

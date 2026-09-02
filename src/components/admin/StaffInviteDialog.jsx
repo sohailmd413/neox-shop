@@ -32,20 +32,53 @@ export default function StaffInviteDialog({ onClose, onInvited, existingStaff = 
   }, []);
 
   const options = roleOptions(customRoles);
-  const dup = existingStaff.find((s) => (s.email || "").toLowerCase() === email.trim().toLowerCase() && email.trim());
+  // Block duplicates — but allow re-inviting a previously failed invite.
+  const dup = existingStaff.find(
+    (s) => (s.email || "").toLowerCase() === email.trim().toLowerCase() && email.trim() && s.invite_status !== "failed"
+  );
 
   const sendInvite = async () => {
     setSaving(true);
+    // Optimistic 'sending' state during the call (never 'delivered').
+    setDone({
+      invite_status: "sending",
+      email: email.trim(),
+      name: name.trim(),
+      role,
+      roleLabel: roleLabel(role, customRoles),
+      invite_sent_at: new Date().toISOString(),
+      invite_expires_at: "",
+      invite_error: "",
+    });
     try {
-      await base44.functions.invoke("manageStaffAccess", {
+      const res = await base44.functions.invoke("manageStaffAccess", {
         action: "invite",
         email: email.trim(),
         name: name.trim(),
         role,
       });
-      setDone({ status: "success", email: email.trim(), name: name.trim(), role, roleLabel: roleLabel(role, customRoles), sentAt: new Date().toISOString() });
+      const inv = res?.data?.invite || res?.invite || {};
+      setDone({
+        invite_status: inv.invite_status || "sent",
+        email: email.trim(),
+        name: name.trim(),
+        role,
+        roleLabel: roleLabel(role, customRoles),
+        invite_sent_at: inv.invite_sent_at || new Date().toISOString(),
+        invite_expires_at: inv.invite_expires_at || "",
+        invite_error: inv.invite_error || "",
+      });
     } catch (e) {
-      setDone({ status: "error", email: email.trim(), name: name.trim(), role, roleLabel: roleLabel(role, customRoles), error: e.response?.data?.error || "Could not send invite" });
+      setDone({
+        invite_status: "failed",
+        email: email.trim(),
+        name: name.trim(),
+        role,
+        roleLabel: roleLabel(role, customRoles),
+        invite_sent_at: new Date().toISOString(),
+        invite_expires_at: "",
+        invite_error: e.response?.data?.error || e.message || "Invite failed",
+      });
     }
     setSaving(false);
   };
@@ -66,12 +99,12 @@ export default function StaffInviteDialog({ onClose, onInvited, existingStaff = 
     sendInvite();
   };
 
-  const doElevatedSend = async () => {
+  const doElevatedSend = () => {
     setElevatedConfirm(false);
-    await sendInvite();
+    sendInvite();
   };
 
-  if (done) return <InviteSummary done={done} onClose={() => onInvited()} onRetry={sendInvite} />;
+  if (done) return <InviteSummary done={done} setDone={setDone} onClose={() => onInvited()} onResume={() => setDone(null)} />;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -140,11 +173,19 @@ export default function StaffInviteDialog({ onClose, onInvited, existingStaff = 
   );
 }
 
-function InviteSummary({ done, onClose, onRetry }) {
+function InviteSummary({ done, setDone, onClose, onResume }) {
   const [copied, setCopied] = useState("");
   const [resending, setResending] = useState(false);
-  const [resent, setResent] = useState(false);
+  const [now, setNow] = useState(Date.now());
   const { toast } = useToast();
+
+  // Recompute relative time live so "X minutes ago" stays accurate.
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  const status = done.invite_status;
 
   const copy = (key, text) => {
     if (!text) return;
@@ -160,126 +201,162 @@ function InviteSummary({ done, onClose, onRetry }) {
   };
   const resend = async () => {
     setResending(true);
+    setDone((d) => ({ ...d, invite_status: "sending", invite_sent_at: new Date().toISOString(), invite_error: "" }));
     try {
-      await base44.functions.invoke("manageStaffAccess", { action: "resend", email: done.email, role: done.role });
-      setResent(true);
-      toast({ title: "Invite resent" });
-    } catch {
+      const res = await base44.functions.invoke("manageStaffAccess", { action: "resend", email: done.email, role: done.role, name: done.name });
+      const inv = res?.data?.invite || res?.invite || {};
+      setDone((d) => ({
+        ...d,
+        invite_status: inv.invite_status || "sent",
+        invite_sent_at: inv.invite_sent_at || d.invite_sent_at,
+        invite_expires_at: inv.invite_expires_at || d.invite_expires_at,
+        invite_error: inv.invite_error || "",
+      }));
+      if ((inv.invite_status || "sent") === "sent") toast({ title: "Invite resent" });
+    } catch (e) {
+      setDone((d) => ({ ...d, invite_status: "failed", invite_error: e.response?.data?.error || "Resend failed" }));
       toast({ title: "Could not resend", variant: "destructive" });
     }
     setResending(false);
   };
 
+  const header = {
+    sending: { Icon: Loader2, cls: "bg-blue-100 text-blue-600", title: "Sending invite…", spin: true },
+    sent: { Icon: Send, cls: "bg-blue-100 text-blue-600", title: "Invite sent" },
+    delivered: { Icon: CheckCircle2, cls: "bg-emerald-100 text-emerald-600", title: "Invite delivered" },
+    failed: { Icon: AlertCircle, cls: "bg-red-100 text-red-600", title: "Couldn't send invite" },
+  }[status] || { Icon: Send, cls: "bg-blue-100 text-blue-600", title: "Invite sent" };
+  const HeadIcon = header.Icon;
+
+  const showDetails = status !== "sending";
   const rows = [
     { key: "name", label: "Name", value: done.name },
     { key: "email", label: "Email", value: done.email },
   ];
-
-  const isSuccess = done.status === "success";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-foreground/30 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-lg">
         <div className="mb-4 flex items-center gap-2">
-          {isSuccess ? (
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 text-emerald-600"><CheckCircle2 className="h-5 w-5" /></span>
-          ) : (
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-red-100 text-red-600"><AlertCircle className="h-5 w-5" /></span>
-          )}
-          <h2 className="text-lg font-semibold">{isSuccess ? "Invite sent" : "Couldn't send invite"}</h2>
+          <span className={`flex h-9 w-9 items-center justify-center rounded-full ${header.cls}`}>
+            <HeadIcon className={`h-5 w-5 ${header.spin ? "animate-spin" : ""}`} />
+          </span>
+          <h2 className="text-lg font-semibold">{header.title}</h2>
         </div>
 
-        {isSuccess ? (
-          <>
-            <p className="mb-4 text-sm text-muted-foreground">
-              The invitation email is on its way. They must set their own password from the invite email to sign in to the admin panel.
-            </p>
-            <div className="mb-4 space-y-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="h-4 w-4" /> Invite sent {relTime(done.sentAt)}
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CalendarClock className="h-4 w-4" /> This link expires in 7 days
-              </div>
-              <div className="flex items-center gap-2 text-sm text-emerald-600">
-                <CheckCircle2 className="h-4 w-4" /> Delivered to {done.email}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-border p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Details</span>
-                <button onClick={copyAll} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground">
-                  {copied === "all" ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                  {copied === "all" ? "Copied" : "Copy all"}
-                </button>
-              </div>
-              <div className="space-y-2">
-                {rows.map((r) => (
-                  <div key={r.key} className="group flex items-center justify-between gap-3 text-sm">
-                    <span className="text-muted-foreground">{r.label}</span>
-                    <span className="flex items-center gap-2 font-medium">
-                      <span className="break-all">{r.value || "—"}</span>
-                      {r.value && (
-                        <button onClick={() => copy(r.key, r.value)} className="opacity-0 transition-opacity group-hover:opacity-100 text-muted-foreground hover:text-foreground" aria-label="Copy">
-                          {copied === r.key ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </button>
-                      )}
-                    </span>
-                  </div>
-                ))}
-                <div className="group flex items-center justify-between gap-3 text-sm">
-                  <span className="text-muted-foreground">Role</span>
-                  <span className="flex items-center gap-2 font-medium">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${roleBadgeClass(done.role)}`}>{done.roleLabel}</span>
-                    <button onClick={() => copy("role", done.roleLabel)} className="opacity-0 transition-opacity group-hover:opacity-100 text-muted-foreground hover:text-foreground" aria-label="Copy">
-                      {copied === "role" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </button>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={resend} disabled={resending || resent}>
-                {resending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                {resent ? "Resent" : "Resend invite"}
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="mb-4 text-sm text-muted-foreground">
-              {done.error || "Something went wrong."} Check the email address and try again.
-            </p>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={onClose}>Close</Button>
-              <Button onClick={onRetry} disabled={resending}>
-                {resending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                Retry
-              </Button>
-            </div>
-          </>
+        {status === "sending" && (
+          <p className="mb-4 text-sm text-muted-foreground">Sending the invitation email to {done.email}…</p>
         )}
 
-        {isSuccess && (
-          <div className="mt-6 flex justify-end">
-            <Button onClick={onClose}>Done</Button>
+        {status === "sent" && (
+          <p className="mb-4 text-sm text-muted-foreground">
+            The invitation email is on its way to {done.email}. They must set their own password from the invite email to sign in to the admin panel.
+          </p>
+        )}
+
+        {status === "delivered" && (
+          <p className="mb-4 text-sm text-muted-foreground">The invitation was delivered to {done.email}.</p>
+        )}
+
+        {status === "failed" && (
+          <p className="mb-4 text-sm text-red-600">
+            We couldn't send the invite to {done.email}. {done.invite_error ? <span className="block text-xs text-muted-foreground">{done.invite_error}</span> : "Check the address and try again."}
+          </p>
+        )}
+
+        {(status === "sent" || status === "delivered") && (
+          <div className="mb-4 space-y-3">
+            <div className={`flex items-center gap-2 text-sm ${status === "delivered" ? "text-emerald-600" : "text-amber-600"}`}>
+              {status === "delivered" ? <CheckCircle2 className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+              {status === "delivered" ? `Delivered to ${done.email}` : "Delivery confirmation pending"}
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock className="h-4 w-4" /> Invite sent {relTime(done.invite_sent_at, now)}
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CalendarClock className="h-4 w-4" /> {expiryText(done.invite_expires_at, now)}
+            </div>
           </div>
         )}
+
+        {showDetails && (
+          <div className="rounded-xl border border-border p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Details</span>
+              <button onClick={copyAll} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground">
+                {copied === "all" ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied === "all" ? "Copied" : "Copy all"}
+              </button>
+            </div>
+            <div className="space-y-2">
+              {rows.map((r) => (
+                <div key={r.key} className="group flex items-center justify-between gap-3 text-sm">
+                  <span className="text-muted-foreground">{r.label}</span>
+                  <span className="flex items-center gap-2 font-medium">
+                    <span className="break-all">{r.value || "—"}</span>
+                    {r.value && (
+                      <button onClick={() => copy(r.key, r.value)} className="opacity-0 transition-opacity group-hover:opacity-100 text-muted-foreground hover:text-foreground" aria-label="Copy">
+                        {copied === r.key ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </button>
+                    )}
+                  </span>
+                </div>
+              ))}
+              <div className="group flex items-center justify-between gap-3 text-sm">
+                <span className="text-muted-foreground">Role</span>
+                <span className="flex items-center gap-2 font-medium">
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${roleBadgeClass(done.role)}`}>{done.roleLabel}</span>
+                  <button onClick={() => copy("role", done.roleLabel)} className="opacity-0 transition-opacity group-hover:opacity-100 text-muted-foreground hover:text-foreground" aria-label="Copy">
+                    {copied === "role" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </button>
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-6 flex justify-end gap-2">
+          {status === "failed" && (
+            <Button onClick={resend} disabled={resending}>
+              {resending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+              Resend invite
+            </Button>
+          )}
+          {(status === "sent" || status === "delivered") && (
+            <Button variant="outline" onClick={resend} disabled={resending}>
+              {resending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+              Resend invite
+            </Button>
+          )}
+          <Button onClick={onClose}>Done</Button>
+        </div>
       </div>
     </div>
   );
 }
 
-function relTime(iso) {
+function relTime(iso, now = Date.now()) {
   if (!iso) return "just now";
-  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  const s = Math.floor((now - new Date(iso).getTime()) / 1000);
+  if (s < 0) return "just now";
   if (s < 60) return "just now";
   const m = Math.floor(s / 60);
   if (m < 60) return `${m} minute${m > 1 ? "s" : ""} ago`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h} hour${h > 1 ? "s" : ""} ago`;
-  return new Date(iso).toLocaleDateString();
+  const d = Math.floor(h / 24);
+  return `${d} day${d > 1 ? "s" : ""} ago`;
+}
+
+function expiryText(iso, now = Date.now()) {
+  if (!iso) return "Expires in 7 days";
+  const ms = new Date(iso).getTime() - now;
+  if (ms <= 0) return "Invite expired";
+  const d = Math.ceil(ms / (24 * 60 * 60 * 1000));
+  if (d <= 0) {
+    const h = Math.ceil(ms / (60 * 60 * 1000));
+    return `Expires in ${h} hour${h > 1 ? "s" : ""}`;
+  }
+  return `Expires in ${d} day${d > 1 ? "s" : ""}`;
 }
