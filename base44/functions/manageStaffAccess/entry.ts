@@ -101,7 +101,13 @@ export default async function (req) {
         u = (users || []).find((x) => x.email === email);
         if (!u) await new Promise((r) => setTimeout(r, 800));
       }
-      if (!u) return Response.json({ error: 'Could not locate the invited user account. The invite may still be processing — the role will apply once they accept it.' }, { status: 500 });
+      if (!u) {
+        // The user record is not created until the invitee accepts the email.
+        // inviteUser() already set their role; name/password/permissions will be
+        // applied once their account is visible. Treat this as a successful
+        // invite rather than failing the whole action.
+        return Response.json({ ok: true, pending: true });
+      }
       const update = { role: finalRole };
       if (typeof name === 'string' && name.trim()) update.full_name = name.trim();
       if (typeof body.password === 'string' && body.password.trim()) update.temp_password = body.password.trim();
