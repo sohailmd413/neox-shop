@@ -2,7 +2,11 @@ import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { ADMIN_SECTIONS, defaultsAllowed } from "@/lib/adminPermissions";
+import { ADMIN_SECTIONS, defaultsAllowed, ROLE_DEFAULTS, ROLE_LABELS } from "@/lib/adminPermissions";
+
+const BUILTIN_ROLES = Object.keys(ROLE_DEFAULTS)
+  .filter((k) => k !== "user" && k !== "admin")
+  .map((k) => ({ name: k, label: ROLE_LABELS[k], permissions: ROLE_DEFAULTS[k], builtin: true }));
 import RoleDialog from "@/components/admin/RoleDialog";
 import { Plus, Pencil, Trash2, Loader2, ShieldCheck } from "lucide-react";
 
@@ -59,9 +63,37 @@ export default function AdminRoles() {
         <div className="space-y-3">
           {roles.length === 0 && (
             <div className="rounded-2xl border border-border p-10 text-center text-sm text-muted-foreground">
-              No custom roles yet. The built-in roles (admin, product, delivery, marketing manager) are always available.
+              No custom roles yet. Create one above.
             </div>
           )}
+          {BUILTIN_ROLES.map((r) => {
+            const allowed = defaultsAllowed(r.permissions || {});
+            return (
+              <div key={r.name} className="rounded-2xl border border-border bg-background p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{r.label}</p>
+                      <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">{r.name}</code>
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">Built-in</span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {ADMIN_SECTIONS.map((s) => (
+                        <span
+                          key={s.id}
+                          className={`rounded-full px-2 py-0.5 text-xs ${
+                            allowed.includes(s.id) ? "bg-foreground text-background" : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {s.label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
           {roles.map((r) => {
             const allowed = defaultsAllowed(r.permissions || {});
             return (
