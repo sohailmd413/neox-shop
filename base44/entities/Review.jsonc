@@ -33,6 +33,16 @@
       "default": false,
       "description": "True when a moderator rejected the review; excluded from the storefront."
     },
+    "unpublished": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when a moderator pulled a previously approved review offline; lives in the Unpublished tab, not Pending."
+    },
+    "deleted": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when a moderator soft-deleted the review; lives in the Deleted tab and is excluded from the storefront."
+    },
     "helpful_count": {
       "type": "number",
       "default": 0

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Clock, CheckCheck, Ban, Check, X, Star, Trash2, RotateCcw } from "lucide-react";
+import { Clock, CheckCheck, Ban, EyeOff, Trash2, Check, X, Star, RotateCcw, AlertTriangle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -7,7 +7,9 @@ import { useToast } from "@/components/ui/use-toast";
 const TABS = [
   { id: "pending", label: "Pending", icon: Clock },
   { id: "approved", label: "Approved", icon: CheckCheck },
+  { id: "unpublished", label: "Unpublished", icon: EyeOff },
   { id: "rejected", label: "Rejected", icon: Ban },
+  { id: "deleted", label: "Deleted", icon: Trash2 },
 ];
 
 export default function AdminReviews() {
@@ -40,32 +42,44 @@ export default function AdminReviews() {
     }
   };
 
-  const approve = (id) => save(id, { approved: true, rejected: false }, "Review approved");
-  const unpublish = (id) => save(id, { approved: false }, "Review moved to pending");
-  const reject = (id) => save(id, { approved: false, rejected: true }, "Review rejected");
-  const restore = (id) => save(id, { rejected: false }, "Review restored to pending");
+  const approve = (id) => save(id, { approved: true, rejected: false, unpublished: false, deleted: false }, "Review approved");
+  const unpublish = (id) => save(id, { approved: false, unpublished: true }, "Review moved to unpublished");
+  const reject = (id) => save(id, { approved: false, rejected: true, unpublished: false }, "Review rejected");
+  const restoreRejected = (id) => save(id, { rejected: false }, "Review restored to pending");
+  const republish = (id) => save(id, { approved: true, unpublished: false }, "Review republished");
 
-  const remove = async (id) => {
-    if (!confirm("Delete this review permanently?")) return;
+  const softDelete = async (id) => {
+    if (!confirm("Move this review to the Deleted section?")) return;
+    await save(id, { approved: false, unpublished: false, rejected: false, deleted: true }, "Review moved to deleted");
+  };
+
+  const restoreDeleted = (id) => save(id, { deleted: false }, "Review restored to pending");
+
+  const permanentDelete = async (id) => {
+    if (!confirm("Permanently delete this review? This cannot be undone.")) return;
     try {
       await base44.entities.Review.delete(id);
       setReviews((prev) => prev.filter((r) => r.id !== id));
-      toast({ title: "Review deleted" });
+      toast({ title: "Review permanently deleted" });
     } catch {
       toast({ title: "Could not delete", variant: "destructive" });
     }
   };
 
   const counts = useMemo(() => ({
-    pending: reviews.filter((r) => !r.approved && !r.rejected).length,
-    approved: reviews.filter((r) => r.approved).length,
-    rejected: reviews.filter((r) => r.rejected).length,
+    pending: reviews.filter((r) => !r.approved && !r.rejected && !r.unpublished && !r.deleted).length,
+    approved: reviews.filter((r) => r.approved && !r.deleted).length,
+    unpublished: reviews.filter((r) => r.unpublished && !r.deleted).length,
+    rejected: reviews.filter((r) => r.rejected && !r.deleted).length,
+    deleted: reviews.filter((r) => r.deleted).length,
   }), [reviews]);
 
   const filtered = useMemo(() => {
-    if (tab === "approved") return reviews.filter((r) => r.approved);
-    if (tab === "rejected") return reviews.filter((r) => r.rejected);
-    return reviews.filter((r) => !r.approved && !r.rejected);
+    if (tab === "approved") return reviews.filter((r) => r.approved && !r.deleted);
+    if (tab === "unpublished") return reviews.filter((r) => r.unpublished && !r.deleted);
+    if (tab === "rejected") return reviews.filter((r) => r.rejected && !r.deleted);
+    if (tab === "deleted") return reviews.filter((r) => r.deleted);
+    return reviews.filter((r) => !r.approved && !r.rejected && !r.unpublished && !r.deleted);
   }, [reviews, tab]);
 
   return (
@@ -75,8 +89,8 @@ export default function AdminReviews() {
         <p className="text-sm text-muted-foreground">Moderate customer reviews by status.</p>
       </div>
 
-      {/* Modern segmented tabs */}
-      <div className="inline-flex w-full max-w-sm items-center gap-1 rounded-xl bg-muted/60 p-1">
+      {/* Segmented tabs */}
+      <div className="inline-flex w-full max-w-xl flex-wrap items-center gap-1 rounded-xl bg-muted/60 p-1">
         {TABS.map((t) => {
           const Icon = t.icon;
           const active = tab === t.id;
@@ -86,7 +100,7 @@ export default function AdminReviews() {
               key={t.id}
               type="button"
               onClick={() => setTab(t.id)}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -116,8 +130,11 @@ export default function AdminReviews() {
               onApprove={() => approve(r.id)}
               onUnpublish={() => unpublish(r.id)}
               onReject={() => reject(r.id)}
-              onRestore={() => restore(r.id)}
-              onDelete={() => remove(r.id)}
+              onRestoreRejected={() => restoreRejected(r.id)}
+              onRepublish={() => republish(r.id)}
+              onSoftDelete={() => softDelete(r.id)}
+              onRestoreDeleted={() => restoreDeleted(r.id)}
+              onPermanentDelete={() => permanentDelete(r.id)}
             />
           ))}
         </div>
@@ -126,7 +143,7 @@ export default function AdminReviews() {
   );
 }
 
-function ReviewCard({ review, status, onApprove, onUnpublish, onReject, onRestore, onDelete }) {
+function ReviewCard({ review, status, onApprove, onUnpublish, onReject, onRestoreRejected, onRepublish, onSoftDelete, onRestoreDeleted, onPermanentDelete }) {
   return (
     <div className="rounded-2xl border border-border bg-background p-5">
       <div className="flex items-center justify-between">
@@ -147,17 +164,29 @@ function ReviewCard({ review, status, onApprove, onUnpublish, onReject, onRestor
               <Button size="sm" variant="outline" onClick={onReject} className="h-8 text-destructive hover:bg-destructive/10">
                 <X className="mr-1 h-3.5 w-3.5" /> Reject
               </Button>
-              <button onClick={onDelete} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label="Delete">
+              <button onClick={onSoftDelete} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label="Delete">
                 <Trash2 className="h-4 w-4" />
               </button>
             </>
           )}
           {status === "approved" && (
             <>
-              <Button size="sm" variant="outline" onClick={onUnpublish} className="h-8">Unpublish</Button>
-              <button onClick={onDelete} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label="Delete">
+              <Button size="sm" variant="outline" onClick={onUnpublish} className="h-8">
+                <EyeOff className="mr-1 h-3.5 w-3.5" /> Unpublish
+              </Button>
+              <button onClick={onSoftDelete} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label="Delete">
                 <Trash2 className="h-4 w-4" />
               </button>
+            </>
+          )}
+          {status === "unpublished" && (
+            <>
+              <Button size="sm" onClick={onRepublish} className="h-8">
+                <Check className="mr-1 h-3.5 w-3.5" /> Republish
+              </Button>
+              <Button size="sm" variant="outline" onClick={onSoftDelete} className="h-8 text-destructive hover:bg-destructive/10">
+                <Trash2 className="mr-1 h-3.5 w-3.5" /> Delete
+              </Button>
             </>
           )}
           {status === "rejected" && (
@@ -165,12 +194,22 @@ function ReviewCard({ review, status, onApprove, onUnpublish, onReject, onRestor
               <Button size="sm" onClick={onApprove} className="h-8">
                 <Check className="mr-1 h-3.5 w-3.5" /> Approve
               </Button>
-              <Button size="sm" variant="outline" onClick={onRestore} className="h-8">
+              <Button size="sm" variant="outline" onClick={onRestoreRejected} className="h-8">
                 <RotateCcw className="mr-1 h-3.5 w-3.5" /> Restore
               </Button>
-              <button onClick={onDelete} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label="Delete">
+              <button onClick={onSoftDelete} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label="Delete">
                 <Trash2 className="h-4 w-4" />
               </button>
+            </>
+          )}
+          {status === "deleted" && (
+            <>
+              <Button size="sm" variant="outline" onClick={onRestoreDeleted} className="h-8">
+                <RotateCcw className="mr-1 h-3.5 w-3.5" /> Restore
+              </Button>
+              <Button size="sm" variant="outline" onClick={onPermanentDelete} className="h-8 text-destructive hover:bg-destructive/10">
+                <AlertTriangle className="mr-1 h-3.5 w-3.5" /> Delete forever
+              </Button>
             </>
           )}
         </div>
