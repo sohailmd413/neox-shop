@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Plus, Pencil, Trash2, Copy, Download, Percent, Archive, ArchiveRestore, EyeOff, RotateCcw, Rocket } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
@@ -364,14 +365,17 @@ export default function AdminProducts() {
       <ProductAnalytics products={products} />
 
       {/* Quick view tabs */}
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1 border-b border-border">
         {VIEWS.map((v) => {
           const active = viewKey === v.id;
           return (
             <button key={v.id} onClick={() => setView(v.id)}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${active ? "bg-foreground text-background" : "border border-border bg-background text-muted-foreground hover:bg-muted"}`}>
+              className={`relative flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors ${active ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
               {v.label}
-              <span className={`rounded-full px-1.5 text-xs ${active ? "bg-background/20" : "bg-muted"}`}>{v.count}</span>
+              <span className={`rounded-full px-1.5 text-xs ${active ? "bg-foreground text-background" : "bg-muted text-muted-foreground"}`}>{v.count}</span>
+              {active && (
+                <motion.span layoutId="prodTabUnderline" className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-foreground" transition={{ type: "spring", stiffness: 400, damping: 32 }} />
+              )}
             </button>
           );
         })}
@@ -430,7 +434,7 @@ export default function AdminProducts() {
               ) : filtered.map((p) => {
                 const isArchived = p.status === "archived";
                 const isDraft = p.status === "draft";
-                const completion = productCompletion(p);
+                const completion = p.completion_percentage ?? productCompletion(p);
                 return (
                   <tr key={p.id} className={`border-b border-border last:border-0 hover:bg-muted/30 ${isArchived ? "opacity-60 bg-zinc-50/60" : ""}`}>
                     <td className="px-4 py-3">
@@ -450,7 +454,7 @@ export default function AdminProducts() {
                           </div>
                           {isDraft && (
                             <div className="mt-1 flex items-center gap-1.5">
-                              <div className="h-1 w-20 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-foreground" style={{ width: `${completion}%` }} /></div>
+                              <div className="h-1 w-20 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-foreground transition-[width] duration-500" style={{ width: `${completion}%` }} /></div>
                               <span className="text-[10px] text-muted-foreground">{completion}% · edited {rel(p.updated_date || p.created_date)}</span>
                             </div>
                           )}
@@ -474,7 +478,7 @@ export default function AdminProducts() {
                       <span className={p.stock <= 5 ? "font-medium text-amber-600" : ""}>{p.stock}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`rounded-full px-2 py-0.5 text-xs ${STATUS_BADGE[p.status]}`}>{STATUS_LABEL[p.status]}</span>
+                      <motion.span key={p.status} initial={{ scale: 0.85 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} className={`inline-block rounded-full px-2 py-0.5 text-xs ${STATUS_BADGE[p.status]}`}>{STATUS_LABEL[p.status]}</motion.span>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {p.rating ? `★ ${p.rating.toFixed(1)}` : "—"}
@@ -507,7 +511,13 @@ export default function AdminProducts() {
                             )}
                             <button onClick={() => handleDuplicate(p)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Duplicate" title="Duplicate"><Copy className="h-4 w-4" /></button>
                             <button onClick={() => archive(p)} className="rounded-lg p-2 text-muted-foreground hover:bg-amber-50 hover:text-amber-600" aria-label="Archive" title="Archive"><Archive className="h-4 w-4" /></button>
-                            <button onClick={() => { setEditing(p); setDialogOpen(true); }} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Edit" title="Edit"><Pencil className="h-4 w-4" /></button>
+                            {isDraft ? (
+                              <button onClick={() => { setEditing(p); setDialogOpen(true); }} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-foreground hover:bg-muted" title="Continue editing">
+                                <Pencil className="h-3.5 w-3.5" /> Continue
+                              </button>
+                            ) : (
+                              <button onClick={() => { setEditing(p); setDialogOpen(true); }} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Edit" title="Edit"><Pencil className="h-4 w-4" /></button>
+                            )}
                             <button onClick={() => handleDelete(p)} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label="Delete" title="Delete"><Trash2 className="h-4 w-4" /></button>
                           </>
                         )}

@@ -66,10 +66,23 @@
         "active",
         "inactive",
         "draft",
-        "archived"
+        "archived",
+        "out_of_stock"
       ],
       "default": "active",
-      "description": "active=live on storefront; inactive=temporarily hidden (reactivate later); draft=incomplete, never live; archived=removed from catalog, kept for history and can be restored."
+      "description": "active=live on storefront; inactive=temporarily hidden (reactivate later); draft=incomplete, never live; archived=removed from catalog, kept for history and can be restored; out_of_stock=active listing but shown as unavailable to customers."
+    },
+    "completion_percentage": {
+      "type": "number",
+      "default": 0,
+      "minimum": 0,
+      "maximum": 100,
+      "description": "0\u2013100 share of the publish-required fields that are filled. Recomputed and stored on every save."
+    },
+    "last_edited_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the most recent save (draft autosave or publish). Updated on every persist."
     },
     "featured": {
       "type": "boolean",

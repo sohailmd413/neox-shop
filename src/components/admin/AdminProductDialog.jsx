@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { X, Info, Image, Tag, Truck, Search, Box, Flag } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Dropdown from "@/components/admin/ui/Dropdown";
 import ImageUpload from "@/components/admin/ImageUpload";
@@ -120,6 +121,8 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
     return_days: form.return_days === "" || form.return_days === null ? 0 : Number(form.return_days),
     warranty: form.warranty || "",
     sale_ends_at: form.sale_ends_at ? new Date(form.sale_ends_at).toISOString() : null,
+    completion_percentage: productCompletion(form),
+    last_edited_at: new Date().toISOString(),
   });
 
   const persist = async (statusOverride, opts = {}) => {
@@ -232,7 +235,7 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
             <h2 className="text-lg font-semibold">{product ? "Edit product" : "New product"}</h2>
             <div className="mt-1 flex items-center gap-2">
               <div className="h-1.5 w-28 overflow-hidden rounded-full bg-muted">
-                <div className="h-full rounded-full bg-foreground transition-all" style={{ width: `${completion}%` }} />
+                <motion.div className="h-full rounded-full bg-foreground" initial={false} animate={{ width: `${completion}%` }} transition={{ type: "spring", stiffness: 200, damping: 26 }} />
               </div>
               <span className="text-xs text-muted-foreground">{completion}% complete</span>
               <SaveIndicator state={saveState} />
@@ -323,8 +326,8 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
                 <Field label="Compare-at / MRP (SAR)"><input type="number" step="0.01" value={form.compare_at_price} onChange={set("compare_at_price")} className={baseInput} /></Field>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Tax class / HSN" required error={errors.tax_class?.msg} fieldKey="tax_class">
-                  <input value={form.tax_class} onChange={set("tax_class")} className={fldCls("tax_class")} placeholder="e.g. VAT-15" />
+                <Field label="Tax class / HSN" hint="Optional — e.g. VAT-15">
+                  <input value={form.tax_class} onChange={set("tax_class")} className={baseInput} placeholder="e.g. VAT-15" />
                 </Field>
                 <Field label="Sale ends at"><input type="datetime-local" value={form.sale_ends_at} onChange={set("sale_ends_at")} className={baseInput} /></Field>
               </div>

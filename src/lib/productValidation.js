@@ -5,7 +5,6 @@ export const REQUIRED_CHECKS = [
   { key: "category", label: "Category", tab: "general", test: (f) => !!(f.category && String(f.category).trim()), msg: "Select at least one category" },
   { key: "images", label: "Product image", tab: "media", test: (f) => Array.isArray(f.images) && f.images.length >= 1, msg: "Add at least one product image" },
   { key: "price", label: "Selling price", tab: "pricing", test: (f) => Number(f.price) > 0, msg: "Enter a selling price" },
-  { key: "tax_class", label: "Tax class / HSN", tab: "pricing", test: (f) => !!(f.tax_class && String(f.tax_class).trim()), msg: "Tax class / HSN code is required" },
   { key: "stock", label: "Stock", tab: "inventory", test: (f) => Number(f.stock) > 0 || f.stock_status === "preorder", msg: "Enter stock quantity or allow backorders" },
   { key: "description", label: "Description", tab: "general", test: (f) => (f.description || "").trim().length >= 50, msg: "Description must be at least 50 characters" },
 ];
