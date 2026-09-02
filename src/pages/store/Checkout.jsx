@@ -105,6 +105,9 @@ export default function Checkout() {
         discount,
         total,
         coupon_code: coupon?.code || "",
+        customer_email: form.email,
+        payment_method: "card",
+        timeline: [{ status: "pending", by: "system", at: new Date().toISOString() }],
         shipping_address: {
           name: form.name,
           line1: form.line1,

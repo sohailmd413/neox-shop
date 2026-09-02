@@ -92,6 +92,74 @@
     },
     "stripe_payment_id": {
       "type": "string"
+    },
+    "customer_email": {
+      "type": "string",
+      "description": "Customer email captured at checkout."
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "card",
+        "cod",
+        "wallet",
+        "upi",
+        "net_banking"
+      ],
+      "default": "card"
+    },
+    "courier": {
+      "type": "string",
+      "description": "Shipping/courier partner assigned by admin."
+    },
+    "tracking_number": {
+      "type": "string",
+      "description": "Shipment tracking number assigned by admin."
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Admin tags e.g. priority, gift, b2b."
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          },
+          "created_date": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "Internal admin notes."
+    },
+    "timeline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "description": "Status change history log."
     }
   },
   "required": [
