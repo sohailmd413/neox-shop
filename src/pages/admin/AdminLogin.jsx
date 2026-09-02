@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShieldCheck, Mail, Lock, Loader2, ArrowLeft } from "lucide-react";
+import { Store, Mail, Lock, Loader2, ArrowLeft } from "lucide-react";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -38,7 +38,7 @@ export default function AdminLogin() {
         <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
           <div className="flex flex-col items-center text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background">
-              <ShieldCheck className="h-6 w-6" />
+              <Store className="h-6 w-6" />
             </div>
             <h1 className="mt-4 text-xl font-semibold tracking-tight">Admin staff sign in</h1>
             <p className="mt-1 text-sm text-muted-foreground">For admin, product, delivery & marketing managers.</p>
