@@ -12,6 +12,7 @@ import MergeDialog from "@/components/admin/categories/MergeDialog";
 import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
 import { showUndoToast } from "@/components/admin/ui/UndoToast";
 import { EmptyState, ErrorState } from "@/components/shared/StateViews";
+import { submitForApproval } from "@/lib/approval";
 
 export default function AdminCategories() {
   const [categories, setCategories] = useState([]);
@@ -25,7 +26,12 @@ export default function AdminCategories() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [mergeSrc, setMergeSrc] = useState(null);
   const [confirm, setConfirm] = useState(null);
+  const [user, setUser] = useState(null);
   const { toast } = useToast();
+
+  useEffect(() => { base44.auth.me().then(setUser).catch(() => {}); }, []);
+
+  const wasApproved = (c) => Array.isArray(c.approval_history) && c.approval_history.some((h) => h.action === "approved");
 
   const load = async () => {
     setLoading(true);
@@ -46,11 +52,15 @@ export default function AdminCategories() {
 
   useEffect(() => { load(); }, []);
 
-  const createCategory = async (data) => {
+  const createCategory = async (data, mode) => {
     setSaving(true);
     try {
-      await base44.entities.Category.create(data);
-      toast({ title: "Category added" });
+      const status = mode === "submit" ? "pending_approval" : "draft";
+      const rec = await base44.entities.Category.create({ ...data, status, active: false });
+      if (mode === "submit" && user) {
+        try { await submitForApproval("Category", rec, user); } catch {}
+      }
+      toast({ title: mode === "submit" ? "Submitted for approval" : "Category saved as draft" });
       setEditing(null);
       await load();
     } catch {
@@ -59,21 +69,28 @@ export default function AdminCategories() {
     setSaving(false);
   };
 
-  const submit = (data) => {
+  const submit = (data, mode = "draft") => {
     if (editing?.id) {
       setSaving(true);
       base44.entities.Category.update(editing.id, data)
-        .then(() => { toast({ title: "Category updated" }); setEditing(null); load(); })
+        .then(async (rec) => {
+          if (mode === "submit" && user) {
+            try { await submitForApproval("Category", rec, user); } catch {}
+          }
+          toast({ title: mode === "submit" ? "Submitted for approval" : "Category updated" });
+          setEditing(null);
+          load();
+        })
         .catch(() => toast({ title: "Could not save category", variant: "destructive" }))
         .finally(() => setSaving(false));
       return;
     }
     setConfirm({
       variant: "default",
-      title: `Create category "${data.name}"?`,
-      description: "It will be added to your catalog and can be edited or removed later.",
-      confirmLabel: "Create category",
-      onConfirm: () => createCategory(data),
+      title: mode === "submit" ? `Submit "${data.name}" for approval?` : `Create category "${data.name}"?`,
+      description: mode === "submit" ? "It will be sent for admin sign-off and won't go live until approved." : "It will be saved as a draft and hidden from the storefront until approved.",
+      confirmLabel: mode === "submit" ? "Submit for approval" : "Create category",
+      onConfirm: () => createCategory(data, mode),
     });
   };
 
@@ -103,7 +120,7 @@ export default function AdminCategories() {
       await base44.entities.Category.create({
         name: `${c.name} (copy)`, name_ar: c.name_ar, slug: slugify(`${c.name}-copy`),
         parent_id: c.parent_id || null, image_url: c.image_url, sort_order: c.sort_order,
-        featured: false, active: c.active !== false, show_in_nav: c.show_in_nav !== false,
+        featured: false, active: false, status: "draft", show_in_nav: c.show_in_nav !== false,
       });
       toast({ title: "Category duplicated" });
       load();
@@ -113,11 +130,28 @@ export default function AdminCategories() {
   };
 
   const activateCategory = async (c) => {
+    // Previously-approved (or pre-approval-system legacy) categories can be
+    // reactivated directly. Never-approved categories must go through the
+    // approval queue — they cannot go live directly.
+    if (c.status === "active" || c.status == null || wasApproved(c)) {
+      try {
+        await base44.entities.Category.update(c.id, { active: true, status: "active" });
+        load();
+      } catch {
+        toast({ title: "Could not update", variant: "destructive" });
+      }
+      return;
+    }
+    if (!c.image_url) {
+      toast({ title: "Add an image before submitting for approval", variant: "destructive" });
+      return;
+    }
     try {
-      await base44.entities.Category.update(c.id, { active: true });
+      await submitForApproval("Category", c, user);
+      toast({ title: "Submitted for approval" });
       load();
     } catch {
-      toast({ title: "Could not update", variant: "destructive" });
+      toast({ title: "Could not submit", variant: "destructive" });
     }
   };
 
@@ -184,7 +218,7 @@ export default function AdminCategories() {
   const bulkCreate = async (data) => {
     setSaving(true);
     try {
-      await base44.entities.Category.bulkCreate(data);
+      await base44.entities.Category.bulkCreate(data.map((d) => ({ ...d, status: "draft", active: false })));
       toast({ title: `${data.length} categories added` });
       setBulkOpen(false);
       await load();
@@ -195,12 +229,16 @@ export default function AdminCategories() {
   };
 
   const bulkActivate = async () => {
+    // Bulk "activate" sends selected categories for approval rather than live,
+    // so nothing goes public without sign-off.
     try {
-      await base44.entities.Category.bulkUpdate([...selected].map((id) => ({ id, active: true })));
-      toast({ title: "Categories activated" });
+      await base44.entities.Category.bulkUpdate(
+        [...selected].map((id) => ({ id, status: "pending_approval", active: false }))
+      );
+      toast({ title: "Submitted for approval" });
       setSelected(new Set());
       load();
-    } catch { toast({ title: "Could not update", variant: "destructive" }); }
+    } catch { toast({ title: "Could not submit", variant: "destructive" }); }
   };
   const bulkDeactivate = () => {
     const ids = [...selected];

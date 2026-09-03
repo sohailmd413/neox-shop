@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import { ClipboardCheck, Check, X as XIcon, Package, Layers } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";

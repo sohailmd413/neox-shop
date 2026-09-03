@@ -15,6 +15,7 @@ import AdminBulkProductDialog from "@/components/admin/AdminBulkProductDialog";
 import AdminSaleDialog from "@/components/admin/AdminSaleDialog";
 import SaleCountdown from "@/components/admin/SaleCountdown";
 import { validateProduct, productCompletion } from "@/lib/productValidation";
+import { submitForApproval } from "@/lib/approval";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/shared/StateViews";
 
 const rel = (iso) => {
@@ -28,12 +29,13 @@ const rel = (iso) => {
   return new Date(iso).toLocaleDateString();
 };
 
-const STATUS_LABEL = { active: "Active", inactive: "Inactive", draft: "Draft", archived: "Archived" };
+const STATUS_LABEL = { active: "Active", inactive: "Inactive", draft: "Draft", pending_approval: "Pending", archived: "Archived" };
 const STATUS_BADGE = {
-  active: "bg-emerald-100 text-emerald-700",
-  inactive: "bg-amber-100 text-amber-700",
-  draft: "bg-sky-100 text-sky-700",
-  archived: "bg-zinc-200 text-zinc-600",
+active: "bg-emerald-100 text-emerald-700",
+inactive: "bg-amber-100 text-amber-700",
+draft: "bg-sky-100 text-sky-700",
+pending_approval: "bg-violet-100 text-violet-700",
+archived: "bg-zinc-200 text-zinc-600",
 };
 
 export default function AdminProducts() {
@@ -48,11 +50,12 @@ export default function AdminProducts() {
   const [selected, setSelected] = useState(new Set());
   const [saleOpen, setSaleOpen] = useState(false);
   const [adminName, setAdminName] = useState("Admin");
+  const [user, setUser] = useState(null);
   const [confirm, setConfirm] = useState(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    base44.auth.me().then((u) => setAdminName(u?.full_name || u?.email || "Admin")).catch(() => {});
+    base44.auth.me().then((u) => { setUser(u); setAdminName(u?.full_name || u?.email || "Admin"); }).catch(() => {});
   }, []);
 
   const counts = {
@@ -60,6 +63,7 @@ export default function AdminProducts() {
     active: products.filter((p) => p.status === "active").length,
     inactive: products.filter((p) => p.status === "inactive").length,
     draft: products.filter((p) => p.status === "draft").length,
+    pending: products.filter((p) => p.status === "pending_approval").length,
     out_of_stock: products.filter((p) => p.status === "active" && (p.stock ?? 0) <= 0).length,
     archived: products.filter((p) => p.status === "archived").length,
   };
@@ -67,6 +71,7 @@ export default function AdminProducts() {
   const VIEWS = [
     { id: "all", label: "All", count: counts.all },
     { id: "active", label: "Active", count: counts.active },
+    { id: "pending", label: "Pending", count: counts.pending },
     { id: "draft", label: "Drafts", count: counts.draft },
     { id: "inactive", label: "Inactive", count: counts.inactive },
     { id: "out_of_stock", label: "Out of stock", count: counts.out_of_stock },
@@ -76,11 +81,12 @@ export default function AdminProducts() {
   const setView = (v) =>
     setFilters((f) => ({
       ...f,
-      status: v === "out_of_stock" || v === "all" ? "all" : v,
+      status: v === "out_of_stock" || v === "all" ? "all" : v === "pending" ? "pending_approval" : v,
       stock: v === "out_of_stock" ? "out" : "all",
     }));
 
   const viewKey = (() => {
+    if (filters.status === "pending_approval") return "pending";
     if (filters.status === "archived") return "archived";
     if (filters.status === "inactive") return "inactive";
     if (filters.status === "draft") return "draft";
@@ -289,12 +295,14 @@ export default function AdminProducts() {
     const skipped = n - ready.length;
     setConfirm({
       variant: "create",
-      title: `Publish ${ready.length} of ${n} selected product${n > 1 ? "s" : ""}?`,
-      description: skipped ? `${skipped} incomplete draft(s) will be skipped and remain as drafts.` : "They will be visible to customers on the storefront.",
-      confirmLabel: "Publish",
+      title: `Submit ${ready.length} of ${n} selected product${n > 1 ? "s" : ""} for approval?`,
+      description: skipped ? `${skipped} incomplete draft(s) will be skipped and remain as drafts.` : "They will be sent for admin sign-off and won't go live until approved.",
+      confirmLabel: "Submit for approval",
       onConfirm: async () => {
-        await base44.entities.Product.bulkUpdate(ready.map((p) => ({ id: p.id, status: "active" })));
-        toast({ title: `${ready.length} product(s) published${skipped ? `, ${skipped} skipped` : ""}` });
+        for (const p of ready) {
+          try { await submitForApproval("Product", p, user); } catch {}
+        }
+        toast({ title: `${ready.length} product(s) submitted for approval${skipped ? `, ${skipped} skipped` : ""}` });
         setSelected(new Set());
         load();
       },
@@ -366,7 +374,7 @@ export default function AdminProducts() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Products</h1>
           <p className="text-sm text-muted-foreground">
-            {counts.all} active · {counts.draft} drafts · {counts.inactive} inactive · {counts.archived} archived
+            {counts.all} active · {counts.pending} pending · {counts.draft} drafts · {counts.inactive} inactive · {counts.archived} archived
             {selectedProducts.length > 0 && ` · ${selectedProducts.length} selected`}
           </p>
         </div>
@@ -412,7 +420,7 @@ export default function AdminProducts() {
       {selectedProducts.length > 0 && (
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-muted/40 px-4 py-3">
           <span className="text-sm font-medium">{selectedProducts.length} selected</span>
-          <Button size="sm" onClick={bulkPublish}><Rocket className="mr-1.5 h-3.5 w-3.5" /> Publish</Button>
+          <Button size="sm" onClick={bulkPublish}><Rocket className="mr-1.5 h-3.5 w-3.5" /> Submit for approval</Button>
           <Button size="sm" variant="outline" onClick={bulkArchive}><Archive className="mr-1.5 h-3.5 w-3.5" /> Archive</Button>
           <Button size="sm" variant="outline" onClick={bulkInactive}><EyeOff className="mr-1.5 h-3.5 w-3.5" /> Set inactive</Button>
           {selectedHasArchived && <Button size="sm" variant="outline" onClick={bulkRestore}><ArchiveRestore className="mr-1.5 h-3.5 w-3.5" /> Restore</Button>}
