@@ -53,6 +53,8 @@ export default async function(req) {
     const settingRefs = {
       store_name: setting.store_name || "",
       business_address: setting.business_address || "",
+    };
+    const policyRefs = {
       terms_policy: setting.terms_policy || "",
       privacy_policy: setting.privacy_policy || "",
       return_policy: setting.return_policy || "",
@@ -61,20 +63,23 @@ export default async function(req) {
     const settingMissing = [];
     if (blank(setting.store_name_ar)) settingMissing.push("store_name_ar");
     if (blank(setting.business_address_ar)) settingMissing.push("business_address_ar");
-    if (blank(setting.terms_policy_ar)) settingMissing.push("terms_policy_ar");
-    if (blank(setting.privacy_policy_ar)) settingMissing.push("privacy_policy_ar");
-    if (blank(setting.return_policy_ar)) settingMissing.push("return_policy_ar");
-    if (blank(setting.shipping_policy_ar)) settingMissing.push("shipping_policy_ar");
+    const policyMissing = [];
+    if (blank(setting.terms_policy_ar)) policyMissing.push("terms_policy_ar");
+    if (blank(setting.privacy_policy_ar)) policyMissing.push("privacy_policy_ar");
+    if (blank(setting.return_policy_ar)) policyMissing.push("return_policy_ar");
+    if (blank(setting.shipping_policy_ar)) policyMissing.push("shipping_policy_ar");
 
     return Response.json({
       products: productRows,
       categories: categoryRows,
       posters: posterRows,
       settings: { id: setting.id || null, missing: settingMissing, refs: settingRefs },
+      policies: { id: setting.id || null, missing: policyMissing, refs: policyRefs },
       totals: {
         products: productRows.length,
         categories: categoryRows.length,
         posters: posterRows.length,
+        policies: policyMissing.length,
         settings: settingMissing.length,
       },
     });

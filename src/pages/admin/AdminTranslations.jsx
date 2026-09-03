@@ -37,7 +37,7 @@ export default function AdminTranslations() {
   useEffect(() => { load(); }, []);
 
   const totals = data?.totals || {};
-  const grandTotal = (totals.products || 0) + (totals.categories || 0) + (totals.posters || 0) + (totals.settings || 0);
+  const grandTotal = (totals.products || 0) + (totals.categories || 0) + (totals.posters || 0) + (totals.policies || 0) + (totals.settings || 0);
 
   const downloadCsv = () => {
     if (!data || grandTotal === 0) return;
@@ -173,16 +173,34 @@ export default function AdminTranslations() {
         />
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-5">
             <Stat label="Products" value={totals.products || 0} />
             <Stat label="Categories" value={totals.categories || 0} />
             <Stat label="Posters" value={totals.posters || 0} />
+            <Stat label="Policies" value={totals.policies || 0} />
             <Stat label="Store settings" value={totals.settings || 0} />
           </div>
 
           <Section title="Products missing Arabic" rows={data.products} linkPrefix="/admin/products" ctaLabel="Fix in Products" />
           <Section title="Categories missing Arabic" rows={data.categories} linkPrefix="/admin/categories" ctaLabel="Fix in Categories" />
           <Section title="Posters missing Arabic" rows={data.posters} linkPrefix="/admin/posters" ctaLabel="Fix in Posters" nameKey="title" />
+
+          {data.policies?.missing?.length > 0 && (
+            <div className="rounded-2xl border border-amber-300 bg-amber-50 p-5">
+              <div className="flex items-center gap-2 text-amber-700">
+                <AlertTriangle className="h-5 w-5" />
+                <h3 className="text-base font-semibold">Policy pages missing Arabic</h3>
+              </div>
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {data.policies.missing.map((f) => (
+                  <li key={f} className="rounded-full border border-amber-300 bg-white px-3 py-1 text-xs text-amber-700">{f}</li>
+                ))}
+              </ul>
+              <Button asChild variant="outline" className="mt-4">
+                <Link to="/admin/settings">Open settings</Link>
+              </Button>
+            </div>
+          )}
 
           {data.settings?.missing?.length > 0 && (
             <div className="rounded-2xl border border-amber-300 bg-amber-50 p-5">

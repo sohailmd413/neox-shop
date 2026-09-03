@@ -11,7 +11,7 @@ import Dropzone from "@/components/admin/ui/Dropzone";
 import ParentCombobox from "./ParentCombobox";
 import { slugify } from "@/lib/format";
 import ApprovalHistory from "@/components/admin/ApprovalHistory";
-import { validateCategory } from "@/lib/approval";
+import { validateCategory, looksLikeTestArtifact } from "@/lib/approval";
 
 const blank = () => ({
   id: null, name: "", name_ar: "", slug: "", parent_id: "",
@@ -43,6 +43,12 @@ export default function CategoryDrawer({ open, initial, isAdd, categories, onSub
   const slugPreview = (form.slug?.trim() || slugify(form.name)) || "";
 
   const doSubmit = (mode) => {
+    // Guard both draft and submit so stray test artifacts (e.g. "vdd") can never
+    // be persisted to a category name field.
+    const artifactErrors = {};
+    if (looksLikeTestArtifact(form.name)) artifactErrors.name = "This looks like test text — enter a real category name.";
+    if (looksLikeTestArtifact(form.name_ar)) artifactErrors.name_ar = "This looks like test text — enter a real Arabic name.";
+    if (Object.keys(artifactErrors).length) { setErrors(artifactErrors); return; }
     if (mode === "submit") {
       const v = validateCategory(form);
       if (!v.valid) { setErrors(v.errors); return; }

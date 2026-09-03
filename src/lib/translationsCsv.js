@@ -54,6 +54,9 @@ export function buildExportCsv(data) {
   if (data.settings && (data.settings.missing || []).length) {
     push("Setting", data.settings.id, data.settings.missing, (k) => (data.settings.refs || {})[k] || "");
   }
+  if (data.policies && (data.policies.missing || []).length) {
+    push("Setting", data.policies.id, data.policies.missing, (k) => (data.policies.refs || {})[k] || "");
+  }
 
   // Stable column order: entity_type, id, then en/ar pairs in config order.
   const columns = ["entity_type", "id"];

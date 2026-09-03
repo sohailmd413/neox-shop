@@ -97,115 +97,118 @@ export default function Navbar() {
             <SearchBar placeholder={t("nav.search")} />
           </div>
 
-          {(isAdmin || !user) && (
-            <Link
-              to={isAdmin ? "/admin" : "/admin/login"}
-              className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex"
-              aria-label={isAdmin ? t("nav.adminPanel") : t("nav.adminSignin")}
-              title={isAdmin ? t("nav.adminPanel") : t("nav.adminSignin")}
-            >
-              <LayoutDashboard className="h-5 w-5" />
-            </Link>
-          )}
-          {user ? (
-            <button
-              onClick={signOut}
-              className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex"
-              aria-label={t("nav.signOut")}
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
-          ) : (
-            <div className="hidden items-center gap-1.5 sm:flex">
+          {/* Icon cluster: grouped tightly with consistent spacing so the block
+              reads as one unit and mirrors cleanly in RTL (flex auto-reverses). */}
+          <div className="flex items-center gap-1.5">
+            {(isAdmin || !user) && (
               <Link
-                to="/login"
-                className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
-                aria-label={t("nav.signIn")}
+                to={isAdmin ? "/admin" : "/admin/login"}
+                className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex"
+                aria-label={isAdmin ? t("nav.adminPanel") : t("nav.adminSignin")}
+                title={isAdmin ? t("nav.adminPanel") : t("nav.adminSignin")}
+              >
+                <LayoutDashboard className="h-5 w-5" />
+              </Link>
+            )}
+            {user ? (
+              <button
+                onClick={signOut}
+                className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex"
+                aria-label={t("nav.signOut")}
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
+            ) : (
+              <div className="hidden items-center gap-1.5 sm:flex">
+                <Link
+                  to="/login"
+                  className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
+                  aria-label={t("nav.signIn")}
+                >
+                  <User className="h-5 w-5" />
+                </Link>
+                <Link
+                  to="/register"
+                  className="flex h-9 items-center rounded-full bg-foreground px-4 text-sm font-medium text-background transition-opacity hover:opacity-90"
+                >
+                  {t("nav.register")}
+                </Link>
+              </div>
+            )}
+            {user && (
+              <Link
+                to="/account"
+                className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex"
+                aria-label={t("nav.account")}
+                title={t("nav.account")}
               >
                 <User className="h-5 w-5" />
               </Link>
-              <Link
-                to="/register"
-                className="flex h-9 items-center rounded-full bg-foreground px-4 text-sm font-medium text-background transition-opacity hover:opacity-90"
-              >
-                {t("nav.register")}
-              </Link>
-            </div>
-          )}
-          {user && (
+            )}
             <Link
-              to="/account"
+              to="/orders"
               className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex"
-              aria-label={t("nav.account")}
-              title={t("nav.account")}
+              aria-label={t("nav.myOrders")}
             >
-              <User className="h-5 w-5" />
+              <Package className="h-5 w-5" />
             </Link>
-          )}
-          <Link
-            to="/orders"
-            className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex"
-            aria-label={t("nav.myOrders")}
-          >
-            <Package className="h-5 w-5" />
-          </Link>
-          <Link
-            to="/wishlist"
-            className="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
-            aria-label={t("nav.wishlist")}
-          >
-            <Heart className="h-5 w-5" />
-            <AnimatePresence>
-              {wishCount > 0 && (
-                <motion.span
-                  key={wishCount}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0 }}
-                  className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[10px] font-semibold text-background"
-                >
-                  {wishCount}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </Link>
-          <button
-            onClick={() => setIsOpen(true)}
-            data-cart-icon
-            className="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
-            aria-label={t("nav.openCart")}
-          >
-            <motion.span
-              key={`bag-${count}`}
-              initial={{ scale: 0.8, y: -2 }}
-              animate={{ scale: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 500, damping: 12 }}
-              className="inline-flex"
+            <Link
+              to="/wishlist"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
+              aria-label={t("nav.wishlist")}
             >
-              <ShoppingBag className="h-5 w-5" />
-            </motion.span>
-            <AnimatePresence>
-              {count > 0 && (
-                <motion.span
-                  key={count}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0 }}
-                  className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[10px] font-semibold text-background"
-                >
-                  {count}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </button>
-
-          <button
-            onClick={() => setMobileOpen((v) => !v)}
-            className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted md:hidden"
-            aria-label={t("nav.menu")}
-          >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+              <Heart className="h-5 w-5" />
+              <AnimatePresence>
+                {wishCount > 0 && (
+                  <motion.span
+                    key={wishCount}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[10px] font-semibold text-background"
+                  >
+                    {wishCount}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </Link>
+            <button
+              onClick={() => setIsOpen(true)}
+              data-cart-icon
+              className="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
+              aria-label={t("nav.openCart")}
+            >
+              <motion.span
+                key={`bag-${count}`}
+                initial={{ scale: 0.8, y: -2 }}
+                animate={{ scale: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 500, damping: 12 }}
+                className="inline-flex"
+              >
+                <ShoppingBag className="h-5 w-5" />
+              </motion.span>
+              <AnimatePresence>
+                {count > 0 && (
+                  <motion.span
+                    key={count}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[10px] font-semibold text-background"
+                  >
+                    {count}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </button>
+            <button
+              onClick={() => setMobileOpen((v) => !v)}
+              className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted md:hidden"
+              aria-label={t("nav.menu")}
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
       </nav>
 

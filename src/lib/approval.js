@@ -7,6 +7,18 @@ import { base44 } from "@/api/base44Client";
 
 export const APPROVAL_STATUSES = ["draft", "pending_approval", "rejected", "active"];
 
+// Rejects values that look like leftover test/garbage text (e.g. "vdd", "test",
+// "asdf", "xxxx"). Applied to category name/name_ar so stray artifacts can't be
+// saved going forward.
+const TEST_ARTIFACT_RE = /^(test|testing|asdf|fdsa|vdd|xxx|qwerty|abcdef?|foobar?|lorem|ipsum|sample|placeholder|untitled|none|n\/a|tbd|\.+)$/i;
+export function looksLikeTestArtifact(str) {
+  const s = String(str || "").trim();
+  if (!s) return false;
+  if (TEST_ARTIFACT_RE.test(s)) return true;
+  if (s.length <= 6 && /^([a-z0-9])\1{2,}$/i.test(s)) return true; // "aaaa", "vvv"
+  return false;
+}
+
 export function userName(user) {
   if (!user) return "Admin";
   return (user.display_name && String(user.display_name).trim()) || user.full_name || user.email || "Admin";
@@ -17,6 +29,8 @@ export function validateCategory(form) {
   const errors = {};
   if (!form.name || !String(form.name).trim()) errors.name = "Category name is required";
   if (!form.name_ar || !String(form.name_ar).trim()) errors.name_ar = "Arabic name is required before publishing";
+  if (looksLikeTestArtifact(form.name)) errors.name = "This looks like test text — enter a real category name.";
+  if (looksLikeTestArtifact(form.name_ar)) errors.name_ar = "This looks like test text — enter a real Arabic name.";
   if (form.description && String(form.description).trim() && (!form.description_ar || !String(form.description_ar).trim())) {
     errors.description_ar = "Arabic description is required before publishing";
   }
