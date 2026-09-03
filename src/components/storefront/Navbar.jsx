@@ -11,6 +11,7 @@ import { Image } from "@/components/ui/image";
 import SearchBar from "@/components/storefront/SearchBar";
 import MegaMenu from "@/components/storefront/MegaMenu";
 import CategoryScrollRow from "@/components/storefront/CategoryScrollRow";
+import MobileMenuDrawer from "@/components/storefront/MobileMenuDrawer";
 
 // Resolve an admin-managed NavItem to a router target. Returns either
 // { to } for an internal route or { href } for an external link.
@@ -265,56 +266,20 @@ export default function Navbar() {
         )}
       </AnimatePresence>
 
-      {/* Mobile menu */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden border-t border-border bg-background md:hidden">
-            <div className="space-y-1 px-4 py-4">
-              <div className="mb-2">
-                <SearchBar placeholder={t("search.placeholder")} />
-              </div>
-              <Link to="/shop" className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-muted">
-                <LayoutGrid className="h-4 w-4" />
-                {t("nav.allCategories")}
-              </Link>
-              {quickItems.map((item, idx) => (
-                <div key={item.id || `q${idx}`} className="rounded-lg px-3 py-2">
-                  <NavLink item={item} catMap={catMap} lang={lang} onClick={() => setMobileOpen(false)} />
-                </div>
-              ))}
-              <div className="my-1 border-t border-border" />
-              {rowItems.map((item, idx) => (
-                <div key={item.id || `r${idx}`} className="rounded-lg px-3 py-2">
-                  <NavLink item={item} catMap={catMap} lang={lang} onClick={() => setMobileOpen(false)} />
-                </div>
-              ))}
-              <div className="my-1 border-t border-border" />
-              {user && (
-                <Link to="/account" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">{t("nav.account")}</Link>
-              )}
-              <Link to="/wishlist" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">{t("nav.wishlist")}</Link>
-              <Link to="/orders" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">{t("nav.myOrders")}</Link>
-              {isAdmin ? (
-                <Link to="/admin" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">{t("nav.adminPanel")}</Link>
-              ) : !user ? (
-                <Link to="/admin/login" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">{t("nav.adminSignin")}</Link>
-              ) : null}
-              <button onClick={toggle} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-                <Languages className="h-4 w-4" />
-                {t("lang.btn")}
-              </button>
-              {user ? (
-                <button onClick={signOut} className="block w-full rounded-lg px-3 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">{t("nav.signOut")}</button>
-              ) : (
-                <div className="flex gap-2 pt-1">
-                  <Link to="/login" className="flex-1 rounded-lg px-3 py-2.5 text-center text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">{t("nav.signIn")}</Link>
-                  <Link to="/register" className="flex-1 rounded-lg bg-foreground px-3 py-2.5 text-center text-sm font-medium text-background">{t("nav.register")}</Link>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Mobile menu drawer */}
+      <MobileMenuDrawer
+        open={mobileOpen}
+        onOpenChange={setMobileOpen}
+        user={user}
+        isAdmin={isAdmin}
+        signOut={signOut}
+        categories={categories}
+        quickItems={quickItems}
+        catMap={catMap}
+        lang={lang}
+        t={t}
+        toggle={toggle}
+      />
     </header>
   );
 }
