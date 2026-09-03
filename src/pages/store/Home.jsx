@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import ProductRow from "@/components/storefront/ProductRow";
 import ProductCard from "@/components/storefront/ProductCard";
 import HomeHero from "@/components/storefront/HomeHero";
 import PosterBanner from "@/components/storefront/PosterBanner";
-import { Image } from "@/components/ui/image";
+import CategoryTile from "@/components/storefront/CategoryTile";
 import { lf } from "@/lib/format";
 import { useLanguage } from "@/lib/i18n";
+import { onSaleProducts, newArrivals, bestSellers } from "@/lib/merchandising";
 
 // Marketplace home: hero + shop-by-category grid, then admin-configured
 // HomeSection rows in display_order (manual picks render in admin-set order;
-// auto_* types compute live), then a secondary Poster banner. When no sections
-// are configured yet, auto-computed fallback rows keep the page populated.
+// auto_* types compute live via the shared merchandising helpers), then a
+// secondary Poster banner. When no sections are configured yet, auto-computed
+// fallback rows keep the page populated.
 export default function Home() {
   const [data, setData] = useState(null);
   const { lang, t } = useLanguage();
@@ -26,8 +27,6 @@ export default function Home() {
           base44.entities.HomeSection.list("display_order", 50),
           base44.entities.HomeSectionProduct.list("sort_order", 500),
         ]);
-        // Orders aren't broadly readable on the storefront (RLS), so best-sellers
-        // gracefully fall back to review-based popularity when order data is empty.
         const orders = await base44.entities.Order.list("-created_date", 200).catch(() => []);
         setData({
           products: products || [],
@@ -45,11 +44,6 @@ export default function Home() {
   const loading = !data;
   const { products = [], categories = [], sections = [], hsp = [], orders = [] } = data || {};
 
-  const soldCount = {};
-  orders.forEach((o) => (o.items || []).forEach((it) => {
-    if (it.product_id) soldCount[it.product_id] = (soldCount[it.product_id] || 0) + (it.quantity || 1);
-  }));
-
   const sectionProducts = (section) => {
     let list = [];
     if (section.section_type === "manual_picks") {
@@ -57,11 +51,11 @@ export default function Home() {
       const map = new Map(products.map((p) => [p.id, p]));
       list = rows.map((r) => map.get(r.product_id)).filter(Boolean);
     } else if (section.section_type === "auto_bestsellers") {
-      list = [...products].sort((a, b) => (soldCount[b.id] || 0) - (soldCount[a.id] || 0) || (b.num_reviews || 0) - (a.num_reviews || 0));
+      list = bestSellers(products, orders);
     } else if (section.section_type === "auto_new_arrivals") {
-      list = [...products].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      list = newArrivals(products);
     } else if (section.section_type === "auto_on_sale") {
-      list = products.filter((p) => p.compare_at_price && p.compare_at_price > p.price).sort((a, b) => (b.compare_at_price - b.price) - (a.compare_at_price - a.price));
+      list = onSaleProducts(products);
     }
     return list.slice(0, section.max_items_shown || 12);
   };
@@ -70,23 +64,16 @@ export default function Home() {
   const hasSections = sections.length > 0;
 
   return (
-    <div className="relative pt-16 md:pt-24">
+    <div className="pt-16 md:pt-24">
       <div className="relative">
         <HomeHero />
 
         {tops.length > 0 && (
           <section className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
             <h2 className="mb-4 text-lg font-bold tracking-tight text-foreground sm:text-xl">{t("home.shopByCategory")}</h2>
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
-              {tops.slice(0, 16).map((cat) => (
-                <Link key={cat.id} to={`/shop?category=${encodeURIComponent(cat.name)}`} className="group flex flex-col items-center gap-2">
-                  <div className="aspect-square w-full overflow-hidden rounded-lg bg-muted/40">
-                    {cat.image_url && (
-                      <Image src={cat.image_url} alt={cat.name} fittingType="fill" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    )}
-                  </div>
-                  <span className="line-clamp-1 w-full text-center text-xs font-medium text-foreground">{lf(cat, "name", lang)}</span>
-                </Link>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+              {tops.slice(0, 12).map((cat) => (
+                <CategoryTile key={cat.id} category={cat} lang={lang} />
               ))}
             </div>
           </section>
@@ -100,8 +87,8 @@ export default function Home() {
         {/* Fallback auto rows when no merchandising sections are configured yet */}
         {!loading && !hasSections && (
           <>
-            <ProductRow title={t("home.deals")} to="/shop?filter=sale" viewAllLabel={t("home.seeAll")} products={products.filter((p) => p.compare_at_price && p.compare_at_price > p.price).slice(0, 12)} />
-            <ProductRow title={t("home.newArrivals")} to="/shop?sort=newest" viewAllLabel={t("home.seeAll")} products={[...products].sort((a, b) => new Date(b.created_date) - new Date(a.created_date)).slice(0, 12)} />
+            <ProductRow title={t("home.deals")} to="/shop?view=deals" viewAllLabel={t("home.seeAll")} products={onSaleProducts(products).slice(0, 12)} />
+            <ProductRow title={t("home.newArrivals")} to="/shop?view=new" viewAllLabel={t("home.seeAll")} products={newArrivals(products).slice(0, 12)} />
           </>
         )}
 

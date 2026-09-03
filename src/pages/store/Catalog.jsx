@@ -13,8 +13,12 @@ import SortDropdown from "@/components/storefront/SortDropdown";
 import { EmptyState, ErrorState } from "@/components/shared/StateViews";
 import SearchBar from "@/components/storefront/SearchBar";
 import { motionPresets } from "@/lib/motion";
+import { onSaleProducts, newArrivals, bestSellers, maxDiscountPct } from "@/lib/merchandising";
 
-const SORT_KEYS = ["featured", "newest", "price-asc", "price-desc", "rating"];
+const SORT_KEYS = ["featured", "newest", "discount", "price-asc", "price-desc", "rating", "best"];
+
+// Default sort per curated view (used when the user hasn't picked one).
+const VIEW_DEFAULT_SORT = { deals: "discount", new: "newest", best: "best" };
 
 export default function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -29,9 +33,11 @@ export default function Catalog() {
 
   const q = searchParams.get("q") || "";
   const category = searchParams.get("category") || "";
-  const sort = searchParams.get("sort") || "featured";
+  const view = searchParams.get("view") || "";
+  const sort = searchParams.get("sort") || "";
   const onSale = searchParams.get("filter") === "sale";
   const maxPrice = searchParams.get("maxPrice") || "";
+  const effectiveSort = sort || VIEW_DEFAULT_SORT[view] || "featured";
 
   useEffect(() => {
     (async () => {
@@ -46,38 +52,40 @@ export default function Catalog() {
     setLoading(true);
     setError(null);
     try {
-      let result = await base44.entities.Product.filter({ status: "active" }, "-created_date", 200);
-      let list = result || [];
+      const [all, orders] = await Promise.all([
+        base44.entities.Product.filter({ status: "active" }, "-created_date", 200),
+        base44.entities.Order.list("-created_date", 200).catch(() => []),
+      ]);
+      let list = all || [];
 
       const limit = list.reduce((m, p) => Math.max(m, Number(p.price) || 0), 0);
       setPriceLimit(limit > 0 ? Math.ceil(limit) : 500);
 
+      // Sidebar filters (combine with the base view filter, never override it)
       if (category) list = list.filter((p) => p.category === category);
       if (q) {
         const term = q.toLowerCase();
-        list = list.filter(
-          (p) =>
-            p.name?.toLowerCase().includes(term) ||
-            p.brand?.toLowerCase().includes(term) ||
-            p.description?.toLowerCase().includes(term)
-        );
+        list = list.filter((p) => p.name?.toLowerCase().includes(term) || p.brand?.toLowerCase().includes(term) || p.description?.toLowerCase().includes(term));
       }
       if (onSale) list = list.filter((p) => p.compare_at_price && p.compare_at_price > p.price);
       if (maxPrice) list = list.filter((p) => p.price <= Number(maxPrice));
 
-      switch (sort) {
+      // Base view filter — applied AFTER sidebar narrowing so it always holds
+      if (view === "deals") list = onSaleProducts(list);
+
+      switch (effectiveSort) {
         case "newest":
-          list = [...list].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
-          break;
+          list = newArrivals(list); break;
+        case "discount":
+          list = onSaleProducts(list); break;
+        case "best":
+          list = bestSellers(list, orders || []); break;
         case "price-asc":
-          list = [...list].sort((a, b) => a.price - b.price);
-          break;
+          list = [...list].sort((a, b) => a.price - b.price); break;
         case "price-desc":
-          list = [...list].sort((a, b) => b.price - a.price);
-          break;
+          list = [...list].sort((a, b) => b.price - a.price); break;
         case "rating":
-          list = [...list].sort((a, b) => (b.rating || 0) - (a.rating || 0));
-          break;
+          list = [...list].sort((a, b) => (b.rating || 0) - (a.rating || 0)); break;
         default:
           list = [...list].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
       }
@@ -88,11 +96,9 @@ export default function Catalog() {
     } finally {
       setLoading(false);
     }
-  }, [category, q, sort, onSale, maxPrice]);
+  }, [category, q, view, sort, onSale, maxPrice, effectiveSort]);
 
-  useEffect(() => {
-    loadProducts();
-  }, [loadProducts]);
+  useEffect(() => { loadProducts(); }, [loadProducts]);
 
   const updateParam = (key, value) => {
     const next = new URLSearchParams(searchParams);
@@ -101,30 +107,49 @@ export default function Catalog() {
     setSearchParams(next, { replace: true });
   };
 
+  // Clear sidebar filters but preserve the curated view context (deals/new/best)
   const clearFilters = () => {
-    setSearchParams({}, { replace: true });
+    const next = new URLSearchParams();
+    if (view) next.set("view", view);
+    setSearchParams(next, { replace: true });
   };
 
   const activeFilters = [category, onSale && "sale", maxPrice && `≤ ${maxPrice} SAR`].filter(Boolean);
+
+  // Header per view
+  let title = t("catalog.allProducts");
+  let subtitle = "";
+  let accent = false;
+  if (view === "deals") {
+    title = t("catalog.dealsTitle");
+    // compute the store-wide max discount from the full active list (pre-filter)
+    // best-effort: use products state if loaded, else 0
+    const maxPct = products ? maxDiscountPct(products) : 0;
+    subtitle = t("catalog.dealsSub").replace("{n}", maxPct);
+    accent = true;
+  } else if (view === "new") {
+    title = t("catalog.newTitle");
+    subtitle = t("catalog.newSub");
+  } else if (view === "best") {
+    title = t("catalog.bestTitle");
+    subtitle = t("catalog.bestSub");
+  } else if (category) {
+    title = lf(categories.find((c) => c.name === category), "name", lang) || category;
+  } else if (q) {
+    title = `${t("catalog.resultsFor")} "${q}"`;
+  }
 
   return (
     <div className="pt-16 md:pt-24">
       {/* Header */}
       <div className="border-b border-border relative">
+        {accent && <div className="absolute inset-x-0 top-0 h-1 bg-deal" />}
         <div className="mf-hero-mesh pointer-events-none absolute inset-0 opacity-40" aria-hidden />
         <div className="relative mx-auto max-w-7xl px-5 py-10 sm:px-8">
-          <motion.h1
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={motionPresets.fade}
-            className="text-2xl font-bold tracking-tight sm:text-3xl"
-          >
-            {category
-              ? lf(categories.find((c) => c.name === category), "name", lang) || category
-              : q
-              ? `${t("catalog.resultsFor")} "${q}"`
-              : t("catalog.allProducts")}
+          <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={motionPresets.fade} className={`text-2xl font-bold tracking-tight sm:text-3xl ${accent ? "text-deal" : ""}`}>
+            {title}
           </motion.h1>
+          {subtitle && <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>}
           <p className="mt-2 text-sm text-muted-foreground">
             {loading ? t("catalog.loading") : `${products?.length || 0} ${products?.length === 1 ? t("catalog.item") : t("catalog.items")}`}
           </p>
@@ -144,40 +169,16 @@ export default function Catalog() {
                   <SlidersHorizontal className="h-4 w-4" /> {t("catalog.filters")}
                 </Button>
               </Pressable>
-              <SortDropdown
-                value={sort}
-                options={sortOptions}
-                onChange={(v) => updateParam("sort", v === "featured" ? "" : v)}
-                className="w-44"
-              />
+              <SortDropdown value={effectiveSort} options={sortOptions} onChange={(v) => updateParam("sort", v === "featured" ? "" : v)} className="w-44" />
             </div>
 
-            {/* Desktop filters */}
             <div className="hidden lg:block">
-              <FilterPanel
-                categories={categories}
-                category={category}
-                onSale={onSale}
-                maxPrice={maxPrice}
-                priceLimit={priceLimit}
-                updateParam={updateParam}
-                clearFilters={clearFilters}
-                activeFilters={activeFilters}
-                t={t}
-              />
+              <FilterPanel categories={categories} category={category} onSale={onSale} maxPrice={maxPrice} priceLimit={priceLimit} updateParam={updateParam} clearFilters={clearFilters} activeFilters={activeFilters} t={t} />
             </div>
 
-            {/* Sort (desktop) */}
             <div className="mt-8 hidden lg:block">
-              <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                {t("catalog.sortBy")}
-              </h3>
-              <SortDropdown
-                value={sort}
-                options={sortOptions}
-                onChange={(v) => updateParam("sort", v === "featured" ? "" : v)}
-                className="mt-3"
-              />
+              <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">{t("catalog.sortBy")}</h3>
+              <SortDropdown value={effectiveSort} options={sortOptions} onChange={(v) => updateParam("sort", v === "featured" ? "" : v)} className="mt-3" />
             </div>
           </aside>
 
@@ -188,13 +189,7 @@ export default function Catalog() {
             ) : error ? (
               <ErrorState onRetry={loadProducts} className="py-24" />
             ) : products?.length === 0 ? (
-              <EmptyState
-                icon={Search}
-                title={t("catalog.noProducts")}
-                description={t("catalog.noProductsDesc")}
-                action={<Button variant="outline" onClick={clearFilters}>{t("filter.clear")}</Button>}
-                className="py-24"
-              />
+              <EmptyState icon={Search} title={t("catalog.noProducts")} description={t("catalog.noProductsDesc")} action={<Button variant="outline" onClick={clearFilters}>{t("filter.clear")}</Button>} className="py-24" />
             ) : (
               <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 {products.map((p, i) => (
@@ -210,32 +205,13 @@ export default function Catalog() {
       {filtersOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-foreground/40 backdrop-blur-md" onClick={() => setFiltersOpen(false)} />
-          <motion.div
-            initial={{ x: "-100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            className="absolute left-0 top-0 h-full w-80 max-w-[85%] overflow-y-auto bg-background p-6"
-          >
+          <motion.div initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} className="absolute left-0 top-0 h-full w-80 max-w-[85%] overflow-y-auto bg-background p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-base font-semibold">{t("catalog.filters")}</h2>
-              <button onClick={() => setFiltersOpen(false)} className="rounded-full p-1.5 hover:bg-muted">
-                <X className="h-4 w-4" />
-              </button>
+              <button onClick={() => setFiltersOpen(false)} className="rounded-full p-1.5 hover:bg-muted"><X className="h-4 w-4" /></button>
             </div>
-            <FilterPanel
-              categories={categories}
-              category={category}
-              onSale={onSale}
-              maxPrice={maxPrice}
-              priceLimit={priceLimit}
-              updateParam={updateParam}
-              clearFilters={clearFilters}
-              activeFilters={activeFilters}
-              t={t}
-            />
-            <Button className="mt-6 w-full" onClick={() => setFiltersOpen(false)}>
-              {t("filter.showResults")}
-            </Button>
+            <FilterPanel categories={categories} category={category} onSale={onSale} maxPrice={maxPrice} priceLimit={priceLimit} updateParam={updateParam} clearFilters={clearFilters} activeFilters={activeFilters} t={t} />
+            <Button className="mt-6 w-full" onClick={() => setFiltersOpen(false)}>{t("filter.showResults")}</Button>
           </motion.div>
         </div>
       )}
@@ -249,88 +225,50 @@ function FilterPanel({ categories, category, onSale, maxPrice, priceLimit, updat
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          {t("filter.category")}
-        </h3>
+        <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">{t("filter.category")}</h3>
         <ul className="mt-3 space-y-2">
           <li>
-            <button
-              onClick={() => updateParam("category", "")}
-              className={`text-sm transition-colors ${!category ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              {t("filter.all")}
-            </button>
+            <button onClick={() => updateParam("category", "")} className={`text-sm transition-colors ${!category ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}>{t("filter.all")}</button>
           </li>
-          {categories
-            .filter((c) => !c.parent_id)
-            .map((parent) => {
-              const subs = categories.filter((c) => c.parent_id === parent.id);
-              return (
-                <li key={parent.id} className={subs.length ? "space-y-1.5" : undefined}>
-                  <button
-                    onClick={() => updateParam("category", parent.name)}
-                    className={`text-sm transition-colors ${category === parent.name ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    {lf(parent, "name", lang)}
-                  </button>
-                  {subs.length > 0 && (
-                    <ul className="ml-3 space-y-1.5 border-l border-border pl-3">
-                      {subs.map((s) => (
-                        <li key={s.id}>
-                          <button
-                            onClick={() => updateParam("category", s.name)}
-                            className={`flex items-center gap-1 text-sm transition-colors ${category === s.name ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                          >
-                            <span className="text-muted-foreground/60">↳</span>
-                            {lf(s, "name", lang)}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </li>
-              );
-            })}
+          {categories.filter((c) => !c.parent_id).map((parent) => {
+            const subs = categories.filter((c) => c.parent_id === parent.id);
+            return (
+              <li key={parent.id} className={subs.length ? "space-y-1.5" : undefined}>
+                <button onClick={() => updateParam("category", parent.name)} className={`text-sm transition-colors ${category === parent.name ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}>{lf(parent, "name", lang)}</button>
+                {subs.length > 0 && (
+                  <ul className="ml-3 space-y-1.5 border-l border-border pl-3">
+                    {subs.map((s) => (
+                      <li key={s.id}>
+                        <button onClick={() => updateParam("category", s.name)} className={`flex items-center gap-1 text-sm transition-colors ${category === s.name ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                          <span className="text-muted-foreground/60">↳</span>
+                          {lf(s, "name", lang)}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </div>
 
       <div>
-        <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          {t("filter.onSale")}
-        </h3>
+        <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">{t("filter.onSale")}</h3>
         <label className="mt-3 flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={onSale}
-            onChange={(e) => updateParam("filter", e.target.checked ? "sale" : "")}
-            className="h-4 w-4 rounded border-border"
-          />
+          <input type="checkbox" checked={onSale} onChange={(e) => updateParam("filter", e.target.checked ? "sale" : "")} className="h-4 w-4 rounded border-border" />
           {t("filter.showSaleItems")}
         </label>
       </div>
 
       <div>
-        <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          {t("filter.maxPrice")}
-        </h3>
-        <input
-          type="range"
-          min="0"
-          max={priceLimit}
-          step={step}
-          value={maxPrice || priceLimit}
-          onChange={(e) => updateParam("maxPrice", e.target.value === String(priceLimit) ? "" : e.target.value)}
-          className="mt-3 w-full accent-foreground"
-        />
-        <p className="mt-1 text-xs text-muted-foreground">
-          {maxPrice ? `${t("filter.upTo")} ${maxPrice} SAR` : t("filter.anyPrice")}
-        </p>
+        <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">{t("filter.maxPrice")}</h3>
+        <input type="range" min="0" max={priceLimit} step={step} value={maxPrice || priceLimit} onChange={(e) => updateParam("maxPrice", e.target.value === String(priceLimit) ? "" : e.target.value)} className="mt-3 w-full accent-foreground" />
+        <p className="mt-1 text-xs text-muted-foreground">{maxPrice ? `${t("filter.upTo")} ${maxPrice} SAR` : t("filter.anyPrice")}</p>
       </div>
 
       {activeFilters.length > 0 && (
-        <Button variant="link" size="sm" onClick={clearFilters} className="h-auto p-0 text-xs text-muted-foreground">
-          {t("filter.clearAll")}
-        </Button>
+        <Button variant="link" size="sm" onClick={clearFilters} className="h-auto p-0 text-xs text-muted-foreground">{t("filter.clearAll")}</Button>
       )}
     </div>
   );
