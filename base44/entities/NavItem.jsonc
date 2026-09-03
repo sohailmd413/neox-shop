@@ -1,0 +1,86 @@
+{
+  "name": "NavItem",
+  "type": "object",
+  "properties": {
+    "label_en": {
+      "type": "string",
+      "description": "Label shown in the storefront navbar when the language is English."
+    },
+    "label_ar": {
+      "type": "string",
+      "description": "Label shown in the storefront navbar when the language is Arabic."
+    },
+    "link_type": {
+      "type": "string",
+      "enum": [
+        "category",
+        "custom_url",
+        "deals",
+        "new_arrivals",
+        "best_sellers",
+        "featured"
+      ],
+      "default": "category",
+      "description": "Where this nav item links to. category=a specific store category; custom_url=any URL; deals/new_arrivals/best_sellers/featured route to their respective filtered Catalog views."
+    },
+    "category_id": {
+      "type": "string",
+      "description": "Target Category id. Only used when link_type=category."
+    },
+    "custom_url": {
+      "type": "string",
+      "description": "Destination URL. Only used when link_type=custom_url. Absolute URLs (http/https) open in a new tab."
+    },
+    "display_order": {
+      "type": "number",
+      "default": 0,
+      "description": "Position of the item within its placement group. Lower shows first."
+    },
+    "is_highlighted": {
+      "type": "boolean",
+      "default": false,
+      "description": "Renders in the accent/bold promotional style (like Deals / Best Sellers) instead of a plain category-style link."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active",
+      "description": "Only active items render on the storefront navbar."
+    },
+    "placement": {
+      "type": "string",
+      "enum": [
+        "primary_row",
+        "quick_links"
+      ],
+      "default": "primary_row",
+      "description": "primary_row=the scrollable category row; quick_links=the highlighted promo group (Deals / New / Best Sellers)."
+    }
+  },
+  "required": [
+    "label_en",
+    "link_type",
+    "placement"
+  ],
+  "rls": {
+    "read": true,
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
