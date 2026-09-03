@@ -1,149 +1,115 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import ProductCard from "@/components/storefront/ProductCard";
-import { ProductGridSkeleton } from "@/components/storefront/Skeleton";
+import ProductRow from "@/components/storefront/ProductRow";
 import HomeHero from "@/components/storefront/HomeHero";
-import Reveal from "@/components/storefront/Reveal";
+import PosterBanner from "@/components/storefront/PosterBanner";
 import { Image } from "@/components/ui/image";
 import { lf } from "@/lib/format";
 import { useLanguage } from "@/lib/i18n";
 
+// Marketplace-style home: a stack of independent, swappable promo modules.
+// Each promotional slot (hero, secondary) pulls a live admin-configured Poster;
+// product rows are data-driven so the page reflects the full catalog breadth.
 export default function Home() {
-  const [featured, setFeatured] = useState(null);
-  const [newArrivals, setNewArrivals] = useState(null);
-  const [categories, setCategories] = useState(null);
+  const [products, setProducts] = useState(null);
+  const [categories, setCategories] = useState([]);
   const { lang, t } = useLanguage();
 
   useEffect(() => {
     (async () => {
       try {
-        const f = await base44.entities.Product.filter({ featured: true, status: "active" }, "-created_date", 8);
-        setFeatured(f);
-      } catch { setFeatured([]); }
-      try {
-        const n = await base44.entities.Product.filter({ status: "active" }, "-created_date", 8);
-        setNewArrivals(n);
-      } catch { setNewArrivals([]); }
-      try {
-        const c = await base44.entities.Category.list("sort_order", 50);
+        const [p, c] = await Promise.all([
+          base44.entities.Product.filter({ status: "active" }, "-created_date", 200),
+          base44.entities.Category.list("sort_order", 100),
+        ]);
+        setProducts(p || []);
         setCategories((c || []).filter((cat) => cat.active !== false));
-      } catch { setCategories([]); }
+      } catch {
+        setProducts([]);
+        setCategories([]);
+      }
     })();
   }, []);
 
+  const active = products || [];
+  const deals = active
+    .filter((p) => p.compare_at_price && p.compare_at_price > p.price)
+    .sort((a, b) => b.compare_at_price - b.price - (a.compare_at_price - a.price))
+    .slice(0, 12);
+  const newArrivals = [...active]
+    .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
+    .slice(0, 12);
+  const tops = categories.filter((c) => !c.parent_id);
+
+  const productsInTop = (top) => {
+    const subNames = categories.filter((s) => s.parent_id === top.id).map((s) => s.name);
+    return active.filter((p) => p.category === top.name || subNames.includes(p.category));
+  };
+
   return (
-    <div className="relative pt-16">
-      <div className="mf-hero-mesh pointer-events-none absolute inset-x-0 top-0 h-[560px] opacity-70" aria-hidden />
+    <div className="relative pt-16 md:pt-24">
       <div className="relative">
-        {/* Hero (admin-configurable Poster; falls back to curated) */}
+        {/* Hero banner strip (live Poster; compact marketplace fallback) */}
         <HomeHero />
 
-        {/* Categories */}
-        {categories && categories.length > 0 && (
-          <section className="mx-auto max-w-7xl px-5 pb-8 sm:px-8">
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {categories.slice(0, 4).map((cat, i) => (
-                <Reveal key={cat.id} delay={i * 0.06}>
-                  <Link
-                    to={`/shop?category=${encodeURIComponent(cat.name)}`}
-                    className="group relative block aspect-square overflow-hidden rounded-2xl bg-muted/40 shadow-[0_1px_12px_-8px_rgba(0,0,0,0.16)] transition-shadow duration-500 hover:shadow-[0_24px_55px_-22px_rgba(0,0,0,0.26)]"
-                  >
+        {/* Shop by category — dense grid of all top-level categories */}
+        {tops.length > 0 && (
+          <section className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
+            <h2 className="mb-4 text-lg font-bold tracking-tight text-foreground sm:text-xl">
+              {t("home.shopByCategory")}
+            </h2>
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+              {tops.slice(0, 16).map((cat) => (
+                <Link
+                  key={cat.id}
+                  to={`/shop?category=${encodeURIComponent(cat.name)}`}
+                  className="group flex flex-col items-center gap-2"
+                >
+                  <div className="aspect-square w-full overflow-hidden rounded-lg bg-muted/40">
                     {cat.image_url && (
                       <Image
                         src={cat.image_url}
                         alt={cat.name}
                         fittingType="fill"
-                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-foreground/10 to-transparent" />
-                    <span className="absolute bottom-4 left-4 font-heading text-base font-medium text-background">
-                      {lf(cat, "name", lang)}
-                    </span>
-                  </Link>
-                </Reveal>
+                  </div>
+                  <span className="line-clamp-1 w-full text-center text-xs font-medium text-foreground">
+                    {lf(cat, "name", lang)}
+                  </span>
+                </Link>
               ))}
             </div>
           </section>
         )}
 
-        {/* Featured */}
-        <Reveal as="section" className="mx-auto max-w-7xl px-5 py-12 sm:px-8">
-          <div className="mb-8 flex items-end justify-between">
-            <div>
-              <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("home.featured")}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{t("home.featuredSub")}</p>
-            </div>
-            <Link to="/shop" className="group inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
-              {t("home.viewAll")}
-              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100" />
-            </Link>
-          </div>
-          {!featured ? (
-            <ProductGridSkeleton count={4} />
-          ) : (
-            <div className="grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
-              {featured.map((p, i) => (
-                <ProductCard key={p.id} product={p} index={i} />
-              ))}
-            </div>
-          )}
-        </Reveal>
+        {/* Deals & discounts carousel */}
+        <ProductRow title={t("home.deals")} to="/shop?filter=sale" viewAllLabel={t("home.seeAll")} products={deals} />
 
-        {/* Editorial banner */}
-        <Reveal as="section" className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
-          <div className="relative overflow-hidden rounded-3xl bg-muted/30 shadow-[0_1px_12px_-8px_rgba(0,0,0,0.16)]">
-            <div className="grid items-center gap-6 lg:grid-cols-2">
-              <div className="order-2 p-8 sm:p-12 lg:order-1">
-                <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  {t("home.editKicker")}
-                </span>
-                <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-                  {t("home.editTitle")}
-                </h2>
-                <p className="mt-4 max-w-sm text-muted-foreground">
-                  {t("home.editBody")}
-                </p>
-                <Link
-                  to="/shop"
-                  className="mt-6 inline-flex items-center gap-2 text-sm font-medium underline-offset-4 hover:underline"
-                >
-                  {t("home.editCta")} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
-                </Link>
-              </div>
-              <div className="order-1 aspect-[4/3] lg:order-2 lg:aspect-auto lg:h-full lg:min-h-[420px]">
-                <Image
-                  src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1200&auto=format&fit=crop"
-                  alt="The edit"
-                  fittingType="fill"
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            </div>
-          </div>
-        </Reveal>
+        {/* Secondary promotional banner (live Poster; renders nothing if none) */}
+        <section className="mx-auto max-w-7xl px-5 py-4 sm:px-8">
+          <PosterBanner page="home" zone="secondary" className="aspect-[16/5] overflow-hidden rounded-xl sm:aspect-[16/4]" />
+        </section>
+
+        {/* Trending per top-level category */}
+        {tops.slice(0, 6).map((top) => {
+          const list = productsInTop(top).slice(0, 12);
+          if (list.length < 3) return null;
+          return (
+            <ProductRow
+              key={top.id}
+              title={`${t("home.trendingPrefix")} ${lf(top, "name", lang)}`}
+              to={`/shop?category=${encodeURIComponent(top.name)}`}
+              viewAllLabel={t("home.seeAll")}
+              products={list}
+            />
+          );
+        })}
 
         {/* New arrivals */}
-        <Reveal as="section" className="mx-auto max-w-7xl px-5 py-12 sm:px-8">
-          <div className="mb-8 flex items-end justify-between">
-            <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("home.newArrivals")}</h2>
-            <Link to="/shop?sort=newest" className="group inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
-              {t("home.viewAll")}
-              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100" />
-            </Link>
-          </div>
-          {!newArrivals ? (
-            <ProductGridSkeleton count={4} />
-          ) : (
-            <div className="grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
-              {newArrivals.map((p, i) => (
-                <ProductCard key={p.id} product={p} index={i} />
-              ))}
-            </div>
-          )}
-        </Reveal>
+        <ProductRow title={t("home.newArrivals")} to="/shop?sort=newest" viewAllLabel={t("home.seeAll")} products={newArrivals} />
       </div>
     </div>
   );

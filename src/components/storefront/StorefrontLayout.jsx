@@ -1,13 +1,21 @@
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
+import { Truck, RotateCcw, ShieldCheck } from "lucide-react";
 import Navbar from "./Navbar";
 import CartDrawer from "./CartDrawer";
 import { CartFlyoutProvider } from "@/components/storefront/cart/CartFlyoutContext";
 import PageTransition from "@/components/shared/PageTransition";
+import PosterBanner from "@/components/storefront/PosterBanner";
 import { useLanguage } from "@/lib/i18n";
 import { useStoreSetting } from "@/lib/useStoreSetting";
 import { Image } from "@/components/ui/image";
+
+const TRUST = [
+  { key: "trust.freeDelivery", icon: Truck },
+  { key: "trust.returns", icon: RotateCcw },
+  { key: "trust.secure", icon: ShieldCheck },
+];
 
 export default function StorefrontLayout() {
   const { t, lang } = useLanguage();
@@ -17,6 +25,9 @@ export default function StorefrontLayout() {
     <div className="flex min-h-screen flex-col bg-background">
       <CartFlyoutProvider>
       <Navbar />
+      {/* Desktop-only spacer so content clears the second nav row added in
+          the marketplace header; mobile keeps a single-row header. */}
+      <div aria-hidden className="hidden h-7 md:block" />
       <main className="flex-1">
         <AnimatePresence mode="wait">
           <PageTransition key={location.pathname}>
@@ -24,15 +35,30 @@ export default function StorefrontLayout() {
           </PageTransition>
         </AnimatePresence>
       </main>
+
+      {/* Trust signals strip */}
+      <div className="border-y border-border bg-muted/30">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-10 gap-y-3 px-5 py-5 sm:px-8">
+          {TRUST.map(({ key, icon: Icon }) => (
+            <span key={key} className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <Icon className="h-5 w-5 text-primary" />
+              {t(key)}
+            </span>
+          ))}
+        </div>
+      </div>
+
       <footer className="border-t border-border bg-background">
         <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8">
+          {/* Footer banner slot (live Poster; renders nothing when absent) */}
+          <PosterBanner page="home" zone="footer" className="mb-10 aspect-[8/1] overflow-hidden rounded-2xl" />
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <Link to="/" className="flex items-center gap-2">
                 {store.logo_url ? (
                   <Image src={store.logo_url} alt={store.store_name || "Store"} fittingType="fit" className="h-8 w-auto max-w-[140px]" />
                 ) : (
-                  <span className="text-lg font-semibold tracking-tight">{store.store_name || "MarketFlow"}</span>
+                  <span className="text-lg font-bold tracking-tight">{store.store_name || "MarketFlow"}</span>
                 )}
               </Link>
               <p className="mt-3 max-w-xs text-sm text-muted-foreground">

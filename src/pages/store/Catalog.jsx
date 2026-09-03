@@ -108,7 +108,7 @@ export default function Catalog() {
   const activeFilters = [category, onSale && "sale", maxPrice && `≤ ${maxPrice} SAR`].filter(Boolean);
 
   return (
-    <div className="pt-16">
+    <div className="pt-16 md:pt-24">
       {/* Header */}
       <div className="border-b border-border relative">
         <div className="mf-hero-mesh pointer-events-none absolute inset-0 opacity-40" aria-hidden />
@@ -117,7 +117,7 @@ export default function Catalog() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={motionPresets.fade}
-            className="font-display text-3xl font-semibold tracking-tight sm:text-4xl"
+            className="text-2xl font-bold tracking-tight sm:text-3xl"
           >
             {category
               ? lf(categories.find((c) => c.name === category), "name", lang) || category
@@ -196,7 +196,7 @@ export default function Catalog() {
                 className="py-24"
               />
             ) : (
-              <div className="grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 {products.map((p, i) => (
                   <ProductCard key={p.id} product={p} index={i} />
                 ))}
