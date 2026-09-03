@@ -44,17 +44,18 @@
     "active": {
       "type": "boolean",
       "default": false,
-      "description": "Storefront visibility flag. Only true once the category has been approved. New / draft / pending categories are inactive."
+      "description": "Storefront visibility flag. Only true once the category has been approved. New / draft / pending / rejected categories are inactive."
     },
     "status": {
       "type": "string",
       "enum": [
         "draft",
         "pending_approval",
+        "rejected",
         "active"
       ],
       "default": "draft",
-      "description": "Approval state. draft=incomplete / not submitted; pending_approval=submitted for admin sign-off; active=approved and live on the storefront. Mirrors the active flag (active=true only when status=active)."
+      "description": "Approval state. draft=incomplete / not submitted; pending_approval=submitted for admin sign-off; rejected=returned by an approver with a reason, not live and never visible on the storefront (must be fixed and resubmitted through pending_approval); active=approved and live on the storefront. Mirrors the active flag (active=true only when status=active)."
     },
     "show_in_nav": {
       "type": "boolean",

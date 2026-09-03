@@ -40,7 +40,7 @@ export default function RejectDialog({ open, onClose, onConfirm, itemName }) {
             <div className="space-y-1.5">
               <DialogTitle>Reject "{itemName || "submission"}"?</DialogTitle>
               <DialogDescription className="text-left">
-                It will be sent back to draft. The reason you enter is shown to the submitter so they know what to fix.
+                It will be marked as Rejected and moved to the Rejected queue — hidden from the storefront until fixed and resubmitted. The reason you enter is shown to the submitter so they know what to fix.
               </DialogDescription>
             </div>
           </div>
@@ -63,7 +63,7 @@ export default function RejectDialog({ open, onClose, onConfirm, itemName }) {
           <Button variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
           <Button className="bg-red-600 text-white hover:bg-red-600/90" disabled={!canConfirm} onClick={handleConfirm}>
             {busy && <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />}
-            Reject & return to draft
+            Reject
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -80,11 +80,12 @@
         "inactive",
         "draft",
         "pending_approval",
+        "rejected",
         "archived",
         "out_of_stock"
       ],
       "default": "active",
-      "description": "active=live on storefront; inactive=temporarily hidden (reactivate later); draft=incomplete / not yet submitted, never live; pending_approval=submitted for admin sign-off, not live yet; archived=removed from catalog, kept for history and can be restored; out_of_stock=active listing but shown as unavailable to customers. A draft can never skip straight to active \u2014 it must pass through pending_approval and be approved first."
+      "description": "active=live on storefront; inactive=temporarily hidden (reactivate later); draft=incomplete / not yet submitted, never live; pending_approval=submitted for admin sign-off, not live yet; rejected=returned by an approver with a reason, not live and never visible on the storefront (must be fixed and resubmitted through pending_approval); archived=removed from catalog, kept for history and can be restored; out_of_stock=active listing but shown as unavailable to customers. A draft can never skip straight to active \u2014 it must pass through pending_approval and be approved first."
     },
     "completion_percentage": {
       "type": "number",

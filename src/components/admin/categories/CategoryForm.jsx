@@ -61,6 +61,11 @@ export default function CategoryForm({ initial, categories, onSubmit, onCancel, 
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); doSubmit("draft"); }} className="space-y-5">
+      {initial?.rejection_reason && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <span className="font-medium">Rejected: </span>{initial.rejection_reason}
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <h2 className="text-base font-medium">{editing ? `Edit: ${initial.name}` : "Add a category"}</h2>
         {editing && (

@@ -220,7 +220,7 @@ export default function AdminApprovals() {
                           </button>
                           <button onClick={() => setRejectTarget(r)} disabled={busy}
                             className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
-                            title="Reject and return to draft">
+                            title="Reject and send to the Rejected queue">
                             <XIcon className="h-4 w-4" /> Reject
                           </button>
                         </div>

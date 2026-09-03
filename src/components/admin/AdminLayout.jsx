@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon, ClipboardCheck } from "lucide-react";
+import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon, ClipboardCheck, FileX } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { canAccess } from "@/lib/adminPermissions";
-import { loadPendingCounts } from "@/lib/approval";
+import { loadPendingCounts, loadRejectedCounts } from "@/lib/approval";
 import NotificationsBell from "@/components/admin/NotificationsBell";
 
 const NAV = [
   { section: "dashboard", label: "Dashboard", path: "/admin", icon: LayoutDashboard, end: true },
   { section: "approvals", label: "Approvals", path: "/admin/approvals", icon: ClipboardCheck },
+  { section: "rejected", label: "Rejected", path: "/admin/rejected", icon: FileX },
   { section: "reports", label: "Reports", path: "/admin/reports", icon: BarChart3 },
   { section: "products", label: "Products", path: "/admin/products", icon: Package },
   { section: "categories", label: "Categories", path: "/admin/categories", icon: Layers },
@@ -37,6 +38,7 @@ export default function AdminLayout() {
   const [checking, setChecking] = useState(true);
   const [staffOpen, setStaffOpen] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
+  const [rejectedCount, setRejectedCount] = useState(0);
   const location = useLocation();
 
   useEffect(() => {
@@ -50,13 +52,16 @@ export default function AdminLayout() {
     })();
   }, []);
 
-  // Live pending-approvals counter for the Approvals nav badge. Subscribes to
-  // product/category changes so the badge updates as submissions arrive.
-  const refreshCount = () => { loadPendingCounts().then((c) => setPendingCount((c.products || 0) + (c.categories || 0))); };
+  // Live pending-approvals and rejected counters for the nav badges. Subscribes
+  // to product/category changes so both badges update as items move.
+  const refreshCounts = () => {
+    loadPendingCounts().then((c) => setPendingCount((c.products || 0) + (c.categories || 0)));
+    loadRejectedCounts().then((c) => setRejectedCount((c.products || 0) + (c.categories || 0)));
+  };
   useEffect(() => {
-    refreshCount();
-    const offP = base44.entities.Product.subscribe(() => refreshCount());
-    const offC = base44.entities.Category.subscribe(() => refreshCount());
+    refreshCounts();
+    const offP = base44.entities.Product.subscribe(() => refreshCounts());
+    const offC = base44.entities.Category.subscribe(() => refreshCounts());
     return () => { offP?.(); offC?.(); };
   }, []);
   const canApprove = user && canAccess(user, "approvals", customRoles);
@@ -128,7 +133,10 @@ export default function AdminLayout() {
         <nav className="flex-1 space-y-1 p-3">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const badge = item.section === "approvals" && canApprove && pendingCount > 0 ? pendingCount : null;
+            const badge =
+              item.section === "approvals" && canApprove && pendingCount > 0 ? pendingCount
+              : item.section === "rejected" && canAccess(user, "rejected", customRoles) && rejectedCount > 0 ? rejectedCount
+              : null;
             return (
               <NavLink key={item.path} to={item.path} end={item.end} className={linkClass}>
                 <Icon className="h-4 w-4" /> {item.label}

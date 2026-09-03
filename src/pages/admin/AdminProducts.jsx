@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Plus, Pencil, Trash2, Copy, Download, Percent, Archive, ArchiveRestore, EyeOff, RotateCcw, Rocket, Printer, Package } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -29,13 +30,14 @@ const rel = (iso) => {
   return new Date(iso).toLocaleDateString();
 };
 
-const STATUS_LABEL = { active: "Active", inactive: "Inactive", draft: "Draft", pending_approval: "Pending", archived: "Archived" };
+const STATUS_LABEL = { active: "Active", inactive: "Inactive", draft: "Draft", pending_approval: "Pending", rejected: "Rejected", archived: "Archived" };
 const STATUS_BADGE = {
-active: "bg-emerald-100 text-emerald-700",
-inactive: "bg-amber-100 text-amber-700",
-draft: "bg-sky-100 text-sky-700",
-pending_approval: "bg-violet-100 text-violet-700",
-archived: "bg-zinc-200 text-zinc-600",
+  active: "bg-emerald-100 text-emerald-700",
+  inactive: "bg-amber-100 text-amber-700",
+  draft: "bg-sky-100 text-sky-700",
+  pending_approval: "bg-violet-100 text-violet-700",
+  rejected: "bg-red-100 text-red-700",
+  archived: "bg-zinc-200 text-zinc-600",
 };
 
 export default function AdminProducts() {
@@ -59,7 +61,7 @@ export default function AdminProducts() {
   }, []);
 
   const counts = {
-    all: products.filter((p) => p.status !== "archived").length,
+    all: products.filter((p) => p.status !== "archived" && p.status !== "rejected").length,
     active: products.filter((p) => p.status === "active").length,
     inactive: products.filter((p) => p.status === "inactive").length,
     draft: products.filter((p) => p.status === "draft").length,
@@ -113,8 +115,18 @@ export default function AdminProducts() {
 
   useEffect(() => { load(); }, []);
 
+  // Open the editor for a specific product when navigated here with
+  // location.state.editProductId (e.g. "Edit & resubmit" from the Rejected page).
+  const location = useLocation();
+  useEffect(() => {
+    const id = location.state?.editProductId;
+    if (!id || !products.length) return;
+    const p = products.find((x) => x.id === id);
+    if (p) { setEditing(p); setDialogOpen(true); }
+  }, [location.state?.editProductId, products]);
+
   const filtered = products.filter((p) => {
-    if (filters.status !== "archived" && p.status === "archived") return false;
+    if (filters.status !== "archived" && (p.status === "archived" || p.status === "rejected")) return false;
     const q = filters.query.trim().toLowerCase();
     if (q && ![p.name, p.sku, p.brand, p.slug, p.barcode].filter(Boolean).join(" ").toLowerCase().includes(q)) return false;
     if (filters.category !== "all" && p.category !== filters.category) return false;

@@ -5,7 +5,7 @@
 
 import { base44 } from "@/api/base44Client";
 
-export const APPROVAL_STATUSES = ["draft", "pending_approval", "active"];
+export const APPROVAL_STATUSES = ["draft", "pending_approval", "rejected", "active"];
 
 export function userName(user) {
   if (!user) return "Admin";
@@ -90,7 +90,7 @@ export async function rejectItem(entityName, record, user, reason) {
     self: selfApprove,
   });
   const patch = {
-    status: "draft",
+    status: "rejected",
     rejection_reason: reason,
     approval_history: history,
   };
@@ -127,6 +127,20 @@ export async function loadPendingCounts() {
     const [products, categories] = await Promise.all([
       base44.entities.Product.filter({ status: "pending_approval" }, "-submitted_at", 200),
       base44.entities.Category.filter({ status: "pending_approval" }, "-submitted_at", 200),
+    ]);
+    return { products: (products || []).length, categories: (categories || []).length };
+  } catch {
+    return { products: 0, categories: 0 };
+  }
+}
+
+// Rejected-count badge data for the Rejected nav item. Independent from
+// loadPendingCounts so an item is only ever counted in one queue.
+export async function loadRejectedCounts() {
+  try {
+    const [products, categories] = await Promise.all([
+      base44.entities.Product.filter({ status: "rejected" }, "-updated_date", 200),
+      base44.entities.Category.filter({ status: "rejected" }, "-updated_date", 200),
     ]);
     return { products: (products || []).length, categories: (categories || []).length };
   } catch {

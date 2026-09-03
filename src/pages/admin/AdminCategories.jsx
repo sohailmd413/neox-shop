@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Layers } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
@@ -51,6 +52,16 @@ export default function AdminCategories() {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Open the editor for a specific category when navigated here with
+  // location.state.editCategoryId (e.g. "Edit & resubmit" from the Rejected page).
+  const location = useLocation();
+  useEffect(() => {
+    const id = location.state?.editCategoryId;
+    if (!id || !categories.length) return;
+    const c = categories.find((x) => x.id === id);
+    if (c) setEditing(c);
+  }, [location.state?.editCategoryId, categories]);
 
   const createCategory = async (data, mode) => {
     setSaving(true);

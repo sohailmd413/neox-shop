@@ -270,6 +270,11 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
         </div>
 
         <div className="overflow-y-auto">
+        {product?.rejection_reason && (
+          <div className="border-b border-red-200 bg-red-50 px-6 py-3 text-sm text-red-700">
+            <span className="font-medium">Rejected: </span>{product.rejection_reason}
+          </div>
+        )}
         {publishAttempt && Object.keys(errors).length > 0 && (
           <div className="border-b border-red-200 bg-red-50 px-6 py-3 text-sm text-red-700">
             <p className="font-medium">{Object.keys(errors).length} of {REQUIRED_COUNT} required fields missing — saved as draft.</p>
