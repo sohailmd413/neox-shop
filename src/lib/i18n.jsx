@@ -550,7 +550,9 @@ const translations = {
   },
 };
 
-const LanguageContext = createContext({ lang: "en", t: (k) => k, setLang: () => {}, toggle: () => {} });
+// Default (used only if a consumer renders outside the provider) never shows
+// a raw key — it falls back to the English value, then an empty string.
+const LanguageContext = createContext({ lang: "en", t: (k) => (translations.en || {})[k] || "", setLang: () => {}, toggle: () => {} });
 
 export function LanguageProvider({ children }) {
   const [lang, setLangState] = useState(() => localStorage.getItem(STORAGE_KEY) || "en");
@@ -589,7 +591,28 @@ export function LanguageProvider({ children }) {
     localStorage.setItem(STORAGE_KEY, next);
     return next;
   }), []);
-  const t = useCallback((key) => translations[lang]?.[key] ?? translations.en[key] ?? key, [lang]);
+  // Resolve a key to the active language, then English, then "" (never the
+  // raw key). A missing key logs in dev so dictionary drift is caught early.
+  const t = useCallback((key) => {
+    if (translations[lang] && translations[lang][key] != null) return translations[lang][key];
+    if (translations.en && translations.en[key] != null) return translations.en[key];
+    if (import.meta.env?.DEV) {
+      console.warn(`[i18n] Missing translation key "${key}" (lang="${lang}")`);
+    }
+    return "";
+  }, [lang]);
+
+  // Dev-only sanity check: warn about keys present in one language but not the
+  // other, so a partial dictionary edit is spotted immediately during dev.
+  useEffect(() => {
+    if (!import.meta.env?.DEV) return;
+    const enKeys = Object.keys(translations.en || {});
+    const arSet = new Set(Object.keys(translations.ar || {}));
+    const enOnly = enKeys.filter((k) => !arSet.has(k));
+    const arOnly = [...arSet].filter((k) => !(k in (translations.en || {})));
+    if (enOnly.length) console.warn("[i18n] Keys in EN missing from AR:", enOnly);
+    if (arOnly.length) console.warn("[i18n] Keys in AR missing from EN:", arOnly);
+  }, []);
 
   return (
     <LanguageContext.Provider value={{ lang, t, setLang, toggle }}>
@@ -600,4 +623,12 @@ export function LanguageProvider({ children }) {
 
 export function useLanguage() {
   return useContext(LanguageContext);
+}
+
+// i18n owns a React Context object. Hot-reloading this module creates a NEW
+// context while already-mounted components keep the OLD one — they'd then read
+// the default context (raw keys + a dead toggle). Decline HMR so any edit here
+// triggers a full page reload instead of a stale, split-context state.
+if (import.meta.hot) {
+  import.meta.hot.decline();
 }
