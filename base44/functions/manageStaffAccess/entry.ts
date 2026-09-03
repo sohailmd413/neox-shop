@@ -42,6 +42,9 @@ export default async function (req) {
         id: u.id,
         email: u.email,
         full_name: u.full_name,
+        display_name: u.display_name || '',
+        phone: u.phone || '',
+        avatar_url: u.avatar_url || '',
         role: u.role || 'user',
         permissions: u.permissions || {},
         temp_password: u.temp_password || '',
@@ -50,7 +53,7 @@ export default async function (req) {
     }
 
     if (action === 'update') {
-      const { user_id, role, permissions } = body;
+      const { user_id, role, permissions, display_name, phone, avatar_url } = body;
       if (!user_id || typeof user_id !== 'string') {
         return Response.json({ error: 'user_id is required' }, { status: 400 });
       }
@@ -76,6 +79,20 @@ export default async function (req) {
         }
         next.permissions = clean;
       }
+      if (display_name !== undefined) {
+        const s = String(display_name).trim();
+        if (s) {
+          if (s.length < 2 || s.length > 50) {
+            return Response.json({ error: 'Name must be 2–50 characters' }, { status: 400 });
+          }
+          if (/^\d+$/.test(s)) {
+            return Response.json({ error: 'Name cannot be purely numeric' }, { status: 400 });
+          }
+        }
+        next.display_name = s;
+      }
+      if (phone !== undefined) next.phone = String(phone).slice(0, 32);
+      if (avatar_url !== undefined) next.avatar_url = String(avatar_url).slice(0, 1024);
       await base44.asServiceRole.entities.User.update(user_id, next);
       return Response.json({ ok: true });
     }

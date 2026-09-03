@@ -9,7 +9,7 @@ export const APPROVAL_STATUSES = ["draft", "pending_approval", "rejected", "acti
 
 export function userName(user) {
   if (!user) return "Admin";
-  return user.full_name || user.email || "Admin";
+  return (user.display_name && String(user.display_name).trim()) || user.full_name || user.email || "Admin";
 }
 
 // Minimum required fields for a category to be submitted for approval.

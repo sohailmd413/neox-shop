@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import Dropdown from "@/components/admin/ui/Dropdown";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { roleOptions, roleLabel } from "@/lib/adminPermissions";
 import StaffInviteDialog from "@/components/admin/StaffInviteDialog";
@@ -34,7 +35,7 @@ export default function AdminUsers() {
       setUsers(list);
       const d = {};
       list.forEach((u) => {
-        d[u.id] = { role: u.role };
+        d[u.id] = { role: u.role, display_name: u.display_name || u.full_name || "" };
       });
       setDrafts(d);
     } catch (e) {
@@ -50,10 +51,14 @@ export default function AdminUsers() {
   const setRole = (id, role) =>
     setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], role } }));
 
+  const setName = (id, display_name) =>
+    setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], display_name } }));
+
   const dirty = (u) => {
     const d = drafts[u.id];
     if (!d) return false;
-    return d.role !== u.role;
+    const origName = u.display_name || u.full_name || "";
+    return d.role !== u.role || (d.display_name || "") !== origName;
   };
 
   const save = async (u) => {
@@ -64,8 +69,9 @@ export default function AdminUsers() {
         action: "update",
         user_id: u.id,
         role: d.role,
+        display_name: d.display_name,
       });
-      toast({ title: "Role updated" });
+      toast({ title: "Staff updated" });
       load();
     } catch (e) {
       toast({ title: e.response?.data?.error || "Could not update", variant: "destructive" });
@@ -136,22 +142,25 @@ export default function AdminUsers() {
             const locked = u.pending || isAdmin;
             return (
               <div key={u.id} className="rounded-2xl border border-border bg-background p-5">
-                <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">{u.email}</p>
-                    {u.pending && (
-                      <InviteStatusBadge
-                        status={u.invite_status}
-                        error={u.invite_error}
-                        sentAt={u.invite_sent_at || u.last_sent_at || u.created_date}
-                        expiresAt={u.invite_expires_at}
-                      />
-                    )}
-                    {isAdmin && !u.pending && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-2 py-0.5 text-xs text-background">
-                        <ShieldCheck className="h-3 w-3" /> Main admin
-                      </span>
-                    )}
+                <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-1">
+                    <p className="font-medium">{(u.display_name || u.full_name) || u.email}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-xs text-muted-foreground">{u.email}</p>
+                      {u.pending && (
+                        <InviteStatusBadge
+                          status={u.invite_status}
+                          error={u.invite_error}
+                          sentAt={u.invite_sent_at || u.last_sent_at || u.created_date}
+                          expiresAt={u.invite_expires_at}
+                        />
+                      )}
+                      {isAdmin && !u.pending && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-2 py-0.5 text-xs text-background">
+                          <ShieldCheck className="h-3 w-3" /> Main admin
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">Role</span>
@@ -168,6 +177,18 @@ export default function AdminUsers() {
                 </div>
 
                 {!u.pending && (
+                  <div className="mt-3 sm:w-64">
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">Full name</label>
+                    <Input
+                      value={d.display_name ?? ""}
+                      onChange={(e) => setName(u.id, e.target.value)}
+                      placeholder="Display name"
+                      maxLength={50}
+                    />
+                  </div>
+                )}
+
+                {!u.pending && (
                   <p className="mt-3 text-xs text-muted-foreground">
                     Access for this staff member comes from the <span className="font-medium text-foreground">{roleLabel(d.role, customRoles)}</span> role. Edit the role's permissions on the Roles page.
                   </p>
@@ -177,7 +198,7 @@ export default function AdminUsers() {
                   {!u.pending && (
                     <Button onClick={() => save(u)} disabled={!dirty(u) || savingId === u.id || isAdmin} size="sm">
                       {savingId === u.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                      Save role
+                      Save
                     </Button>
                   )}
                   {u.pending && (

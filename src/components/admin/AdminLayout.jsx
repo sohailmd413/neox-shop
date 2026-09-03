@@ -66,6 +66,14 @@ export default function AdminLayout() {
     return () => { offP?.(); offC?.(); };
   }, []);
   const canApprove = user && canAccess(user, "approvals", customRoles);
+  // Refresh the header user when the profile is edited in-place.
+  useEffect(() => {
+    const refresh = async () => {
+      try { const me = await base44.auth.me(); if (me) setUser(me); } catch {}
+    };
+    window.addEventListener("profile-updated", refresh);
+    return () => window.removeEventListener("profile-updated", refresh);
+  }, []);
 
   if (checking) {
     return (

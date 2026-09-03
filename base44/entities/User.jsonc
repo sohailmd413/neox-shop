@@ -14,6 +14,57 @@
     "temp_password": {
       "type": "string",
       "description": "Temporary password shared with a staff member at invite time. The platform can't apply it automatically; the staff member must set their own password. Shown to admins in the Staff members list for their reference."
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Editable display name chosen by the user (or set by an admin on their behalf). The single source of truth for the staff member's name everywhere it is shown (admin header, audit trail, staff list). Falls back to the built-in full_name then email when empty."
+    },
+    "phone": {
+      "type": "string",
+      "description": "Optional contact phone for the staff member."
+    },
+    "avatar_url": {
+      "type": "string",
+      "description": "Optional profile photo URL (uploaded via the Profile page). Falls back to the initials circle when empty."
+    },
+    "timezone": {
+      "type": "string",
+      "description": "Preferred IANA timezone, e.g. 'Asia/Riyadh'. Used to display dates/times in reports and order timestamps correctly for this staff member."
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "ar"
+      ],
+      "default": "en",
+      "description": "Preferred admin interface language."
+    },
+    "notification_preferences": {
+      "type": "object",
+      "description": "Per-staff alert toggles. Keys: new_order, low_stock, new_review, approval_assigned, approval_outcome. Values are booleans.",
+      "properties": {
+        "new_order": {
+          "type": "boolean",
+          "default": false
+        },
+        "low_stock": {
+          "type": "boolean",
+          "default": false
+        },
+        "new_review": {
+          "type": "boolean",
+          "default": false
+        },
+        "approval_assigned": {
+          "type": "boolean",
+          "default": false
+        },
+        "approval_outcome": {
+          "type": "boolean",
+          "default": false
+        }
+      }
     }
   }
 }
