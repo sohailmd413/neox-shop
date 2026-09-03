@@ -154,7 +154,7 @@ export default function AdminApprovals() {
         <div className="overflow-x-auto">
           <table className="w-full table-fixed text-sm">
             <colgroup>
-              <col className="w-12" /><col /><col className="w-24" /><col className="w-28" /><col className="w-28" /><col className="w-32" /><col className="w-28" /><col className="w-20" /><col className="w-32" />
+              <col className="w-12" /><col /><col className="w-24" /><col className="w-28" /><col className="w-28" /><col className="w-32" /><col className="w-28" /><col className="w-24" /><col className="w-44" />
             </colgroup>
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-[0.1em] text-muted-foreground">
@@ -212,14 +212,14 @@ export default function AdminApprovals() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex justify-end gap-1">
+                        <div className="flex shrink-0 justify-end gap-1 whitespace-nowrap">
                           <button onClick={() => setApproveTarget(r)} disabled={busy}
-                            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50"
+                            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
                             title="Approve and publish">
                             <Check className="h-4 w-4" /> Approve
                           </button>
                           <button onClick={() => setRejectTarget(r)} disabled={busy}
-                            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50"
+                            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
                             title="Reject and return to draft">
                             <XIcon className="h-4 w-4" /> Reject
                           </button>
