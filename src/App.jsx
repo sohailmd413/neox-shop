@@ -29,6 +29,7 @@ import AdminSettings from '@/pages/admin/AdminSettings';
 import AdminReviews from '@/pages/admin/AdminReviews';
 import AdminTranslations from '@/pages/admin/AdminTranslations';
 import AdminPosters from '@/pages/admin/AdminPosters';
+import AdminHomeSections from '@/pages/admin/AdminHomeSections';
 import AdminApprovals from '@/pages/admin/AdminApprovals';
 import AdminRejected from '@/pages/admin/AdminRejected';
 import AdminUsers from '@/pages/admin/AdminUsers';
@@ -113,6 +114,7 @@ const AuthenticatedApp = () => {
             <Route path="reviews" element={<AdminReviews />} />
             <Route path="reports" element={<AdminReports />} />
             <Route path="posters" element={<AdminPosters />} />
+            <Route path="home-sections" element={<AdminHomeSections />} />
             <Route path="coupons" element={<AdminCoupons />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route path="roles" element={<AdminRoles />} />

@@ -7,7 +7,7 @@ import ProductCard from "@/components/storefront/ProductCard";
 // (Deals, Trending in <category>, New arrivals). Cards keep a fixed width per
 // breakpoint so 4–6 are visible at once on desktop. All cards stay wired to the
 // shared Cart/Wishlist contexts via ProductCard.
-export default function ProductRow({ title, to, viewAllLabel = "See all", products = [] }) {
+export default function ProductRow({ title, subtitle, to, viewAllLabel = "See all", products = [] }) {
   const scroller = useRef(null);
   const scroll = (dir) => {
     const el = scroller.current;
@@ -18,7 +18,10 @@ export default function ProductRow({ title, to, viewAllLabel = "See all", produc
   return (
     <section className="mx-auto max-w-7xl px-5 py-6 sm:px-8">
       <div className="mb-3 flex items-end justify-between">
-        <h2 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">{title}</h2>
+        <div>
+          <h2 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">{title}</h2>
+          {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+        </div>
         {to && (
           <Link to={to} className="group inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
             {viewAllLabel}

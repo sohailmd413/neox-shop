@@ -14,15 +14,16 @@ export const ADMIN_SECTIONS = [
   { id: 'customers', label: 'Customers' },
   { id: 'reviews', label: 'Reviews' },
   { id: 'posters', label: 'Marketing posters' },
+  { id: 'home_sections', label: 'Homepage sections' },
   { id: 'coupons', label: 'Coupons' },
   { id: 'settings', label: 'Settings' },
 ];
 
 export const ROLE_DEFAULTS = {
-  admin: { dashboard: true, approvals: true, rejected: true, reports: true, products: true, categories: true, orders: true, customers: true, reviews: true, posters: true, coupons: true, settings: true },
+  admin: { dashboard: true, approvals: true, rejected: true, reports: true, products: true, categories: true, orders: true, customers: true, reviews: true, posters: true, coupons: true, home_sections: true, settings: true },
   product_manager: { products: true, categories: true, reports: true, approvals: true, rejected: true },
   delivery_manager: { orders: true, reports: true },
-  marketing_manager: { reviews: true, posters: true, coupons: true },
+  marketing_manager: { reviews: true, posters: true, coupons: true, home_sections: true },
   user: {},
 };
 

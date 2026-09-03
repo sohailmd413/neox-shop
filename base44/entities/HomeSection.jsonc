@@ -1,0 +1,81 @@
+{
+  "name": "HomeSection",
+  "type": "object",
+  "properties": {
+    "title_en": {
+      "type": "string",
+      "description": "Display title shown when the site language is English."
+    },
+    "title_ar": {
+      "type": "string",
+      "description": "Display title shown when the site language is Arabic."
+    },
+    "subtitle_en": {
+      "type": "string",
+      "description": "Optional subtitle shown under the title in English."
+    },
+    "subtitle_ar": {
+      "type": "string",
+      "description": "Optional subtitle shown under the title in Arabic."
+    },
+    "section_type": {
+      "type": "string",
+      "enum": [
+        "manual_picks",
+        "auto_bestsellers",
+        "auto_new_arrivals",
+        "auto_on_sale"
+      ],
+      "description": "manual_picks renders the admin's hand-picked product list; the auto_* types compute their products live (best sellers by units sold, newest by creation date, on-sale by active discount)."
+    },
+    "display_order": {
+      "type": "number",
+      "default": 0,
+      "description": "Position of the section on the homepage, top to bottom. Lower shows first."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active",
+      "description": "Only active sections render on the storefront."
+    },
+    "layout_style": {
+      "type": "string",
+      "enum": [
+        "grid",
+        "carousel"
+      ],
+      "default": "carousel"
+    },
+    "max_items_shown": {
+      "type": "number",
+      "default": 12,
+      "description": "Maximum number of products rendered for this section."
+    }
+  },
+  "required": [
+    "title_en",
+    "section_type"
+  ],
+  "rls": {
+    "read": true,
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
