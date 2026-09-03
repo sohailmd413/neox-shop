@@ -7,7 +7,10 @@ import { productCompletion } from "@/lib/productValidation";
 import { approveItem, rejectItem } from "@/lib/approval";
 import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
 import RejectDialog from "@/components/admin/RejectDialog";
+import Dropdown from "@/components/admin/ui/Dropdown";
+import DatePicker from "@/components/admin/ui/DatePicker";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/shared/StateViews";
+import { cn } from "@/lib/utils";
 
 const rel = (iso) => {
   if (!iso) return "—";
@@ -110,8 +113,6 @@ export default function AdminApprovals() {
     setBusy(false);
   };
 
-  const baseInput = "rounded-md border border-input bg-background px-2.5 py-1.5 text-sm outline-none focus:border-foreground/40";
-
   return (
     <div className="space-y-6">
       <div>
@@ -122,29 +123,33 @@ export default function AdminApprovals() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-background px-4 py-3">
-        <label className="space-y-1 text-xs font-medium text-muted-foreground">
-          <span>Submitted by</span>
-          <select value={filters.submitter} onChange={(e) => setFilters((f) => ({ ...f, submitter: e.target.value }))} className={baseInput}>
-            {submitters.map((s) => <option key={s} value={s}>{s === "all" ? "Anyone" : s}</option>)}
-          </select>
-        </label>
-        <label className="space-y-1 text-xs font-medium text-muted-foreground">
-          <span>Category</span>
-          <select value={filters.category} onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value }))} className={baseInput}>
-            {categories.map((c) => <option key={c} value={c}>{c === "all" ? "All" : c}</option>)}
-          </select>
-        </label>
-        <label className="space-y-1 text-xs font-medium text-muted-foreground">
-          <span>From</span>
-          <input type="date" value={filters.from} onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value }))} className={baseInput} />
-        </label>
-        <label className="space-y-1 text-xs font-medium text-muted-foreground">
-          <span>To</span>
-          <input type="date" value={filters.to} onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value }))} className={baseInput} />
-        </label>
+      <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-background px-5 py-3">
+        <FilterField label="Submitted by" className="w-[180px]">
+          <Dropdown
+            type="select"
+            value={filters.submitter}
+            onChange={(v) => setFilters((f) => ({ ...f, submitter: v }))}
+            options={submitters.map((s) => ({ label: s === "all" ? "Anyone" : s, value: s }))}
+            placeholder="Anyone"
+          />
+        </FilterField>
+        <FilterField label="Category" className="w-[200px]">
+          <Dropdown
+            type="search"
+            value={filters.category}
+            onChange={(v) => setFilters((f) => ({ ...f, category: v }))}
+            options={categories.map((c) => ({ label: c === "all" ? "All" : c, value: c }))}
+            placeholder="All"
+          />
+        </FilterField>
+        <FilterField label="From" className="w-[150px]">
+          <DatePicker value={filters.from} onChange={(v) => setFilters((f) => ({ ...f, from: v }))} placeholder="From" />
+        </FilterField>
+        <FilterField label="To" className="w-[150px]">
+          <DatePicker value={filters.to} onChange={(v) => setFilters((f) => ({ ...f, to: v }))} placeholder="To" />
+        </FilterField>
         {(filters.submitter !== "all" || filters.category !== "all" || filters.from || filters.to) && (
-          <Button variant="ghost" size="sm" onClick={() => setFilters({ submitter: "all", category: "all", from: "", to: "" })}>
+          <Button variant="ghost" size="sm" onClick={() => setFilters({ submitter: "all", category: "all", from: "", to: "" })} className="mb-0.5">
             Clear filters
           </Button>
         )}
@@ -154,19 +159,19 @@ export default function AdminApprovals() {
         <div className="overflow-x-auto">
           <table className="w-full table-fixed text-sm">
             <colgroup>
-              <col className="w-12" /><col /><col className="w-24" /><col className="w-28" /><col className="w-28" /><col className="w-32" /><col className="w-28" /><col className="w-24" /><col className="w-44" />
+              <col className="w-12" /><col /><col className="w-24" /><col className="w-36" /><col className="w-28" /><col className="w-36" /><col className="w-28" /><col className="w-24" /><col className="w-48" />
             </colgroup>
             <thead>
               <tr className="border-b border-border text-left text-xs uppercase tracking-[0.1em] text-muted-foreground">
-                <th className="px-4 py-3 font-medium"></th>
-                <th className="px-4 py-3 font-medium">Name</th>
-                <th className="px-4 py-3 font-medium">Type</th>
-                <th className="px-4 py-3 font-medium">Submitted by</th>
-                <th className="px-4 py-3 font-medium">Submitted</th>
-                <th className="px-4 py-3 font-medium">Category</th>
-                <th className="px-4 py-3 font-medium">Price</th>
-                <th className="px-4 py-3 font-medium">Complete</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
+                <th className="whitespace-nowrap px-5 py-3 font-medium"></th>
+                <th className="whitespace-nowrap px-5 py-3 font-medium">Name</th>
+                <th className="whitespace-nowrap px-5 py-3 font-medium">Type</th>
+                <th className="whitespace-nowrap px-5 py-3 font-medium">Submitted by</th>
+                <th className="whitespace-nowrap px-5 py-3 font-medium">Submitted</th>
+                <th className="whitespace-nowrap px-5 py-3 font-medium">Category</th>
+                <th className="whitespace-nowrap px-5 py-3 font-medium">Price</th>
+                <th className="whitespace-nowrap px-5 py-3 font-medium">Complete</th>
+                <th className="whitespace-nowrap px-5 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -187,7 +192,7 @@ export default function AdminApprovals() {
                   const TypeIcon = r.type === "Product" ? Package : Layers;
                   return (
                     <tr key={r.type + r.id} className="border-b border-border last:border-0 hover:bg-muted/30">
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3">
                         {r.thumb ? (
                           <img src={r.thumb} alt="" className="h-10 w-10 rounded-md object-cover" />
                         ) : (
@@ -196,22 +201,22 @@ export default function AdminApprovals() {
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3 font-medium">{r.name}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3 font-medium">{r.name}</td>
+                      <td className="px-5 py-3">
                         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${r.type === "Product" ? "bg-sky-100 text-sky-700" : "bg-violet-100 text-violet-700"}`}>
                           <TypeIcon className="h-3 w-3" /> {r.type}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{r.submittedBy}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{rel(r.submittedAt)}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{r.category || "—"}</td>
-                      <td className="px-4 py-3">{r.price != null ? formatPrice(r.price) : "—"}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3 text-muted-foreground">{r.submittedBy}</td>
+                      <td className="px-5 py-3 text-muted-foreground">{rel(r.submittedAt)}</td>
+                      <td className="px-5 py-3 text-muted-foreground">{r.category || "—"}</td>
+                      <td className="px-5 py-3">{r.price != null ? formatPrice(r.price) : "—"}</td>
+                      <td className="px-5 py-3">
                         <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
                           {r.completion}%
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-5 py-3">
                         <div className="flex shrink-0 justify-end gap-1 whitespace-nowrap">
                           <button onClick={() => setApproveTarget(r)} disabled={busy}
                             className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
@@ -252,6 +257,15 @@ export default function AdminApprovals() {
           onConfirm={doReject}
         />
       )}
+    </div>
+  );
+}
+
+function FilterField({ label, children, className }) {
+  return (
+    <div className={cn("flex min-w-0 flex-col gap-1", className)}>
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      {children}
     </div>
   );
 }

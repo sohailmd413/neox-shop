@@ -5,6 +5,7 @@ import { base44 } from "@/api/base44Client";
 import { canAccess } from "@/lib/adminPermissions";
 import { loadPendingCounts, loadRejectedCounts } from "@/lib/approval";
 import NotificationsBell from "@/components/admin/NotificationsBell";
+import AccountMenu from "@/components/admin/AccountMenu";
 
 const NAV = [
   { section: "dashboard", label: "Dashboard", path: "/admin", icon: LayoutDashboard, end: true },
@@ -182,7 +183,7 @@ export default function AdminLayout() {
       </aside>
 
       <div className="flex-1">
-        <header className="flex items-center justify-between border-b border-border bg-background px-5 py-3 md:px-8">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/95 px-5 py-2.5 shadow-sm backdrop-blur md:px-8">
           <nav className="flex gap-1 overflow-x-auto md:hidden">
             {navItems.map((item) => (
               <NavLink key={item.path} to={item.path} end={item.end} className={mobileLinkClass}>
@@ -195,10 +196,10 @@ export default function AdminLayout() {
               </NavLink>
             ))}
           </nav>
-          <NotificationsBell />
-          <Link to="/admin/profile" className="ml-auto rounded-lg px-2 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
-            Signed in as <span className="font-medium text-foreground">{user.email}</span>
-          </Link>
+          <div className="ml-auto flex items-center gap-1">
+            <NotificationsBell />
+            <AccountMenu user={user} />
+          </div>
         </header>
         <main className="p-5 md:p-8">
           {sectionBlocked ? (
