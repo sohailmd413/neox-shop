@@ -40,16 +40,24 @@ export default async function(req) {
     };
 
     const productRows = (products || [])
-      .map((p) => ({ id: p.id, name: p.name, status: p.status, missing: productFields(p) }))
+      .map((p) => ({ id: p.id, name: p.name, description: p.description || "", status: p.status, missing: productFields(p) }))
       .filter((r) => r.missing.length);
     const categoryRows = (categories || [])
-      .map((c) => ({ id: c.id, name: c.name, status: c.status, missing: categoryFields(c) }))
+      .map((c) => ({ id: c.id, name: c.name, description: c.description || "", short_description: c.short_description || "", status: c.status, missing: categoryFields(c) }))
       .filter((r) => r.missing.length);
     const posterRows = (posters || [])
-      .map((p) => ({ id: p.id, title: p.title, active: p.active, missing: posterFields(p) }))
+      .map((p) => ({ id: p.id, title: p.title, tagline: p.tagline || "", cta_text: p.cta_text || "", active: p.active, missing: posterFields(p) }))
       .filter((r) => r.missing.length);
 
     const setting = (settingsList || [])[0] || {};
+    const settingRefs = {
+      store_name: setting.store_name || "",
+      business_address: setting.business_address || "",
+      terms_policy: setting.terms_policy || "",
+      privacy_policy: setting.privacy_policy || "",
+      return_policy: setting.return_policy || "",
+      shipping_policy: setting.shipping_policy || "",
+    };
     const settingMissing = [];
     if (blank(setting.store_name_ar)) settingMissing.push("store_name_ar");
     if (blank(setting.business_address_ar)) settingMissing.push("business_address_ar");
@@ -62,7 +70,7 @@ export default async function(req) {
       products: productRows,
       categories: categoryRows,
       posters: posterRows,
-      settings: { id: setting.id || null, missing: settingMissing },
+      settings: { id: setting.id || null, missing: settingMissing, refs: settingRefs },
       totals: {
         products: productRows.length,
         categories: categoryRows.length,
