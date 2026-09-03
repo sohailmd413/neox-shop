@@ -191,12 +191,15 @@ export default function AdminLayout() {
 
   return (
     <div className="flex min-h-screen bg-muted/20">
-      <aside className="sticky top-0 hidden h-screen w-64 flex-shrink-0 flex-col overflow-y-auto border-r border-border bg-background md:flex">
-        <div className="border-b border-border px-5 py-5">
+      <aside className="sticky top-0 hidden h-screen w-64 flex-shrink-0 flex-col overflow-hidden border-r border-border bg-background md:flex">
+        <div className="shrink-0 border-b border-border px-5 py-5">
           <Link to="/" className="text-lg font-semibold tracking-tight">Admin</Link>
           <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Dashboard</p>
         </div>
 
+        {/* Scrollable middle: search + nav. The header above and the
+            "Back to store" footer below stay fixed; only this region scrolls. */}
+        <div className="flex-1 overflow-y-auto">
         {/* Quick search / jump */}
         <div className="px-3 pt-3">
           <div className="relative">
@@ -205,7 +208,7 @@ export default function AdminLayout() {
           </div>
         </div>
 
-        <nav className="flex-1 space-y-0.5 p-3">
+        <nav className="space-y-0.5 p-3">
           {canSee("dashboard") && !term && (
             <NavLink to="/admin" end className={linkClass}>
               <LayoutDashboard className="h-4 w-4" /> {SECTION_META.dashboard.label}
@@ -231,8 +234,9 @@ export default function AdminLayout() {
             </>
           )}
         </nav>
+        </div>
 
-        <div className="border-t border-border p-3">
+        <div className="shrink-0 border-t border-border p-3">
           <Link to="/" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted">
             <ArrowLeft className="h-4 w-4" /> Back to store
           </Link>
