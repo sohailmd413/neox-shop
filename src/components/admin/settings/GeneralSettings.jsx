@@ -60,17 +60,17 @@ export default function GeneralSettings({ setting, onSave }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <Label className="space-y-1.5">
           <span className="text-xs font-medium text-muted-foreground">Contact email</span>
-          <Input type="email" value={f.contact_email || ""} onChange={(e) => set("contact_email", e.target.value)} />
+          <Input type="email" dir="ltr" value={f.contact_email || ""} onChange={(e) => set("contact_email", e.target.value)} />
         </Label>
         <Label className="space-y-1.5">
           <span className="text-xs font-medium text-muted-foreground">Contact phone</span>
-          <Input value={f.contact_phone || ""} onChange={(e) => set("contact_phone", e.target.value)} />
+          <Input dir="ltr" value={f.contact_phone || ""} onChange={(e) => set("contact_phone", e.target.value)} />
         </Label>
       </div>
 
       <Label className="space-y-1.5">
         <span className="text-xs font-medium text-muted-foreground">Business address</span>
-        <Input value={f.business_address || ""} onChange={(e) => set("business_address", e.target.value)} />
+        <Input dir="ltr" value={f.business_address || ""} onChange={(e) => set("business_address", e.target.value)} />
       </Label>
 
       <Label className="space-y-1.5">
@@ -80,7 +80,7 @@ export default function GeneralSettings({ setting, onSave }) {
 
       <Label className="space-y-1.5">
         <span className="text-xs font-medium text-muted-foreground">VAT / Tax ID</span>
-        <Input value={f.tax_id || ""} onChange={(e) => set("tax_id", e.target.value)} placeholder="300000000000003" />
+        <Input dir="ltr" value={f.tax_id || ""} onChange={(e) => set("tax_id", e.target.value)} placeholder="300000000000003" />
       </Label>
 
       <div className="grid gap-4 sm:grid-cols-3">

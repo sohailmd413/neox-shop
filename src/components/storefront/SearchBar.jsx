@@ -7,14 +7,15 @@ import { Image } from "@/components/ui/image";
 import { formatPrice, lf } from "@/lib/format";
 import { useLanguage } from "@/lib/i18n";
 
-export default function SearchBar({ placeholder = "Search products or categories…" }) {
+export default function SearchBar({ placeholder }) {
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const wrapRef = useRef(null);
   const navigate = useNavigate();
-  const { lang } = useLanguage();
+  const { lang, t } = useLanguage();
+  const ph = placeholder || t("search.placeholder");
 
   useEffect(() => {
     (async () => {
@@ -54,7 +55,8 @@ export default function SearchBar({ placeholder = "Search products or categories
     return { products: pMatches, categories: cMatches };
   }, [term, products, categories]);
 
-  const showDropdown = focused && term && (suggestions.products.length > 0 || suggestions.categories.length > 0);
+  const showDropdown = focused && term;
+  const empty = suggestions.products.length === 0 && suggestions.categories.length === 0;
 
   const pickProduct = (p) => {
     setQuery("");
@@ -82,7 +84,7 @@ export default function SearchBar({ placeholder = "Search products or categories
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setFocused(true)}
-            placeholder={placeholder}
+            placeholder={ph}
             className="h-11 w-full rounded-full border border-border bg-background/80 pl-10 pr-10 text-sm outline-none transition-all focus:border-foreground/40 focus:ring-2 focus:ring-ring/30"
           />
           {query && (
@@ -90,7 +92,7 @@ export default function SearchBar({ placeholder = "Search products or categories
               type="button"
               onClick={() => setQuery("")}
               className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              aria-label="Clear"
+              aria-label={t("search.clear")}
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -110,8 +112,8 @@ export default function SearchBar({ placeholder = "Search products or categories
             {suggestions.products.length > 0 && (
               <div className="mb-1">
                 <p className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                  Products
-                </p>
+                  {t("search.products")}
+                  </p>
                 {suggestions.products.map((p) => (
                   <button
                     key={p.id}
@@ -136,8 +138,8 @@ export default function SearchBar({ placeholder = "Search products or categories
             {suggestions.categories.length > 0 && (
               <div>
                 <p className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                  Categories
-                </p>
+                  {t("search.categories")}
+                  </p>
                 {suggestions.categories.map((c) => (
                   <button
                     key={c.id}
@@ -153,6 +155,11 @@ export default function SearchBar({ placeholder = "Search products or categories
                     <span className="truncate text-sm text-foreground">{lf(c, "name", lang)}</span>
                   </button>
                 ))}
+              </div>
+            )}
+            {empty && (
+              <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                {t("search.noResults")}
               </div>
             )}
           </motion.div>

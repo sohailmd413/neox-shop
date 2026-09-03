@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { useStoreSetting } from "@/lib/useStoreSetting";
 import { computeTax, computeShipping, PAYMENT_LABELS } from "@/lib/settings";
+import { useLanguage } from "@/lib/i18n";
 
 const PAYMENT_ICONS = {
   card: "💳",
@@ -25,6 +26,7 @@ export default function Checkout() {
   const { items, subtotal, clearCart } = useCart();
   const { toast } = useToast();
   const store = useStoreSetting();
+  const { t, lang } = useLanguage();
   const [placing, setPlacing] = useState(false);
   const [placed, setPlaced] = useState(null);
   const [couponInput, setCouponInput] = useState("");
@@ -116,13 +118,13 @@ export default function Checkout() {
       const data = res?.data;
       if (!data || !data.valid) {
         setCoupon(null);
-        setCouponMsg(data?.reason || "Invalid coupon code.");
+        setCouponMsg(data?.reason || t("checkout.couponInvalid"));
         return;
       }
       setCoupon({ code: data.code, discount_type: data.discount_type, discount_value: data.discount_value });
-      setCouponMsg("Coupon applied!");
+      setCouponMsg(t("checkout.couponApplied"));
     } catch {
-      setCouponMsg("Could not validate coupon.");
+      setCouponMsg(t("checkout.couponError"));
     }
   };
 
@@ -140,7 +142,7 @@ export default function Checkout() {
     const required = ["name", "email", "line1", "city", "postal_code", "country"];
     for (const k of required) {
       if (!form[k].trim()) {
-        toast({ title: "Please fill in all required fields.", variant: "destructive" });
+        toast({ title: t("checkout.required"), variant: "destructive" });
         return;
       }
     }
@@ -177,7 +179,7 @@ export default function Checkout() {
       setPlaced(order);
       clearCart();
     } catch (err) {
-      toast({ title: "Could not place order. Please try again.", variant: "destructive" });
+      toast({ title: t("checkout.placeError"), variant: "destructive" });
     } finally {
       setPlacing(false);
     }
@@ -191,9 +193,9 @@ export default function Checkout() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-5 pt-16 text-center">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-100 text-red-600"><Lock className="h-6 w-6" /></div>
-        <h1 className="text-2xl font-semibold tracking-tight">Your account is blocked</h1>
-        <p className="max-w-sm text-sm text-muted-foreground">You can't place new orders. Please contact the store for help.</p>
-        <Button asChild className="rounded-full"><Link to="/shop">Back to store</Link></Button>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("checkout.blocked")}</h1>
+        <p className="max-w-sm text-sm text-muted-foreground">{t("checkout.blockedDesc")}</p>
+        <Button asChild className="rounded-full"><Link to="/shop">{t("checkout.backToStore")}</Link></Button>
       </div>
     );
   }
@@ -201,10 +203,10 @@ export default function Checkout() {
   if (items.length === 0) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-5 pt-16 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Your cart is empty</h1>
-        <p className="text-sm text-muted-foreground">Add something before heading to checkout.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("checkout.cartEmpty")}</h1>
+        <p className="text-sm text-muted-foreground">{t("checkout.cartEmptyDesc")}</p>
         <Button asChild className="rounded-full">
-          <Link to="/shop">Browse the shop</Link>
+          <Link to="/shop">{t("checkout.browse")}</Link>
         </Button>
       </div>
     );
@@ -214,41 +216,41 @@ export default function Checkout() {
     <div className="pt-16">
       <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
         <Link to="/shop" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Continue shopping
+          <ArrowLeft className="h-4 w-4" /> {t("checkout.continueShopping")}
         </Link>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight">Checkout</h1>
+        <h1 className="mt-4 text-3xl font-semibold tracking-tight">{t("checkout.title")}</h1>
 
         <form onSubmit={placeOrder} className="mt-8 grid gap-10 lg:grid-cols-[1fr_400px]">
           {/* Form */}
           <div className="space-y-8">
             <section>
-              <h2 className="text-lg font-medium">Contact</h2>
+              <h2 className="text-lg font-medium">{t("checkout.contact")}</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <Input label="Full name" value={form.name} onChange={set("name")} required />
-                <Input label="Email" type="email" value={form.email} onChange={set("email")} required />
+                <Input label={t("checkout.fullName")} value={form.name} onChange={set("name")} required />
+                <Input label={t("checkout.email")} type="email" dir="ltr" value={form.email} onChange={set("email")} required />
               </div>
             </section>
 
             <section>
-              <h2 className="text-lg font-medium">Shipping address</h2>
+              <h2 className="text-lg font-medium">{t("checkout.shippingAddress")}</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <Input label="Address" value={form.line1} onChange={set("line1")} required />
+                  <Input label={t("checkout.address")} value={form.line1} onChange={set("line1")} required />
                 </div>
-                <Input label="City" value={form.city} onChange={set("city")} required />
-                <Input label="State / Province" value={form.state} onChange={set("state")} />
-                <Input label="Postal code" value={form.postal_code} onChange={set("postal_code")} required />
-                <Input label="Country" value={form.country} onChange={set("country")} required />
-                <Input label="Phone" value={form.phone} onChange={set("phone")} />
+                <Input label={t("checkout.city")} value={form.city} onChange={set("city")} required />
+                <Input label={t("checkout.state")} value={form.state} onChange={set("state")} />
+                <Input label={t("checkout.postalCode")} dir="ltr" value={form.postal_code} onChange={set("postal_code")} required />
+                <Input label={t("checkout.country")} value={form.country} onChange={set("country")} required />
+                <Input label={t("checkout.phone")} dir="ltr" value={form.phone} onChange={set("phone")} />
               </div>
             </section>
 
             <section>
-              <h2 className="text-lg font-medium">Payment method</h2>
+              <h2 className="text-lg font-medium">{t("checkout.paymentMethod")}</h2>
               <div className="mt-4 space-y-3">
                 {enabledPayments.length === 0 && (
                   <p className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
-                    No payment methods are currently available. Please contact the store.
+                    {t("checkout.noPayments")}
                   </p>
                 )}
                 {enabledPayments.map((m) => {
@@ -261,7 +263,7 @@ export default function Checkout() {
                       className={`flex w-full items-center gap-3 rounded-2xl border p-4 text-left transition-colors ${on ? "border-foreground bg-muted/40" : "border-border hover:border-foreground/30"}`}
                     >
                       <span className="text-xl">{PAYMENT_ICONS[m] || "•"}</span>
-                      <span className="flex-1 text-sm font-medium">{PAYMENT_LABELS[m]?.en || m}</span>
+                      <span className="flex-1 text-sm font-medium">{PAYMENT_LABELS[m]?.[lang] || PAYMENT_LABELS[m]?.en || m}</span>
                       <span className={`flex h-5 w-5 items-center justify-center rounded-full border ${on ? "border-foreground bg-foreground text-background" : "border-border"}`}>
                         {on && <Check className="h-3 w-3" />}
                       </span>
@@ -271,7 +273,7 @@ export default function Checkout() {
                 {paymentMethod === "card" && (
                   <div className="flex items-center gap-3 rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
                     <Lock className="h-4 w-4" />
-                    Secure payment via Stripe. Card details are collected on the next step — we never store raw card numbers.
+                    {t("checkout.cardNote")}
                   </div>
                 )}
               </div>
@@ -282,7 +284,7 @@ export default function Checkout() {
           <aside className="lg:sticky lg:top-24 lg:self-start">
             <div className="rounded-2xl border border-border p-6">
               <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                Order summary
+                {t("checkout.orderSummary")}
               </h2>
               <ul className="mt-4 space-y-4">
                 {items.map((item) => (
@@ -309,10 +311,10 @@ export default function Checkout() {
                 {coupon ? (
                   <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm">
                     <span className="font-medium">
-                      {coupon.code} · {coupon.discount_type === "percent" ? `${coupon.discount_value}% off` : `${formatPrice(coupon.discount_value)} off`}
+                      {coupon.code} · {coupon.discount_type === "percent" ? `${coupon.discount_value}% ${t("product.off")}` : `${formatPrice(coupon.discount_value)} ${t("product.off")}`}
                     </span>
                     <button onClick={removeCoupon} className="text-xs text-muted-foreground underline hover:text-foreground">
-                      Remove
+                      {t("cart.remove")}
                     </button>
                   </div>
                 ) : (
@@ -320,7 +322,7 @@ export default function Checkout() {
                     <input
                       value={couponInput}
                       onChange={(e) => setCouponInput(e.target.value)}
-                      placeholder="Coupon code"
+                      placeholder={t("checkout.couponPlaceholder")}
                       className="h-9 flex-1 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-foreground/40"
                     />
                     <button
@@ -328,7 +330,7 @@ export default function Checkout() {
                       onClick={applyCoupon}
                       className="rounded-lg border border-border px-4 text-sm font-medium transition-colors hover:bg-muted"
                     >
-                      Apply
+                      {t("checkout.apply")}
                     </button>
                   </div>
                 )}
@@ -338,23 +340,23 @@ export default function Checkout() {
               </div>
 
               <div className="mt-4 space-y-2 text-sm">
-                <Row label="Subtotal" value={<AnimatedNumber value={subtotal} format={formatPrice} />} />
-                {discount > 0 && <Row label="Discount" value={`−${formatPrice(discount)}`} />}
-                <Row label="Shipping" value={shipping === 0 ? "Free" : <AnimatedNumber value={shipping} format={formatPrice} />} />
-                <Row label="Tax" value={<AnimatedNumber value={tax} format={formatPrice} />} />
+                <Row label={t("cart.subtotal")} value={<AnimatedNumber value={subtotal} format={formatPrice} />} />
+                {discount > 0 && <Row label={t("cart.discount")} value={`−${formatPrice(discount)}`} />}
+                <Row label={t("cart.shipping")} value={shipping === 0 ? t("checkout.free") : <AnimatedNumber value={shipping} format={formatPrice} />} />
+                <Row label={t("cart.tax")} value={<AnimatedNumber value={tax} format={formatPrice} />} />
               </div>
               <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
-                <span className="font-medium">Total</span>
+                <span className="font-medium">{t("cart.total")}</span>
                 <span className="text-lg font-semibold font-display"><AnimatedNumber value={total} format={formatPrice} /></span>
               </div>
 
               <Pressable className="mt-5 w-full">
                 <Button type="submit" disabled={placing} className="w-full rounded-full">
-                  {placing ? "Placing order…" : `Pay ${formatPrice(total)}`}
+                  {placing ? t("checkout.placing") : `${t("checkout.pay")} ${formatPrice(total)}`}
                 </Button>
               </Pressable>
               <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-                <Lock className="h-3 w-3" /> Secure checkout
+                <Lock className="h-3 w-3" /> {t("checkout.secureCheckout")}
               </p>
             </div>
           </aside>

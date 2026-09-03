@@ -10,7 +10,7 @@ import { useStoreSetting } from "@/lib/useStoreSetting";
 import { Image } from "@/components/ui/image";
 
 export default function StorefrontLayout() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const store = useStoreSetting();
   const location = useLocation();
   return (
@@ -39,9 +39,18 @@ export default function StorefrontLayout() {
                 {t("footer.tagline")}
               </p>
               <div className="mt-3 space-y-1 text-xs text-muted-foreground">
-                {store.contact_email && <p>{store.contact_email}</p>}
-                {store.contact_phone && <p>{store.contact_phone}</p>}
-                {store.business_address && <p>{store.business_address}</p>}
+                {store.contact_email && (
+                  <p><span dir="ltr" style={{ unicodeBidi: "isolate" }}>{store.contact_email}</span></p>
+                )}
+                {store.contact_phone && (
+                  <p><span dir="ltr" style={{ unicodeBidi: "isolate" }}>{store.contact_phone}</span></p>
+                )}
+                {(() => {
+                  const addr = lang === "ar" && store.business_address_ar ? store.business_address_ar : store.business_address;
+                  if (!addr) return null;
+                  const isolate = !(lang === "ar" && store.business_address_ar);
+                  return <p>{isolate ? <span dir="ltr" style={{ unicodeBidi: "isolate" }}>{addr}</span> : addr}</p>;
+                })()}
               </div>
             </div>
             <div>
