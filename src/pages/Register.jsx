@@ -19,6 +19,8 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
   const [otpCode, setOtpCode] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,6 +30,16 @@ export default function Register() {
       return;
     }
     setLoading(true);
+    if (phone.trim()) {
+      try {
+        const res = await base44.functions.invoke("updateCustomerProfile", { check_only: true, phone: phone.trim() });
+        if (res?.data?.available === false) {
+          setError(res.data.message || "This phone number is already registered.");
+          setLoading(false);
+          return;
+        }
+      } catch {}
+    }
     try {
       await base44.auth.register({ email, password });
       setShowOtp(true);
@@ -46,6 +58,14 @@ export default function Register() {
       if (result?.access_token) {
         base44.auth.setToken(result.access_token);
       }
+      try {
+        if (name.trim() || phone.trim()) {
+          await base44.functions.invoke("updateCustomerProfile", {
+            display_name: name.trim(),
+            phone: phone.trim(),
+          });
+        }
+      } catch {}
       window.location.href = safeReturnTo();
     } catch (err) {
       setError(err.message || "Invalid verification code");
@@ -183,6 +203,30 @@ export default function Register() {
               required
             />
           </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="name">Full name <span className="font-normal text-muted-foreground">(optional)</span></Label>
+          <Input
+            id="name"
+            type="text"
+            autoComplete="name"
+            placeholder="Your name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="h-12"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone">Phone <span className="font-normal text-muted-foreground">(optional)</span></Label>
+          <Input
+            id="phone"
+            type="tel"
+            autoComplete="tel"
+            placeholder="+966 5x xxx xxxx"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="h-12"
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>

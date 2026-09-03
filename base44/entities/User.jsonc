@@ -17,11 +17,16 @@
     },
     "display_name": {
       "type": "string",
-      "description": "Editable display name chosen by the user (or set by an admin on their behalf). The single source of truth for the staff member's name everywhere it is shown (admin header, audit trail, staff list). Falls back to the built-in full_name then email when empty."
+      "description": "Editable display name chosen by the user (or set by an admin on their behalf). The single source of truth for the user's name everywhere it is shown (admin header, audit trail, storefront account). Falls back to the built-in full_name then email when empty."
     },
     "phone": {
       "type": "string",
-      "description": "Optional contact phone for the staff member."
+      "description": "Contact phone for the user. On customer accounts this is unique across all customers (enforced by the updateCustomerProfile backend function)."
+    },
+    "phone_verified": {
+      "type": "boolean",
+      "default": false,
+      "description": "True once the phone number has been verified. SMS verification isn't built in yet, so customer phones stay unverified until an SMS gateway is connected."
     },
     "avatar_url": {
       "type": "string",
@@ -29,7 +34,7 @@
     },
     "timezone": {
       "type": "string",
-      "description": "Preferred IANA timezone, e.g. 'Asia/Riyadh'. Used to display dates/times in reports and order timestamps correctly for this staff member."
+      "description": "Preferred IANA timezone, e.g. 'Asia/Riyadh'. Used to display dates/times correctly for this user."
     },
     "language": {
       "type": "string",
@@ -38,11 +43,49 @@
         "ar"
       ],
       "default": "en",
-      "description": "Preferred admin interface language."
+      "description": "Preferred interface language for this user."
+    },
+    "date_of_birth": {
+      "type": "string",
+      "format": "date",
+      "description": "Customer date of birth (optional)."
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "male",
+        "female",
+        "other",
+        "prefer_not_to_say"
+      ],
+      "description": "Customer gender (optional)."
+    },
+    "marketing_opt_in": {
+      "type": "boolean",
+      "default": false,
+      "description": "Consent to receive promotional emails/SMS. Toggled from the customer Notification preferences."
+    },
+    "customer_notifications": {
+      "type": "object",
+      "description": "Per-customer notification toggles. Promo consent lives in marketing_opt_in.",
+      "properties": {
+        "order_updates": {
+          "type": "boolean",
+          "default": true
+        },
+        "price_drop": {
+          "type": "boolean",
+          "default": true
+        },
+        "new_arrivals": {
+          "type": "boolean",
+          "default": false
+        }
+      }
     },
     "notification_preferences": {
       "type": "object",
-      "description": "Per-staff alert toggles. Keys: new_order, low_stock, new_review, approval_assigned, approval_outcome. Values are booleans.",
+      "description": "Per-staff admin alert toggles. Keys: new_order, low_stock, new_review, approval_assigned, approval_outcome. Values are booleans.",
       "properties": {
         "new_order": {
           "type": "boolean",

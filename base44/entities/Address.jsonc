@@ -5,6 +5,24 @@
     "user_id": {
       "type": "string"
     },
+    "label": {
+      "type": "string",
+      "enum": [
+        "Home",
+        "Work",
+        "Other"
+      ],
+      "default": "Home",
+      "description": "Address label shown in the address book."
+    },
+    "full_name": {
+      "type": "string",
+      "description": "Recipient name for this address."
+    },
+    "phone": {
+      "type": "string",
+      "description": "Contact phone for this address (for delivery coordination)."
+    },
     "line1": {
       "type": "string"
     },

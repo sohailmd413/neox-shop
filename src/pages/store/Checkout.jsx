@@ -47,6 +47,40 @@ export default function Checkout() {
       .then((r) => setBlocked(!!r?.data?.blocked))
       .catch(() => {});
   }, []);
+
+  // Prefill the checkout form with the signed-in customer's saved default
+  // address and profile (name/email/phone) for a faster checkout.
+  useEffect(() => {
+    (async () => {
+      try {
+        const me = await base44.auth.me();
+        if (me) {
+          setForm((f) => ({
+            ...f,
+            name: me.display_name || me.full_name || f.name,
+            email: me.email || f.email,
+            phone: me.phone || f.phone,
+          }));
+        }
+      } catch {}
+      try {
+        const list = await base44.entities.Address.list("-created_date", 50);
+        const def = (list || []).find((a) => a.is_default);
+        if (def) {
+          setForm((f) => ({
+            ...f,
+            name: def.full_name || f.name,
+            phone: def.phone || f.phone,
+            line1: def.line1 || f.line1,
+            city: def.city || f.city,
+            state: def.state || f.state,
+            postal_code: def.postal_code || f.postal_code,
+            country: def.country || f.country,
+          }));
+        }
+      } catch {}
+    })();
+  }, []);
   const [form, setForm] = useState({
     name: "",
     email: "",

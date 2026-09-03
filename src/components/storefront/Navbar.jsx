@@ -132,6 +132,16 @@ export default function Navbar() {
               </Link>
             </div>
           )}
+          {user && (
+            <Link
+              to="/account"
+              className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex"
+              aria-label={t("nav.account")}
+              title={t("nav.account")}
+            >
+              <User className="h-5 w-5" />
+            </Link>
+          )}
           <Link
             to="/orders"
             className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex"
@@ -219,6 +229,11 @@ export default function Navbar() {
                 </Link>
               ))}
               <div className="my-1 border-t border-border" />
+              {user && (
+                <Link to="/account" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                  {t("nav.account")}
+                </Link>
+              )}
               <Link to="/wishlist" className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                 {t("nav.wishlist")}
               </Link>

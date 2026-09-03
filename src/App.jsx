@@ -38,6 +38,7 @@ import PrintBarcodes from '@/pages/admin/PrintBarcodes';
 import AdminCategories from '@/pages/admin/AdminCategories';
 import AdminReports from '@/pages/admin/AdminReports';
 import PolicyPage from '@/pages/store/PolicyPage';
+import Account from '@/pages/store/Account';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
@@ -94,6 +95,7 @@ const AuthenticatedApp = () => {
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/orders" element={<Orders />} />
+            <Route path="/account" element={<Account />} />
             <Route path="/policies/:type" element={<PolicyPage />} />
           </Route>
           {/* Admin */}
