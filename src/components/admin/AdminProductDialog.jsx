@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { X, Info, Image, Tag, Truck, Search, Box, Flag } from "lucide-react";
+import { Info, Image, Tag, Truck, Search, Box, Flag } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import Dropdown from "@/components/admin/ui/Dropdown";
 import ImageUpload from "@/components/admin/ImageUpload";
 import { base44 } from "@/api/base44Client";
@@ -251,11 +252,11 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
   const fldCls = (key) => baseInput + (errors[key] ? errInput : "");
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-foreground/30 p-4 backdrop-blur-sm sm:p-8">
-      <div className="flex max-h-[calc(100vh-4rem)] w-full max-w-2xl flex-col rounded-2xl bg-background shadow-xl">
-        <div className="flex shrink-0 items-center justify-between rounded-t-2xl border-b border-border bg-background px-6 py-4">
+    <Sheet open onOpenChange={() => handleClose()}>
+      <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-xl">
+        <div className="flex shrink-0 items-center justify-between border-b border-border bg-background px-6 py-4 pr-12">
           <div>
-            <h2 className="text-lg font-semibold">{product ? "Edit product" : "New product"}</h2>
+            <SheetTitle className="text-lg font-semibold text-left">{product ? "Edit product" : "New product"}</SheetTitle>
             <div className="mt-1 flex items-center gap-2">
               <div className="h-1.5 w-28 overflow-hidden rounded-full bg-muted">
                 <motion.div className="h-full rounded-full bg-foreground" initial={false} animate={{ width: `${completion}%` }} transition={{ type: "spring", stiffness: 200, damping: 26 }} />
@@ -264,12 +265,9 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
               <SaveIndicator state={saveState} />
             </div>
           </div>
-          <button onClick={handleClose} className="rounded-full p-1.5 hover:bg-muted" aria-label="Close">
-            <X className="h-4 w-4" />
-          </button>
         </div>
 
-        <div className="overflow-y-auto">
+        <div className="flex-1 overflow-y-auto">
         {product?.rejection_reason && (
           <div className="border-b border-red-200 bg-red-50 px-6 py-3 text-sm text-red-700">
             <span className="font-medium">Rejected: </span>{product.rejection_reason}
@@ -422,19 +420,20 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
           )}
 
           {product?.approval_history?.length > 0 && <ApprovalHistory history={product.approval_history} />}
-          <div className="flex items-center justify-between gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
-            <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" onClick={saveAsDraft}>Save as draft</Button>
-              <Button type="button" onClick={publish} disabled={publishing}>
-                {product && product.status === "active" && Object.keys(errors).length === 0 ? "Save & keep live" : "Submit for approval"}
-              </Button>
-            </div>
           </div>
+        </div>
+
+        <div className="flex shrink-0 items-center justify-between gap-2 border-t border-border bg-background px-6 py-4">
+          <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" onClick={saveAsDraft}>Save as draft</Button>
+            <Button type="button" onClick={publish} disabled={publishing}>
+              {product && product.status === "active" && Object.keys(errors).length === 0 ? "Save & keep live" : "Submit for approval"}
+            </Button>
           </div>
-          </div>
-          </div>
-          <ConfirmDialog
+        </div>
+      </SheetContent>
+      <ConfirmDialog
         open={publishConfirm}
         onClose={() => setPublishConfirm(false)}
         variant="create"
@@ -443,7 +442,7 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
         confirmLabel={product && product.status === "active" ? "Save" : "Submit for approval"}
         onConfirm={doPublish}
       />
-    </div>
+    </Sheet>
   );
 }
 

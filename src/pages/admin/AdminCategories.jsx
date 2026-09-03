@@ -6,8 +6,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { slugify } from "@/lib/format";
 import CategoryStats from "@/components/admin/categories/CategoryStats";
 import CategoryTree from "@/components/admin/categories/CategoryTree";
-import CategoryForm from "@/components/admin/categories/CategoryForm";
 import CategoryTable from "@/components/admin/categories/CategoryTable";
+import CategoryDrawer from "@/components/admin/categories/CategoryDrawer";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import BulkAddGrid from "@/components/admin/categories/BulkAddGrid";
 import MergeDialog from "@/components/admin/categories/MergeDialog";
 import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
@@ -292,14 +294,33 @@ export default function AdminCategories() {
     });
   };
 
-  // normalize a "sub" placeholder into a blank form with parent_id preset
-  const formInitial = editing && editing.__sub ? { parent_id: editing.parent_id } : editing;
+  // editing can be: a real category (edit), { __sub: true, parent_id } (add sub),
+  // or { __new: true } (add top-level). null = drawer closed.
+  const openAdd = () => setEditing({ __new: true });
+  const formInitial = !editing
+    ? null
+    : editing.__new
+    ? null
+    : editing.__sub
+    ? { parent_id: editing.parent_id }
+    : editing;
+  const drawerIsAdd = !editing || editing.__new || editing.__sub;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Categories</h1>
-        <p className="text-sm text-muted-foreground">Organize your catalog with a multi-level tree, rich editor, and bulk tools.</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Categories</h1>
+          <p className="text-sm text-muted-foreground">Organize your catalog with a multi-level tree, rich editor, and bulk tools.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setBulkOpen((v) => !v)}>
+            {bulkOpen ? "Hide bulk add" : "Bulk add / import"}
+          </Button>
+          <Button onClick={openAdd}>
+            <Plus className="h-4 w-4" /> Add category
+          </Button>
+        </div>
       </div>
 
       <CategoryStats categories={categories} products={products} />
@@ -311,55 +332,38 @@ export default function AdminCategories() {
             categories={categories}
             products={products}
             selectedId={selectedId}
-            onSelect={(c) => { setSelectedId(c.id); setEditing(c); }}
+            onSelect={(c) => setSelectedId(c.id)}
             onEdit={(c) => setEditing(c)}
             onAddSub={addSub}
             onDelete={remove}
             onToggleActive={toggleActive}
             onReorder={reorder}
             onMove={moveCategory}
-            />
+          />
         </div>
 
-        {/* Right panel: form + table */}
-        <div className="space-y-6 lg:col-span-7">
-          <div className="rounded-2xl border border-border bg-background p-5">
-            <CategoryForm
-              initial={formInitial}
+        {/* Right panel: table */}
+        <div className="rounded-2xl border border-border bg-background p-5 lg:col-span-7">
+          {bulkOpen ? (
+            <BulkAddGrid categories={categories} onSubmit={bulkCreate} saving={saving} toast={toast} />
+          ) : (
+            <CategoryTable
               categories={categories}
-              onSubmit={submit}
-              onCancel={() => setEditing(null)}
-              saving={saving}
+              products={products}
+              onEdit={(c) => setEditing(c)}
+              onAdd={openAdd}
+              onDelete={remove}
+              onDuplicate={duplicate}
+              onAddSub={addSub}
+              onMerge={(c) => setMergeSrc(c)}
+              onToggleActive={toggleActive}
+              selected={selected}
+              setSelected={setSelected}
+              onBulkActivate={bulkActivate}
+              onBulkDeactivate={bulkDeactivate}
+              onBulkDelete={bulkDelete}
             />
-          </div>
-
-          <div className="rounded-2xl border border-border bg-background p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-base font-medium">All categories</h2>
-              <button onClick={() => setBulkOpen((v) => !v)} className="text-sm text-muted-foreground hover:text-foreground">
-                {bulkOpen ? "Hide bulk add" : "Bulk add / import"}
-              </button>
-            </div>
-            {bulkOpen ? (
-              <BulkAddGrid categories={categories} onSubmit={bulkCreate} saving={saving} toast={toast} />
-            ) : (
-              <CategoryTable
-                categories={categories}
-                products={products}
-                onEdit={(c) => setEditing(c)}
-                onDelete={remove}
-                onDuplicate={duplicate}
-                onAddSub={addSub}
-                onMerge={(c) => setMergeSrc(c)}
-                onToggleActive={toggleActive}
-                selected={selected}
-                setSelected={setSelected}
-                onBulkActivate={bulkActivate}
-                onBulkDeactivate={bulkDeactivate}
-                onBulkDelete={bulkDelete}
-              />
-            )}
-          </div>
+          )}
         </div>
       </div>
 
@@ -374,7 +378,7 @@ export default function AdminCategories() {
         <EmptyState
           icon={Layers}
           title="No categories yet"
-          description="Add your first category using the form above to organize your catalog."
+          description="Click the “Add category” button to create your first category and organize your catalog."
           className="py-20"
         />
       ) : null}
@@ -397,6 +401,16 @@ export default function AdminCategories() {
           onConfirm={confirm.onConfirm}
         />
       )}
+
+      <CategoryDrawer
+        open={!!editing}
+        initial={formInitial}
+        isAdd={drawerIsAdd}
+        categories={categories}
+        onSubmit={submit}
+        onClose={() => setEditing(null)}
+        saving={saving}
+      />
     </div>
   );
 }
