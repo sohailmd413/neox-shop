@@ -7,6 +7,7 @@ import PosterBanner from "@/components/storefront/PosterBanner";
 import Pressable from "@/components/storefront/Pressable";
 import { base44 } from "@/api/base44Client";
 import { motionPresets } from "@/lib/motion";
+import { useLanguage } from "@/lib/i18n";
 
 // Home hero. If an admin has configured a live hero Poster (page=home, zone=hero)
 // it renders that banner with the tagline animation; otherwise it falls back to
@@ -50,6 +51,7 @@ export default function HomeHero() {
 }
 
 function CuratedHero() {
+  const { t } = useLanguage();
   return (
     <section className="relative overflow-hidden">
       <div className="mx-auto grid max-w-7xl items-center gap-8 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:py-24">
@@ -60,16 +62,13 @@ function CuratedHero() {
           className="space-y-6"
         >
           <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Autumn / Winter 2026
+            {t("home.heroKicker")}
           </span>
           <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
-            Objects of quiet
-            <br />
-            intention.
+            {t("home.heroTitle")}
           </h1>
           <p className="max-w-md text-base text-muted-foreground">
-            A curated collection of considered essentials — designed to be lived with,
-            made to endure.
+            {t("home.heroSubtitle")}
           </p>
           <div className="flex items-center gap-3 pt-2">
             <Pressable>
@@ -77,8 +76,8 @@ function CuratedHero() {
                 to="/shop"
                 className="group inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-opacity hover:opacity-90"
               >
-                Explore the collection
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                {t("home.heroCta")}
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100" />
               </Link>
             </Pressable>
             <Pressable>
@@ -86,7 +85,7 @@ function CuratedHero() {
                 to="/shop?sort=newest"
                 className="inline-flex items-center gap-2 rounded-full border border-border px-6 py-3 text-sm font-medium transition-colors hover:bg-muted"
               >
-                New arrivals
+                {t("home.heroCtaAlt")}
               </Link>
             </Pressable>
           </div>

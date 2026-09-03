@@ -308,8 +308,8 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
                 <Field label="Name (English)" required error={errors.name?.msg} fieldKey="name">
                   <input value={form.name} onChange={set("name")} className={fldCls("name")} />
                 </Field>
-                <Field label="Name (Arabic)">
-                  <input value={form.name_ar || ""} onChange={set("name_ar")} className={baseInput} dir="rtl" placeholder="الاسم بالعربية" />
+                <Field label="Name (Arabic)" required error={errors.name_ar?.msg} fieldKey="name_ar">
+                  <input dir="rtl" value={form.name_ar || ""} onChange={set("name_ar")} className={fldCls("name_ar")} placeholder="الاسم بالعربية" />
                 </Field>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -330,7 +330,9 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
               <Field label="Description (English)" required error={errors.description?.msg} fieldKey="description" hint={`${(form.description || "").trim().length}/50 characters`}>
                 <textarea value={form.description} onChange={set("description")} rows={3} className={fldCls("description")} />
               </Field>
-              <Field label="Description (Arabic)"><textarea value={form.description_ar || ""} onChange={set("description_ar")} rows={3} dir="rtl" className={baseInput} /></Field>
+              <Field label="Description (Arabic)" required error={errors.description_ar?.msg} fieldKey="description_ar" hint={`${(form.description_ar || "").trim().length}/50 characters`}>
+                <textarea dir="rtl" value={form.description_ar || ""} onChange={set("description_ar")} rows={3} className={fldCls("description_ar")} />
+              </Field>
             </>
           )}
 

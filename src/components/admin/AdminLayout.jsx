@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon, ClipboardCheck, FileX } from "lucide-react";
+import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon, ClipboardCheck, FileX, Languages } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { canAccess } from "@/lib/adminPermissions";
 import { loadPendingCounts, loadRejectedCounts } from "@/lib/approval";
@@ -11,6 +11,7 @@ const NAV = [
   { section: "dashboard", label: "Dashboard", path: "/admin", icon: LayoutDashboard, end: true },
   { section: "approvals", label: "Approvals", path: "/admin/approvals", icon: ClipboardCheck },
   { section: "rejected", label: "Rejected", path: "/admin/rejected", icon: FileX },
+  { section: "translations", label: "Translations", path: "/admin/translations", icon: Languages },
   { section: "reports", label: "Reports", path: "/admin/reports", icon: BarChart3 },
   { section: "products", label: "Products", path: "/admin/products", icon: Package },
   { section: "categories", label: "Categories", path: "/admin/categories", icon: Layers },

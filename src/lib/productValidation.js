@@ -7,6 +7,8 @@ export const REQUIRED_CHECKS = [
   { key: "price", label: "Selling price", tab: "pricing", test: (f) => Number(f.price) > 0, msg: "Enter a selling price" },
   { key: "stock", label: "Stock", tab: "inventory", test: (f) => Number(f.stock) > 0 || f.stock_status === "preorder", msg: "Enter stock quantity or allow backorders" },
   { key: "description", label: "Description", tab: "general", test: (f) => (f.description || "").trim().length >= 50, msg: "Description must be at least 50 characters" },
+  { key: "name_ar", label: "Arabic name", tab: "general", test: (f) => !!(f.name_ar && f.name_ar.trim()), msg: "Arabic name is required before publishing" },
+  { key: "description_ar", label: "Arabic description", tab: "general", test: (f) => (f.description_ar || "").trim().length >= 50, msg: "Arabic description must be at least 50 characters" },
 ];
 
 export const REQUIRED_COUNT = REQUIRED_CHECKS.length;

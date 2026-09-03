@@ -12,7 +12,7 @@
     },
     "store_name_ar": {
       "type": "string",
-      "description": "Store display name (Arabic)."
+      "description": "Store display name (Arabic). Required for the Arabic storefront."
     },
     "logo_url": {
       "type": "string"
@@ -24,7 +24,12 @@
       "type": "string"
     },
     "business_address": {
-      "type": "string"
+      "type": "string",
+      "description": "Business address (English)."
+    },
+    "business_address_ar": {
+      "type": "string",
+      "description": "Business address (Arabic). Required for the Arabic storefront."
     },
     "business_hours": {
       "type": "string",
@@ -113,19 +118,35 @@
     },
     "terms_policy": {
       "type": "string",
-      "description": "Terms of Service HTML content."
+      "description": "Terms of Service HTML content (English)."
+    },
+    "terms_policy_ar": {
+      "type": "string",
+      "description": "Terms of Service HTML content (Arabic). Required so the Arabic policy page shows real content."
     },
     "privacy_policy": {
       "type": "string",
-      "description": "Privacy Policy HTML content."
+      "description": "Privacy Policy HTML content (English)."
+    },
+    "privacy_policy_ar": {
+      "type": "string",
+      "description": "Privacy Policy HTML content (Arabic)."
     },
     "return_policy": {
       "type": "string",
-      "description": "Return Policy HTML content."
+      "description": "Return Policy HTML content (English)."
+    },
+    "return_policy_ar": {
+      "type": "string",
+      "description": "Return Policy HTML content (Arabic)."
     },
     "shipping_policy": {
       "type": "string",
-      "description": "Shipping Policy HTML content."
+      "description": "Shipping Policy HTML content (English)."
+    },
+    "shipping_policy_ar": {
+      "type": "string",
+      "description": "Shipping Policy HTML content (Arabic)."
     }
   },
   "required": [

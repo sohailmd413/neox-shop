@@ -14,13 +14,7 @@ import { EmptyState, ErrorState } from "@/components/shared/StateViews";
 import SearchBar from "@/components/storefront/SearchBar";
 import { motionPresets } from "@/lib/motion";
 
-const SORT_OPTIONS = [
-  { value: "featured", label: "Featured" },
-  { value: "newest", label: "Newest" },
-  { value: "price-asc", label: "Price: Low to High" },
-  { value: "price-desc", label: "Price: High to Low" },
-  { value: "rating", label: "Top rated" },
-];
+const SORT_KEYS = ["featured", "newest", "price-asc", "price-desc", "rating"];
 
 export default function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -30,7 +24,8 @@ export default function Catalog() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [priceLimit, setPriceLimit] = useState(500);
   const [error, setError] = useState(null);
-  const { lang } = useLanguage();
+  const { lang, t } = useLanguage();
+  const sortOptions = SORT_KEYS.map((v) => ({ value: v, label: t(`cat.sort.${v}`) }));
 
   const q = searchParams.get("q") || "";
   const category = searchParams.get("category") || "";
@@ -127,11 +122,11 @@ export default function Catalog() {
             {category
               ? lf(categories.find((c) => c.name === category), "name", lang) || category
               : q
-              ? `Results for "${q}"`
-              : "All products"}
+              ? `${t("catalog.resultsFor")} "${q}"`
+              : t("catalog.allProducts")}
           </motion.h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {loading ? "Loading…" : `${products?.length || 0} ${products?.length === 1 ? "item" : "items"}`}
+            {loading ? t("catalog.loading") : `${products?.length || 0} ${products?.length === 1 ? t("catalog.item") : t("catalog.items")}`}
           </p>
           <div className="mt-5 max-w-md">
             <SearchBar />
@@ -146,12 +141,12 @@ export default function Catalog() {
             <div className="mb-4 flex items-center justify-between lg:hidden">
               <Pressable>
                 <Button variant="outline" size="sm" onClick={() => setFiltersOpen(true)} className="gap-2 rounded-full px-4">
-                  <SlidersHorizontal className="h-4 w-4" /> Filters
+                  <SlidersHorizontal className="h-4 w-4" /> {t("catalog.filters")}
                 </Button>
               </Pressable>
               <SortDropdown
                 value={sort}
-                options={SORT_OPTIONS}
+                options={sortOptions}
                 onChange={(v) => updateParam("sort", v === "featured" ? "" : v)}
                 className="w-44"
               />
@@ -168,17 +163,18 @@ export default function Catalog() {
                 updateParam={updateParam}
                 clearFilters={clearFilters}
                 activeFilters={activeFilters}
+                t={t}
               />
             </div>
 
             {/* Sort (desktop) */}
             <div className="mt-8 hidden lg:block">
               <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-                Sort by
+                {t("catalog.sortBy")}
               </h3>
               <SortDropdown
                 value={sort}
-                options={SORT_OPTIONS}
+                options={sortOptions}
                 onChange={(v) => updateParam("sort", v === "featured" ? "" : v)}
                 className="mt-3"
               />
@@ -194,9 +190,9 @@ export default function Catalog() {
             ) : products?.length === 0 ? (
               <EmptyState
                 icon={Search}
-                title="No products found"
-                description="Try adjusting your filters or search terms."
-                action={<Button variant="outline" onClick={clearFilters}>Clear filters</Button>}
+                title={t("catalog.noProducts")}
+                description={t("catalog.noProductsDesc")}
+                action={<Button variant="outline" onClick={clearFilters}>{t("filter.clear")}</Button>}
                 className="py-24"
               />
             ) : (
@@ -221,7 +217,7 @@ export default function Catalog() {
             className="absolute left-0 top-0 h-full w-80 max-w-[85%] overflow-y-auto bg-background p-6"
           >
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-base font-semibold">Filters</h2>
+              <h2 className="text-base font-semibold">{t("catalog.filters")}</h2>
               <button onClick={() => setFiltersOpen(false)} className="rounded-full p-1.5 hover:bg-muted">
                 <X className="h-4 w-4" />
               </button>
@@ -235,9 +231,10 @@ export default function Catalog() {
               updateParam={updateParam}
               clearFilters={clearFilters}
               activeFilters={activeFilters}
+              t={t}
             />
             <Button className="mt-6 w-full" onClick={() => setFiltersOpen(false)}>
-              Show results
+              {t("filter.showResults")}
             </Button>
           </motion.div>
         </div>
@@ -246,14 +243,14 @@ export default function Catalog() {
   );
 }
 
-function FilterPanel({ categories, category, onSale, maxPrice, priceLimit, updateParam, clearFilters, activeFilters }) {
+function FilterPanel({ categories, category, onSale, maxPrice, priceLimit, updateParam, clearFilters, activeFilters, t }) {
   const { lang } = useLanguage();
   const step = priceLimit <= 100 ? 5 : priceLimit <= 1000 ? 10 : 50;
   return (
     <div className="space-y-6">
       <div>
         <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          Category
+          {t("filter.category")}
         </h3>
         <ul className="mt-3 space-y-2">
           <li>
@@ -261,7 +258,7 @@ function FilterPanel({ categories, category, onSale, maxPrice, priceLimit, updat
               onClick={() => updateParam("category", "")}
               className={`text-sm transition-colors ${!category ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}
             >
-              All
+              {t("filter.all")}
             </button>
           </li>
           {categories
@@ -299,7 +296,7 @@ function FilterPanel({ categories, category, onSale, maxPrice, priceLimit, updat
 
       <div>
         <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          On sale
+          {t("filter.onSale")}
         </h3>
         <label className="mt-3 flex items-center gap-2 text-sm">
           <input
@@ -308,13 +305,13 @@ function FilterPanel({ categories, category, onSale, maxPrice, priceLimit, updat
             onChange={(e) => updateParam("filter", e.target.checked ? "sale" : "")}
             className="h-4 w-4 rounded border-border"
           />
-          Show sale items only
+          {t("filter.showSaleItems")}
         </label>
       </div>
 
       <div>
         <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          Max price
+          {t("filter.maxPrice")}
         </h3>
         <input
           type="range"
@@ -326,13 +323,13 @@ function FilterPanel({ categories, category, onSale, maxPrice, priceLimit, updat
           className="mt-3 w-full accent-foreground"
         />
         <p className="mt-1 text-xs text-muted-foreground">
-          {maxPrice ? `Up to ${maxPrice} SAR` : "Any price"}
+          {maxPrice ? `${t("filter.upTo")} ${maxPrice} SAR` : t("filter.anyPrice")}
         </p>
       </div>
 
       {activeFilters.length > 0 && (
         <Button variant="link" size="sm" onClick={clearFilters} className="h-auto p-0 text-xs text-muted-foreground">
-          Clear all filters
+          {t("filter.clearAll")}
         </Button>
       )}
     </div>

@@ -14,7 +14,7 @@ export default function Home() {
   const [featured, setFeatured] = useState(null);
   const [newArrivals, setNewArrivals] = useState(null);
   const [categories, setCategories] = useState(null);
-  const { lang } = useLanguage();
+  const { lang, t } = useLanguage();
 
   useEffect(() => {
     (async () => {
@@ -73,12 +73,12 @@ export default function Home() {
         <Reveal as="section" className="mx-auto max-w-7xl px-5 py-12 sm:px-8">
           <div className="mb-8 flex items-end justify-between">
             <div>
-              <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Featured</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Our most-loved pieces right now.</p>
+              <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("home.featured")}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{t("home.featuredSub")}</p>
             </div>
             <Link to="/shop" className="group inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
-              View all
-              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              {t("home.viewAll")}
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100" />
             </Link>
           </div>
           {!featured ? (
@@ -98,20 +98,19 @@ export default function Home() {
             <div className="grid items-center gap-6 lg:grid-cols-2">
               <div className="order-2 p-8 sm:p-12 lg:order-1">
                 <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                  The Edit
+                  {t("home.editKicker")}
                 </span>
                 <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-                  Made to be lived with.
+                  {t("home.editTitle")}
                 </h2>
                 <p className="mt-4 max-w-sm text-muted-foreground">
-                  Every piece is chosen for its material honesty and quiet utility —
-                  objects that earn their place over time.
+                  {t("home.editBody")}
                 </p>
                 <Link
                   to="/shop"
                   className="mt-6 inline-flex items-center gap-2 text-sm font-medium underline-offset-4 hover:underline"
                 >
-                  Discover the story <ArrowRight className="h-4 w-4" />
+                  {t("home.editCta")} <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
                 </Link>
               </div>
               <div className="order-1 aspect-[4/3] lg:order-2 lg:aspect-auto lg:h-full lg:min-h-[420px]">
@@ -129,10 +128,10 @@ export default function Home() {
         {/* New arrivals */}
         <Reveal as="section" className="mx-auto max-w-7xl px-5 py-12 sm:px-8">
           <div className="mb-8 flex items-end justify-between">
-            <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">New arrivals</h2>
+            <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("home.newArrivals")}</h2>
             <Link to="/shop?sort=newest" className="group inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
-              View all
-              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+              {t("home.viewAll")}
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 rtl:-scale-x-100" />
             </Link>
           </div>
           {!newArrivals ? (

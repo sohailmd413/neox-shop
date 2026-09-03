@@ -4,6 +4,8 @@ import { base44 } from "@/api/base44Client";
 import { Image } from "@/components/ui/image";
 import { PosterTagline, isLight } from "@/components/admin/posters/PosterPreview";
 import { cn } from "@/lib/utils";
+import { lf } from "@/lib/format";
+import { useLanguage } from "@/lib/i18n";
 
 // Storefront banner driven by the Poster entity (managed in AdminPosters).
 // Fetches the top active poster for a page+zone and renders it with the live
@@ -11,6 +13,7 @@ import { cn } from "@/lib/utils";
 // to skip the fetch (callers that already resolved it). Returns null while
 // loading or when no live poster exists, so callers can show a fallback.
 export default function PosterBanner({ page = "home", zone = "hero", poster, className = "", overlay = true }) {
+  const { lang } = useLanguage();
   const [found, setFound] = useState(poster || undefined);
 
   useEffect(() => {
@@ -45,12 +48,14 @@ export default function PosterBanner({ page = "home", zone = "hero", poster, cla
   const weight = p.font_weight === "normal" ? "normal" : "bold";
   const ctaTarget = p.cta_link || p.link_url || "#";
   const external = /^https?:\/\//i.test(ctaTarget);
+  const localizedTagline = lf(p, "tagline", lang);
+  const localizedCta = lf(p, "cta_text", lang);
   const ctaBtn = (
     <span
       className="inline-block rounded-full px-5 py-2 text-sm font-semibold shadow-sm transition-transform hover:scale-[1.02]"
       style={{ background: p.cta_color || "#111111", color: isLight(p.cta_color) ? "#111" : "#fff" }}
     >
-      {p.cta_text}
+      {localizedCta}
     </span>
   );
 
@@ -60,8 +65,8 @@ export default function PosterBanner({ page = "home", zone = "hero", poster, cla
       {overlay && <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-black/25" />}
       <div className={cn("absolute inset-0 flex flex-col px-6 py-8", just)}>
         <div className={cn("w-full", p.strip_bg && "rounded-md bg-black/45 px-3 py-1.5")}>
-          {p.tagline && <PosterTagline text={p.tagline} p={p} color={color} weight={weight} fs={fs} align={align} />}
-          {p.cta_text && (
+          {localizedTagline && <PosterTagline text={localizedTagline} p={p} color={color} weight={weight} fs={fs} align={align} />}
+          {localizedCta && (
             <div style={{ textAlign: align }} className="mt-3">
               {external ? (
                 <a href={ctaTarget} target="_blank" rel="noreferrer">

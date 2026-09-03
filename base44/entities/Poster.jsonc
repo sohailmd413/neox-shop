@@ -28,7 +28,7 @@
     },
     "tagline_ar": {
       "type": "string",
-      "description": "Tagline overlay text (Arabic)."
+      "description": "Arabic tagline overlay text shown when Arabic is selected. Required before publishing the poster if an English tagline is set."
     },
     "animation": {
       "type": "string",
@@ -102,7 +102,11 @@
     },
     "cta_text": {
       "type": "string",
-      "description": "Call-to-action button label."
+      "description": "Call-to-action button label (English)."
+    },
+    "cta_text_ar": {
+      "type": "string",
+      "description": "Arabic call-to-action button label shown when Arabic is selected. Required before publishing the poster if an English cta_text is set."
     },
     "cta_link": {
       "type": "string",

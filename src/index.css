@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -126,4 +127,15 @@
     -webkit-box-shadow: 0 0 0px 1000px hsl(var(--muted)) inset;
     caret-color: hsl(var(--foreground));
     transition: background-color 9999s ease-in-out 0s;
+  }
+
+  /* Arabic (RTL) typography: use Cairo for body and headings so Arabic glyphs
+     render cleanly; English keeps Inter/Fraunces. The dir attribute is toggled
+     on <html> by the language provider. */
+  [dir="rtl"] body {
+    font-family: "Cairo", "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  }
+  [dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3,
+  [dir="rtl"] .font-heading, [dir="rtl"] .font-display {
+    font-family: "Cairo", "Fraunces", Georgia, serif;
   }

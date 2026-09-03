@@ -16,6 +16,10 @@ export function userName(user) {
 export function validateCategory(form) {
   const errors = {};
   if (!form.name || !String(form.name).trim()) errors.name = "Category name is required";
+  if (!form.name_ar || !String(form.name_ar).trim()) errors.name_ar = "Arabic name is required before publishing";
+  if (form.description && String(form.description).trim() && (!form.description_ar || !String(form.description_ar).trim())) {
+    errors.description_ar = "Arabic description is required before publishing";
+  }
   if (!form.image_url) errors.image = "Add a category image before submitting for approval";
   return { valid: Object.keys(errors).length === 0, errors };
 }

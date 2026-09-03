@@ -131,8 +131,9 @@ export default function AdminCategories() {
   const duplicate = async (c) => {
     try {
       await base44.entities.Category.create({
-        name: `${c.name} (copy)`, name_ar: c.name_ar, slug: slugify(`${c.name}-copy`),
+        name: `${c.name} (copy)`, name_ar: c.name_ar ? `${c.name_ar} (نسخة)` : "", slug: slugify(`${c.name}-copy`),
         parent_id: c.parent_id || null, image_url: c.image_url, sort_order: c.sort_order,
+        description: c.description, description_ar: c.description_ar,
         featured: false, active: false, status: "draft", show_in_nav: c.show_in_nav !== false,
       });
       toast({ title: "Category duplicated" });
@@ -157,6 +158,10 @@ export default function AdminCategories() {
     }
     if (!c.image_url) {
       toast({ title: "Add an image before submitting for approval", variant: "destructive" });
+      return;
+    }
+    if (!c.name_ar || !String(c.name_ar).trim()) {
+      toast({ title: "Arabic name is required before submitting for approval", variant: "destructive" });
       return;
     }
     try {

@@ -16,7 +16,7 @@ import { validateCategory } from "@/lib/approval";
 const blank = () => ({
   id: null, name: "", name_ar: "", slug: "", parent_id: "",
   image_url: "", banner_image_url: "",
-  description: "", short_description: "",
+  description: "", description_ar: "", short_description: "", short_description_ar: "",
   sort_order: 0, active: false, status: "draft", featured: false, show_in_nav: true,
   meta_title: "", meta_description: "", focus_keyword: "",
 });
@@ -89,8 +89,9 @@ export default function CategoryDrawer({ open, initial, isAdd, categories, onSub
               {errors.name && <span className="block text-xs text-red-500">{errors.name}</span>}
             </Label>
             <Label className="space-y-1.5">
-              <span className="text-xs font-medium text-muted-foreground">Name (Arabic)</span>
+              <span className="text-xs font-medium text-muted-foreground">Name (Arabic) <span className="text-red-500">*</span></span>
               <Input dir="rtl" value={form.name_ar} onChange={(e) => set("name_ar", e.target.value)} placeholder="إلكترونيات" />
+              {errors.name_ar && <span className="block text-xs text-red-500">{errors.name_ar}</span>}
             </Label>
           </div>
 
@@ -134,6 +135,16 @@ export default function CategoryDrawer({ open, initial, isAdd, categories, onSub
                 modules={{ toolbar: [["bold", "italic", "underline"], [{ list: "bullet" }, { list: "ordered" }], ["link"]] }}
                 style={{ height: 140, marginBottom: 42 }} />
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <span className="text-xs font-medium text-muted-foreground">Description (Arabic) <span className="text-red-500">*</span></span>
+            <div className="rounded-md border border-border">
+              <ReactQuill theme="snow" value={form.description_ar || ""} onChange={(v) => set("description_ar", v)}
+                modules={{ toolbar: [["bold", "italic", "underline"], [{ list: "bullet" }, { list: "ordered" }], ["link"]] }}
+                style={{ height: 140, marginBottom: 42 }} />
+            </div>
+            {errors.description_ar && <span className="block text-xs text-red-500">{errors.description_ar}</span>}
           </div>
 
           {initial?.approval_history?.length > 0 && <ApprovalHistory history={initial.approval_history} />}

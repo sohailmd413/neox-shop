@@ -15,7 +15,7 @@ import SaleCountdown from "@/components/admin/SaleCountdown";
 export default function ProductDetail() {
   const { id } = useParams();
   const { addItem, setIsOpen } = useCart();
-  const { lang } = useLanguage();
+  const { lang, t } = useLanguage();
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -33,7 +33,7 @@ export default function ProductDetail() {
   const submitReview = async (e) => {
     e.preventDefault();
     if (!reviewForm.comment.trim()) {
-      toast({ title: "Please write your review.", variant: "destructive" });
+      toast({ title: t("product.reviewEmpty"), variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -46,10 +46,10 @@ export default function ProductDetail() {
         verified_purchase: true,
         author: userName || "Verified buyer",
       });
-      toast({ title: "Review submitted for moderation" });
+      toast({ title: t("product.reviewSubmitted") });
       setReviewForm({ rating: 5, comment: "" });
     } catch {
-      toast({ title: "Could not submit review", variant: "destructive" });
+      toast({ title: t("product.reviewError"), variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -122,9 +122,9 @@ export default function ProductDetail() {
   if (!product) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 pt-32 text-center">
-        <p className="text-lg font-medium">Product not found</p>
+        <p className="text-lg font-medium">{t("product.notFound")}</p>
         <Button asChild variant="outline">
-          <Link to="/shop">Back to shop</Link>
+          <Link to="/shop">{t("product.backToShop")}</Link>
         </Button>
       </div>
     );
@@ -158,9 +158,9 @@ export default function ProductDetail() {
       {/* Breadcrumb */}
       <div className="mx-auto max-w-7xl px-5 pt-6 sm:px-8">
         <nav className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Link to="/" className="hover:text-foreground">Home</Link>
-          <ChevronRight className="h-3 w-3" />
-          <Link to="/shop" className="hover:text-foreground">Shop</Link>
+          <Link to="/" className="hover:text-foreground">{t("product.home")}</Link>
+          <ChevronRight className="h-3 w-3 rtl:-scale-x-100" />
+          <Link to="/shop" className="hover:text-foreground">{t("product.shop")}</Link>
           {showCategoryCrumb && (
             <>
               <ChevronRight className="h-3 w-3" />
@@ -191,7 +191,7 @@ export default function ProductDetail() {
               />
               {onSale && (
                 <span className="absolute left-4 top-4 rounded-full bg-foreground px-3 py-1 text-[11px] font-medium text-background">
-                  {salePct}% off
+                  {salePct}% {t("product.off")}
                 </span>
               )}
             </motion.div>
@@ -231,7 +231,7 @@ export default function ProductDetail() {
                     {formatPrice(product.compare_at_price)}
                   </span>
                   <span className="rounded-full bg-foreground px-2.5 py-0.5 text-[11px] font-medium text-background">
-                    Save {salePct}%
+                    {t("product.savePct")} {salePct}%
                   </span>
                 </>
               )}
@@ -251,7 +251,7 @@ export default function ProductDetail() {
                   ))}
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  {product.rating.toFixed(1)} · {product.num_reviews || reviews.length} reviews
+                  {product.rating.toFixed(1)} · {product.num_reviews || reviews.length} {t("product.reviews")}
                 </span>
               </div>
             )}
@@ -263,13 +263,13 @@ export default function ProductDetail() {
             {/* Stock */}
             <div className="mt-6">
               {outOfStock ? (
-                <span className="text-sm font-medium text-destructive">Out of stock</span>
+                <span className="text-sm font-medium text-destructive">{t("product.outOfStock")}</span>
               ) : product.stock <= 5 ? (
                 <span className="text-sm font-medium text-amber-600">
-                  Only {product.stock} left in stock
+                  {product.stock} {t("product.lowStock")}
                 </span>
               ) : (
-                <span className="text-sm text-muted-foreground">In stock</span>
+                <span className="text-sm text-muted-foreground">{t("product.inStock")}</span>
               )}
             </div>
 
@@ -279,7 +279,7 @@ export default function ProductDetail() {
                 <button
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   className="flex h-11 w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
-                  aria-label="Decrease quantity"
+                  aria-label={t("product.decreaseQty")}
                 >
                   <Minus className="h-4 w-4" />
                 </button>
@@ -288,7 +288,7 @@ export default function ProductDetail() {
                   onClick={() => setQuantity((q) => clampQty(q + 1))}
                   disabled={outOfStock || quantity >= maxQty}
                   className="flex h-11 w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40 disabled:hover:text-muted-foreground"
-                  aria-label="Increase quantity"
+                  aria-label={t("product.increaseQty")}
                 >
                   <Plus className="h-4 w-4" />
                 </button>
@@ -299,11 +299,11 @@ export default function ProductDetail() {
                 className="h-11 flex-1 rounded-full"
               >
                 {outOfStock ? (
-                  "Sold out"
+                  t("product.soldOut")
                 ) : (
                   <>
                     <ShoppingBag className="mr-2 h-4 w-4" />
-                    Add to cart — {formatPrice(product.price * clampQty(quantity))}
+                    {t("product.addToCart")} — {formatPrice(product.price * clampQty(quantity))}
                   </>
                 )}
               </Button>
@@ -314,25 +314,25 @@ export default function ProductDetail() {
               variant="outline"
               className="mt-3 h-11 w-full rounded-full"
             >
-              {outOfStock ? "Sold out" : "Buy it now"}
+              {outOfStock ? t("product.soldOut") : t("product.buyNow")}
             </Button>
 
             {/* Trust badges */}
             <div className="mt-8 grid grid-cols-3 gap-4 border-t border-border pt-6">
               <div className="flex flex-col items-center gap-2 text-center">
                 <Truck className="h-5 w-5 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">Free shipping over $75</span>
+                <span className="text-xs text-muted-foreground">{t("product.freeShipping")}</span>
               </div>
               <div className="flex flex-col items-center gap-2 text-center">
                 <RefreshCw className="h-5 w-5 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">
-                  {product.return_days ? `${product.return_days}-day returns` : "No returns"}
+                  {product.return_days ? `${product.return_days}-day ${t("product.returns")}` : t("product.noReturns")}
                 </span>
               </div>
               <div className="flex flex-col items-center gap-2 text-center">
                 <ShieldCheck className="h-5 w-5 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">
-                  {product.warranty ? product.warranty : "No warranty"}
+                  {product.warranty ? product.warranty : t("product.noWarranty")}
                 </span>
               </div>
             </div>
@@ -342,8 +342,8 @@ export default function ProductDetail() {
         {/* Reviews */}
         <section className="mt-16 border-t border-border pt-12">
           <div className="flex flex-wrap items-end justify-between gap-2">
-            <h2 className="text-2xl font-semibold tracking-tight">Customer reviews</h2>
-            <span className="text-sm text-muted-foreground">{reviews.length} review(s)</span>
+            <h2 className="text-2xl font-semibold tracking-tight">{t("product.customerReviews")}</h2>
+            <span className="text-sm text-muted-foreground">{reviews.length} {t("product.reviewCount")}</span>
           </div>
 
           {reviews.length > 0 ? (
@@ -366,15 +366,15 @@ export default function ProductDetail() {
               ))}
             </div>
           ) : (
-            <p className="mt-6 text-sm text-muted-foreground">No reviews yet — be the first to share your thoughts.</p>
+            <p className="mt-6 text-sm text-muted-foreground">{t("product.noReviews")}</p>
           )}
 
           {/* Write a review — only after delivery */}
           {reviewEligibleChecked && canReview ? (
             <form onSubmit={submitReview} className="mt-8 rounded-2xl border border-border p-6">
-              <h3 className="text-base font-medium">Write a review</h3>
+              <h3 className="text-base font-medium">{t("product.writeReview")}</h3>
               <div className="mt-4 flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Your rating</span>
+                <span className="text-sm text-muted-foreground">{t("product.yourRating")}</span>
                 <div className="flex">
                   {[1, 2, 3, 4, 5].map((n) => (
                     <button
@@ -393,18 +393,18 @@ export default function ProductDetail() {
               <textarea
                 value={reviewForm.comment}
                 onChange={(e) => setReviewForm((f) => ({ ...f, comment: e.target.value }))}
-                placeholder="Share your experience with this product…"
+                placeholder={t("product.reviewPlaceholder")}
                 rows={3}
                 className="mt-4 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/40"
               />
               <Button type="submit" disabled={submitting} className="mt-3 rounded-full">
-                {submitting ? "Submitting…" : "Submit review"}
+                {submitting ? t("product.submitting") : t("product.submitReview")}
               </Button>
             </form>
           ) : reviewEligibleChecked ? (
             <div className="mt-8 rounded-2xl border border-dashed border-border p-6 text-center">
               <p className="text-sm text-muted-foreground">
-                You can leave a review once your order for this product has been delivered.
+                {t("product.reviewEligible")}
               </p>
             </div>
           ) : null}
@@ -413,7 +413,7 @@ export default function ProductDetail() {
         {/* Related */}
         {related.length > 0 && (
           <section className="mt-16 border-t border-border pt-12">
-            <h2 className="text-2xl font-semibold tracking-tight">You may also like</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">{t("product.relatedTitle")}</h2>
             <div className="mt-6 grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
               {related.map((p, i) => (
                 <ProductCard key={p.id} product={p} index={i} />

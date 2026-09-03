@@ -28,9 +28,17 @@
       "type": "string",
       "description": "Rich HTML description shown on the category landing page."
     },
+    "description_ar": {
+      "type": "string",
+      "description": "Arabic rich HTML description shown on the category landing page when Arabic is selected. Required before the category can be submitted for approval."
+    },
     "short_description": {
       "type": "string",
       "description": "Short blurb shown on category cards/tiles."
+    },
+    "short_description_ar": {
+      "type": "string",
+      "description": "Arabic short blurb shown on category cards/tiles when Arabic is selected."
     },
     "sort_order": {
       "type": "number",
