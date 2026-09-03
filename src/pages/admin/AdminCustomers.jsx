@@ -74,7 +74,7 @@ export default function AdminCustomers() {
     const vipCount = Math.max(1, Math.ceil(ranked.length * 0.1));
     const vipIds = new Set(ranked.slice(0, vipCount).map((x) => x.u.id));
 
-    return cust.map(({ u }) => {
+    return cust.map((u) => {
       const m = byUser.get(u.id) || { total_orders: 0, total_spend: 0, last_order: null };
       const segment = m.total_orders === 0 ? "new" : vipIds.has(u.id) ? "vip" : "returning";
       const prof = profileByUser.get(u.id);
