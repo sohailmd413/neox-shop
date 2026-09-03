@@ -10,6 +10,7 @@ import Pressable from "@/components/storefront/Pressable";
 import { lf } from "@/lib/format";
 import { useLanguage } from "@/lib/i18n";
 import SortDropdown from "@/components/storefront/SortDropdown";
+import CategorySidebarFilter from "@/components/storefront/CategorySidebarFilter";
 import { EmptyState, ErrorState } from "@/components/shared/StateViews";
 import SearchBar from "@/components/storefront/SearchBar";
 import { motionPresets } from "@/lib/motion";
@@ -72,6 +73,7 @@ export default function Catalog() {
 
       // Base view filter — applied AFTER sidebar narrowing so it always holds
       if (view === "deals") list = onSaleProducts(list);
+      if (view === "featured") list = list.filter((p) => p.featured);
 
       switch (effectiveSort) {
         case "newest":
@@ -133,6 +135,9 @@ export default function Catalog() {
   } else if (view === "best") {
     title = t("catalog.bestTitle");
     subtitle = t("catalog.bestSub");
+  } else if (view === "featured") {
+    title = t("catalog.featuredTitle");
+    subtitle = t("catalog.featuredSub");
   } else if (category) {
     title = lf(categories.find((c) => c.name === category), "name", lang) || category;
   } else if (q) {
@@ -220,38 +225,10 @@ export default function Catalog() {
 }
 
 function FilterPanel({ categories, category, onSale, maxPrice, priceLimit, updateParam, clearFilters, activeFilters, t }) {
-  const { lang } = useLanguage();
   const step = priceLimit <= 100 ? 5 : priceLimit <= 1000 ? 10 : 50;
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">{t("filter.category")}</h3>
-        <ul className="mt-3 space-y-2">
-          <li>
-            <button onClick={() => updateParam("category", "")} className={`text-sm transition-colors ${!category ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}>{t("filter.all")}</button>
-          </li>
-          {categories.filter((c) => !c.parent_id).map((parent) => {
-            const subs = categories.filter((c) => c.parent_id === parent.id);
-            return (
-              <li key={parent.id} className={subs.length ? "space-y-1.5" : undefined}>
-                <button onClick={() => updateParam("category", parent.name)} className={`text-sm transition-colors ${category === parent.name ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}>{lf(parent, "name", lang)}</button>
-                {subs.length > 0 && (
-                  <ul className="ml-3 space-y-1.5 border-l border-border pl-3">
-                    {subs.map((s) => (
-                      <li key={s.id}>
-                        <button onClick={() => updateParam("category", s.name)} className={`flex items-center gap-1 text-sm transition-colors ${category === s.name ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-                          <span className="text-muted-foreground/60">↳</span>
-                          {lf(s, "name", lang)}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+      <CategorySidebarFilter categories={categories} active={category} onSelect={(v) => updateParam("category", v)} />
 
       <div>
         <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">{t("filter.onSale")}</h3>

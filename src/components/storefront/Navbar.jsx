@@ -10,15 +10,42 @@ import { useStoreSetting } from "@/lib/useStoreSetting";
 import { Image } from "@/components/ui/image";
 import SearchBar from "@/components/storefront/SearchBar";
 import MegaMenu from "@/components/storefront/MegaMenu";
-import { lf } from "@/lib/format";
 
-// Promotional / curated quick-links — distinct from plain category links, so
-// they're rendered bolder and accent-tinted in Tier 2.
-const quickLinks = [
-  { key: "nav.deals", path: "/shop?view=deals" },
-  { key: "nav.new", path: "/shop?view=new" },
-  { key: "nav.bestSellers", path: "/shop?view=best" },
-];
+// Resolve an admin-managed NavItem to a router target. Returns either
+// { to } for an internal route or { href } for an external link.
+function navTarget(item, catMap) {
+  switch (item.link_type) {
+    case "deals": return { to: "/shop?view=deals" };
+    case "new_arrivals": return { to: "/shop?view=new" };
+    case "best_sellers": return { to: "/shop?view=best" };
+    case "featured": return { to: "/shop?view=featured" };
+    case "custom_url": {
+      const u = item.custom_url || "";
+      return /^https?:\/\//.test(u) ? { href: u } : { to: u || "/shop" };
+    }
+    case "category": {
+      const cat = catMap.get(item.category_id);
+      const name = cat?.name || "";
+      return { to: name ? `/shop?category=${encodeURIComponent(name)}` : "/shop" };
+    }
+    default: return { to: "/shop" };
+  }
+}
+
+function navLabel(item, lang) {
+  return lang === "ar" ? (item.label_ar || item.label_en) : item.label_en;
+}
+
+function NavLink({ item, catMap, lang, onClick }) {
+  const target = navTarget(item, catMap);
+  const cls = item.is_highlighted
+    ? "whitespace-nowrap text-sm font-semibold text-deal transition-opacity hover:opacity-70"
+    : "whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground";
+  if (target.href) {
+    return <a href={target.href} target="_blank" rel="noopener noreferrer" onClick={onClick} className={cls}>{navLabel(item, lang)}</a>;
+  }
+  return <Link to={target.to} onClick={onClick} className={cls}>{navLabel(item, lang)}</Link>;
+}
 
 export default function Navbar() {
   const { count, setIsOpen } = useCart();
@@ -31,6 +58,7 @@ export default function Navbar() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState(null);
   const [categories, setCategories] = useState([]);
+  const [navItems, setNavItems] = useState([]);
   const location = useLocation();
   const megaRef = useRef(null);
 
@@ -42,10 +70,23 @@ export default function Navbar() {
         setIsAdmin(me?.role === "admin");
       } catch {}
       try {
-        const c = await base44.entities.Category.list("sort_order", 200);
+        const [c, ni] = await Promise.all([
+          base44.entities.Category.list("sort_order", 200),
+          base44.entities.NavItem.filter({ status: "active" }, "display_order", 100),
+        ]);
         setCategories((c || []).filter((x) => x.active !== false));
+        setNavItems(ni || []);
       } catch {}
     })();
+  }, []);
+
+  // Reflect admin changes to nav items live, without a code change.
+  useEffect(() => {
+    const off = base44.entities.NavItem.subscribe(() => {
+      base44.entities.NavItem.filter({ status: "active" }, "display_order", 100)
+        .then(setNavItems).catch(() => {});
+    });
+    return () => off?.();
   }, []);
 
   const signOut = async () => {
@@ -60,13 +101,12 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close the mega-menu on route change and on outside click / Escape.
   useEffect(() => { setMegaOpen(false); }, [location.pathname, location.search]);
   useEffect(() => {
     if (!megaOpen) return;
     const onClick = (e) => {
       if (megaRef.current && megaRef.current.contains(e.target)) return;
-      if (e.target.closest("[data-mega-toggle]")) return; // the toggle button toggles itself
+      if (e.target.closest("[data-mega-toggle]")) return;
       setMegaOpen(false);
     };
     const onKey = (e) => { if (e.key === "Escape") setMegaOpen(false); };
@@ -78,6 +118,20 @@ export default function Navbar() {
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   const tops = categories.filter((c) => !c.parent_id);
+  const catMap = new Map(categories.map((c) => [c.id, c]));
+
+  // Quick links (highlighted promo group) + category row, read from NavItem.
+  // Falls back to the prior hardcoded behavior only while the table is empty
+  // (e.g. before the admin first opens the Navigation page to seed it).
+  const hasNav = navItems.length > 0;
+  const quickItems = hasNav ? navItems.filter((i) => i.placement === "quick_links") : [
+    { label_en: "Deals", label_ar: "عروض", link_type: "deals", is_highlighted: true },
+    { label_en: "New Arrivals", label_ar: "وصل حديثًا", link_type: "new_arrivals", is_highlighted: true },
+    { label_en: "Best Sellers", label_ar: "الأكثر مبيعًا", link_type: "best_sellers", is_highlighted: true },
+  ];
+  const rowItems = hasNav
+    ? navItems.filter((i) => i.placement === "primary_row")
+    : tops.map((c) => ({ label_en: c.name, label_ar: c.name_ar, link_type: "category", category_id: c.id }));
 
   return (
     <header
@@ -101,7 +155,6 @@ export default function Navbar() {
           <SearchBar placeholder={t("search.placeholder")} />
         </div>
 
-        {/* Icon cluster — tight, consistent spacing, subtle dividers between groups */}
         <div className="flex shrink-0 items-center gap-1 sm:gap-1.5">
           {(isAdmin || !user) && (
             <Link to={isAdmin ? "/admin" : "/admin/login"} className="hidden h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted sm:flex" aria-label={isAdmin ? t("nav.adminPanel") : t("nav.adminSignin")} title={isAdmin ? t("nav.adminPanel") : t("nav.adminSignin")}>
@@ -177,28 +230,22 @@ export default function Navbar() {
             <ChevronDown className={`h-4 w-4 transition-transform ${megaOpen ? "rotate-180" : ""}`} />
           </button>
 
-          {/* Curated promo links — visually distinct (bold + accent) */}
-          <div className="flex shrink-0 items-center gap-2.5">
-            {quickLinks.map((link) => (
-              <Link key={link.key} to={link.path} className="whitespace-nowrap text-sm font-semibold text-deal transition-opacity hover:opacity-70">
-                {t(link.key)}
-              </Link>
-            ))}
-          </div>
-
-          <span className="h-4 w-px shrink-0 bg-border" />
-
-          {/* Live category row — horizontal scroll with fade edges, never wraps */}
-          <div className="relative min-w-0 flex-1">
-            <div className="flex items-center gap-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {tops.slice(0, 12).map((cat) => (
-                <Link key={cat.id} to={`/shop?category=${encodeURIComponent(cat.name)}`} className="whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground">
-                  {lf(cat, "name", lang)}
-                </Link>
-              ))}
+          {quickItems.length > 0 && (
+            <div className="flex shrink-0 items-center gap-2.5">
+              {quickItems.map((item, idx) => <NavLink key={item.id || idx} item={item} catMap={catMap} lang={lang} />)}
             </div>
-            <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-muted/30 to-transparent" />
-          </div>
+          )}
+
+          {quickItems.length > 0 && rowItems.length > 0 && <span className="h-4 w-px shrink-0 bg-border" />}
+
+          {rowItems.length > 0 && (
+            <div className="relative min-w-0 flex-1">
+              <div className="flex items-center gap-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {rowItems.map((item, idx) => <NavLink key={item.id || idx} item={item} catMap={catMap} lang={lang} />)}
+              </div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-muted/30 to-transparent" />
+            </div>
+          )}
         </div>
       </div>
 
@@ -232,16 +279,16 @@ export default function Navbar() {
                 <LayoutGrid className="h-4 w-4" />
                 {t("nav.allCategories")}
               </Link>
-              {quickLinks.map((link) => (
-                <Link key={link.key} to={link.path} className="block rounded-lg px-3 py-2.5 text-sm font-medium text-deal transition-colors hover:bg-muted">
-                  {t(link.key)}
-                </Link>
+              {quickItems.map((item, idx) => (
+                <div key={item.id || `q${idx}`} className="rounded-lg px-3 py-2">
+                  <NavLink item={item} catMap={catMap} lang={lang} onClick={() => setMobileOpen(false)} />
+                </div>
               ))}
               <div className="my-1 border-t border-border" />
-              {tops.map((cat) => (
-                <Link key={cat.id} to={`/shop?category=${encodeURIComponent(cat.name)}`} className="block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-                  {lf(cat, "name", lang)}
-                </Link>
+              {rowItems.map((item, idx) => (
+                <div key={item.id || `r${idx}`} className="rounded-lg px-3 py-2">
+                  <NavLink item={item} catMap={catMap} lang={lang} onClick={() => setMobileOpen(false)} />
+                </div>
               ))}
               <div className="my-1 border-t border-border" />
               {user && (

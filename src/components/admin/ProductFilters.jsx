@@ -19,6 +19,11 @@ export default function ProductFilters({ products, filters, setFilters }) {
     { label: "Low stock", value: "low" },
     { label: "Out of stock", value: "out" },
   ];
+  const featuredOpts = [
+    { label: "Featured: any", value: "all" },
+    { label: "Featured only", value: "featured" },
+    { label: "Not featured", value: "not" },
+  ];
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -36,6 +41,7 @@ export default function ProductFilters({ products, filters, setFilters }) {
       <Dropdown type="search" options={[{ label: "All brands", value: "all" }, ...brands]} value={filters.brand || "all"} onChange={set("brand")} placeholder="All brands" className="w-[160px]" />
       <Dropdown type="select" options={statusOpts} value={filters.status || "all"} onChange={set("status")} placeholder="All statuses" className="w-[150px]" />
       <Dropdown type="select" options={stockOpts} value={filters.stock || "all"} onChange={set("stock")} placeholder="Any stock" className="w-[150px]" />
+      <Dropdown type="select" options={featuredOpts} value={filters.featured || "all"} onChange={set("featured")} placeholder="Featured: any" className="w-[150px]" />
     </div>
   );
 }

@@ -45,7 +45,7 @@ export default function AdminProducts() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({ query: "", category: "all", brand: "all", status: "all", stock: "all" });
+  const [filters, setFilters] = useState({ query: "", category: "all", brand: "all", status: "all", stock: "all", featured: "all" });
   const [editing, setEditing] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -138,6 +138,8 @@ export default function AdminProducts() {
       if (filters.stock === "low" && (s <= 0 || s > 5)) return false;
       if (filters.stock === "out" && s > 0) return false;
     }
+    if (filters.featured === "featured" && !p.featured) return false;
+    if (filters.featured === "not" && p.featured) return false;
     return true;
   });
 

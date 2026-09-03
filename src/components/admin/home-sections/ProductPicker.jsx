@@ -15,6 +15,7 @@ import { formatPrice } from "@/lib/format";
 export default function ProductPicker({ sectionId, hsp, products, onChange }) {
   const { toast } = useToast();
   const [q, setQ] = useState("");
+  const [featuredOnly, setFeaturedOnly] = useState(false);
   const [busy, setBusy] = useState(false);
   const [delRow, setDelRow] = useState(null);
 
@@ -26,7 +27,7 @@ export default function ProductPicker({ sectionId, hsp, products, onChange }) {
   const addedIds = new Set(rows.map((r) => r.product_id));
   const term = q.trim().toLowerCase();
   const results = products
-    .filter((p) => !addedIds.has(p.id) && (p.name?.toLowerCase().includes(term) || p.brand?.toLowerCase().includes(term)))
+    .filter((p) => !addedIds.has(p.id) && (!featuredOnly || p.featured) && (p.name?.toLowerCase().includes(term) || p.brand?.toLowerCase().includes(term)))
     .slice(0, 8);
 
   const add = async (p) => {
@@ -97,6 +98,10 @@ export default function ProductPicker({ sectionId, hsp, products, onChange }) {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search active products…" className="pl-9" />
         </div>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+          <input type="checkbox" checked={featuredOnly} onChange={(e) => setFeaturedOnly(e.target.checked)} className="h-3.5 w-3.5 rounded border-border" />
+          Featured products only
+        </label>
         <div className="space-y-1">
           {q.trim() && results.length === 0 && <p className="px-2 py-2 text-xs text-muted-foreground">No matches.</p>}
           {results.map((p) => (
