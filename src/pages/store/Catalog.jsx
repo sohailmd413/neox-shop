@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { SlidersHorizontal, X, Search } from "lucide-react";
@@ -21,6 +21,25 @@ const SORT_KEYS = ["featured", "newest", "discount", "price-asc", "price-desc", 
 // Default sort per curated view (used when the user hasn't picked one).
 const VIEW_DEFAULT_SORT = { deals: "discount", new: "newest", best: "best" };
 
+// Returns the set of category names belonging to a category AND all of its
+// descendants, so selecting a parent filters to the parent + every child
+// (and grandchild) combined — the standard marketplace behavior. Fixes the
+// bug where only leaf categories were matching because the product filter
+// used an exact-name equality against the single category value.
+function descendantNames(categories, name) {
+  const set = new Set([name]);
+  const start = categories.find((c) => c.name === name);
+  if (!start) return set;
+  const queue = [start.id];
+  while (queue.length) {
+    const id = queue.shift();
+    for (const ch of categories.filter((c) => c.parent_id === id)) {
+      if (!set.has(ch.name)) { set.add(ch.name); queue.push(ch.id); }
+    }
+  }
+  return set;
+}
+
 export default function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState(null);
@@ -29,6 +48,7 @@ export default function Catalog() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [priceLimit, setPriceLimit] = useState(500);
   const [error, setError] = useState(null);
+  const [countsBase, setCountsBase] = useState([]);
   const { lang, t } = useLanguage();
   const sortOptions = SORT_KEYS.map((v) => ({ value: v, label: t(`cat.sort.${v}`) }));
 
@@ -62,8 +82,7 @@ export default function Catalog() {
       const limit = list.reduce((m, p) => Math.max(m, Number(p.price) || 0), 0);
       setPriceLimit(limit > 0 ? Math.ceil(limit) : 500);
 
-      // Sidebar filters (combine with the base view filter, never override it)
-      if (category) list = list.filter((p) => p.category === category);
+      // Sidebar + search + price narrowing first…
       if (q) {
         const term = q.toLowerCase();
         list = list.filter((p) => p.name?.toLowerCase().includes(term) || p.brand?.toLowerCase().includes(term) || p.description?.toLowerCase().includes(term));
@@ -71,9 +90,21 @@ export default function Catalog() {
       if (onSale) list = list.filter((p) => p.compare_at_price && p.compare_at_price > p.price);
       if (maxPrice) list = list.filter((p) => p.price <= Number(maxPrice));
 
-      // Base view filter — applied AFTER sidebar narrowing so it always holds
+      // …then the base view filter so it always holds…
       if (view === "deals") list = onSaleProducts(list);
       if (view === "featured") list = list.filter((p) => p.featured);
+
+      // Snapshot for per-category counts BEFORE the selected category narrows
+      // the grid — so badges reflect the current context (deals/new/best + the
+      // applied filters), not the active category.
+      const base = [...list];
+
+      // …then narrow by the selected category, matching the parent and all
+      // descendants so clicking a parent shows its whole subtree.
+      if (category) {
+        const names = descendantNames(categories, category);
+        list = list.filter((p) => p.category && names.has(p.category));
+      }
 
       switch (effectiveSort) {
         case "newest":
@@ -92,9 +123,11 @@ export default function Catalog() {
           list = [...list].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
       }
       setProducts(list);
+      setCountsBase(base);
     } catch {
       setError(true);
       setProducts([]);
+      setCountsBase([]);
     } finally {
       setLoading(false);
     }
@@ -117,6 +150,18 @@ export default function Catalog() {
   };
 
   const activeFilters = [category, onSale && "sale", maxPrice && `≤ ${maxPrice} SAR`].filter(Boolean);
+
+  // Per-category product counts within the current filtered context (view +
+  // search/sale/price), parent counts including descendants.
+  const counts = useMemo(() => {
+    const desc = new Map(categories.map((c) => [c.name, descendantNames(categories, c.name)]));
+    const map = {};
+    for (const c of categories) {
+      const names = desc.get(c.name);
+      map[c.name] = countsBase.reduce((n, p) => n + (p.category && names.has(p.category) ? 1 : 0), 0);
+    }
+    return map;
+  }, [categories, countsBase]);
 
   // Header per view
   let title = t("catalog.allProducts");
@@ -177,13 +222,12 @@ export default function Catalog() {
               <SortDropdown value={effectiveSort} options={sortOptions} onChange={(v) => updateParam("sort", v === "featured" ? "" : v)} className="w-44" />
             </div>
 
-            <div className="hidden lg:block">
-              <FilterPanel categories={categories} category={category} onSale={onSale} maxPrice={maxPrice} priceLimit={priceLimit} updateParam={updateParam} clearFilters={clearFilters} activeFilters={activeFilters} t={t} />
-            </div>
-
-            <div className="mt-8 hidden lg:block">
-              <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">{t("catalog.sortBy")}</h3>
-              <SortDropdown value={effectiveSort} options={sortOptions} onChange={(v) => updateParam("sort", v === "featured" ? "" : v)} className="mt-3" />
+            <div className="hidden lg:sticky lg:top-24 lg:block lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pe-2">
+              <FilterPanel categories={categories} category={category} onSale={onSale} maxPrice={maxPrice} priceLimit={priceLimit} updateParam={updateParam} clearFilters={clearFilters} activeFilters={activeFilters} t={t} counts={counts} total={countsBase.length} />
+              <div className="mt-8">
+                <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">{t("catalog.sortBy")}</h3>
+                <SortDropdown value={effectiveSort} options={sortOptions} onChange={(v) => updateParam("sort", v === "featured" ? "" : v)} className="mt-3" />
+              </div>
             </div>
           </aside>
 
@@ -215,7 +259,7 @@ export default function Catalog() {
               <h2 className="text-base font-semibold">{t("catalog.filters")}</h2>
               <button onClick={() => setFiltersOpen(false)} className="rounded-full p-1.5 hover:bg-muted"><X className="h-4 w-4" /></button>
             </div>
-            <FilterPanel categories={categories} category={category} onSale={onSale} maxPrice={maxPrice} priceLimit={priceLimit} updateParam={updateParam} clearFilters={clearFilters} activeFilters={activeFilters} t={t} />
+            <FilterPanel categories={categories} category={category} onSale={onSale} maxPrice={maxPrice} priceLimit={priceLimit} updateParam={updateParam} clearFilters={clearFilters} activeFilters={activeFilters} t={t} counts={counts} total={countsBase.length} />
             <Button className="mt-6 w-full" onClick={() => setFiltersOpen(false)}>{t("filter.showResults")}</Button>
           </motion.div>
         </div>
@@ -224,11 +268,11 @@ export default function Catalog() {
   );
 }
 
-function FilterPanel({ categories, category, onSale, maxPrice, priceLimit, updateParam, clearFilters, activeFilters, t }) {
+function FilterPanel({ categories, category, onSale, maxPrice, priceLimit, updateParam, clearFilters, activeFilters, t, counts, total }) {
   const step = priceLimit <= 100 ? 5 : priceLimit <= 1000 ? 10 : 50;
   return (
     <div className="space-y-6">
-      <CategorySidebarFilter categories={categories} active={category} onSelect={(v) => updateParam("category", v)} />
+      <CategorySidebarFilter categories={categories} active={category} onSelect={(v) => updateParam("category", v)} counts={counts} total={total} />
 
       <div>
         <h3 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">{t("filter.onSale")}</h3>

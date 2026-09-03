@@ -1,15 +1,22 @@
 import React, { useMemo, useState } from "react";
-import { Search, LayoutGrid, Check } from "lucide-react";
+import { Search, LayoutGrid } from "lucide-react";
+import { Image } from "@/components/ui/image";
 import { lf } from "@/lib/format";
 import { useLanguage } from "@/lib/i18n";
 
-// Shared storefront category sidebar filter. Used identically by every
-// filtered product view (All products / Deals / New Arrivals / Best Sellers /
-// Featured / a single Category). Redesigned as a compact, polished card:
-// icon header with a live count, pill search input, and selectable rows
-// with a strong active state. Behavior (search filtering, nesting, onSelect,
-// the "All" reset) is unchanged.
-export default function CategorySidebarFilter({ categories, active, onSelect }) {
+// Shared storefront category sidebar filter — shared by every filtered view
+// (Catalog / Deals / New Arrivals / Best Sellers / Featured), all of which are
+// the same Catalog page with a different ?view=. Polished card design:
+//  - icon header with a live live-count badge
+//  - rounded-pill search input
+//  - rows with each category's image_url as a small thumbnail, a product
+//    count badge (within the current filtered context), and a strong active
+//    state (accent left bar + tinted background + medium weight)
+//  - sub-categories indented under a thin connector line in a lighter weight
+// Behavior is unchanged: search filtering, nesting, the "All" reset,
+// onSelect(name). The parent/child filtering is handled in Catalog
+// (descendant-aware), this component just emits the selected name.
+export default function CategorySidebarFilter({ categories, active, onSelect, counts = {}, total = 0 }) {
   const [q, setQ] = useState("");
   const { lang, t } = useLanguage();
   const term = q.trim().toLowerCase();
@@ -22,12 +29,37 @@ export default function CategorySidebarFilter({ categories, active, onSelect }) 
   const tops = useMemo(() => categories.filter((c) => !c.parent_id), [categories]);
   const flat = useMemo(() => categories.filter(match), [categories, term]);
 
-  const row = (isActive) =>
-    `group flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all ${
-      isActive
-        ? "bg-foreground text-background shadow-sm"
-        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-    }`;
+  const Badge = ({ n, isActive }) => (
+    <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums leading-none ${isActive ? "bg-deal/15 text-deal" : "bg-muted text-muted-foreground"}`}>
+      {n}
+    </span>
+  );
+
+  const Thumb = ({ cat, size = "h-5 w-5" }) =>
+    cat.image_url ? (
+      <Image src={cat.image_url} alt="" fittingType="fill" className={`shrink-0 rounded-md ${size}`} />
+    ) : (
+      <span className={`flex shrink-0 items-center justify-center rounded-md bg-muted ${size}`}>
+        <LayoutGrid className="h-3 w-3 text-muted-foreground" />
+      </span>
+    );
+
+  const Row = ({ cat, isActive, count }) => (
+    <button
+      onClick={() => onSelect(cat.name)}
+      className={`group flex w-full items-center gap-2.5 border-s-2 px-3 py-2 text-start transition-all duration-150 ${
+        isActive
+          ? "border-deal bg-deal/10 text-foreground"
+          : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+      }`}
+    >
+      <Thumb cat={cat} />
+      <span className={`flex-1 truncate text-sm ${isActive ? "font-semibold" : "font-normal"}`}>
+        {lf(cat, "name", lang) || cat.name}
+      </span>
+      {count != null && <Badge n={count} isActive={isActive} />}
+    </button>
+  );
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card/60 shadow-sm backdrop-blur">
@@ -39,7 +71,7 @@ export default function CategorySidebarFilter({ categories, active, onSelect }) 
           </span>
           <h3 className="text-sm font-semibold tracking-tight text-foreground">{t("filter.category")}</h3>
         </div>
-        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">{categories.length}</span>
+        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">{total || categories.length}</span>
       </div>
 
       {/* Search */}
@@ -57,45 +89,38 @@ export default function CategorySidebarFilter({ categories, active, onSelect }) 
 
       {/* List */}
       <div className="max-h-[60vh] space-y-0.5 overflow-y-auto p-3">
-        <button onClick={() => onSelect("")} className={row(!active)}>
-          <span className={`flex h-1.5 w-1.5 rounded-full ${!active ? "bg-background" : "bg-foreground/40"}`} />
-          {t("filter.all")}
+        <button
+          onClick={() => onSelect("")}
+          className={`group flex w-full items-center gap-2.5 border-s-2 px-3 py-2 text-start transition-all duration-150 ${
+            !active
+              ? "border-deal bg-deal/10 text-foreground"
+              : "border-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
+          }`}
+        >
+          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${!active ? "bg-deal/20 text-deal" : "bg-muted"}`}>
+            <LayoutGrid className="h-3 w-3" />
+          </span>
+          <span className={`flex-1 text-sm ${!active ? "font-semibold" : ""}`}>{t("filter.all")}</span>
+          <Badge n={total} isActive={!active} />
         </button>
 
         {term ? (
           flat.length === 0 ? (
             <p className="px-3 py-3 text-xs text-muted-foreground">{t("filter.noCategories")}</p>
           ) : (
-            flat.map((c) => {
-              const isActive = active === c.name;
-              return (
-                <button key={c.id} onClick={() => onSelect(c.name)} className={row(isActive)}>
-                  <Check className={`h-3.5 w-3.5 ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-40"}`} />
-                  <span className="truncate">{lf(c, "name", lang) || c.name}</span>
-                </button>
-              );
-            })
+            flat.map((c) => <Row key={c.id} cat={c} isActive={active === c.name} count={counts[c.name]} />)
           )
         ) : (
           tops.map((parent) => {
             const subs = categories.filter((c) => c.parent_id === parent.id);
             return (
               <div key={parent.id} className="space-y-0.5">
-                <button onClick={() => onSelect(parent.name)} className={row(active === parent.name)}>
-                  <span className={`h-1.5 w-1.5 rounded-full ${active === parent.name ? "bg-background" : "bg-foreground/25 group-hover:bg-foreground/50"}`} />
-                  <span className="truncate">{lf(parent, "name", lang) || parent.name}</span>
-                </button>
+                <Row cat={parent} isActive={active === parent.name} count={counts[parent.name]} />
                 {subs.length > 0 && (
                   <div className="ms-4 space-y-0.5 border-s border-border ps-3">
-                    {subs.map((s) => {
-                      const isActive = active === s.name;
-                      return (
-                        <button key={s.id} onClick={() => onSelect(s.name)} className={row(isActive)}>
-                          <span className={`h-1 w-1.5 rounded-full ${isActive ? "bg-background" : "bg-foreground/20 group-hover:bg-foreground/40"}`} />
-                          <span className="truncate">{lf(s, "name", lang) || s.name}</span>
-                        </button>
-                      );
-                    })}
+                    {subs.map((s) => (
+                      <Row key={s.id} cat={s} isActive={active === s.name} count={counts[s.name]} />
+                    ))}
                   </div>
                 )}
               </div>
