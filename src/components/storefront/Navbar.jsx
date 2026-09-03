@@ -10,6 +10,7 @@ import { useStoreSetting } from "@/lib/useStoreSetting";
 import { Image } from "@/components/ui/image";
 import SearchBar from "@/components/storefront/SearchBar";
 import MegaMenu from "@/components/storefront/MegaMenu";
+import CategoryScrollRow from "@/components/storefront/CategoryScrollRow";
 
 // Resolve an admin-managed NavItem to a router target. Returns either
 // { to } for an internal route or { href } for an external link.
@@ -39,8 +40,8 @@ function navLabel(item, lang) {
 function NavLink({ item, catMap, lang, onClick }) {
   const target = navTarget(item, catMap);
   const cls = item.is_highlighted
-    ? "whitespace-nowrap text-sm font-semibold text-deal transition-opacity hover:opacity-70"
-    : "whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground";
+    ? "shrink-0 whitespace-nowrap text-sm font-semibold text-deal transition-opacity hover:opacity-70"
+    : "shrink-0 whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground";
   if (target.href) {
     return <a href={target.href} target="_blank" rel="noopener noreferrer" onClick={onClick} className={cls}>{navLabel(item, lang)}</a>;
   }
@@ -239,12 +240,9 @@ export default function Navbar() {
           {quickItems.length > 0 && rowItems.length > 0 && <span className="h-4 w-px shrink-0 bg-border" />}
 
           {rowItems.length > 0 && (
-            <div className="relative min-w-0 flex-1">
-              <div className="flex items-center gap-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {rowItems.map((item, idx) => <NavLink key={item.id || idx} item={item} catMap={catMap} lang={lang} />)}
-              </div>
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-muted/30 to-transparent" />
-            </div>
+            <CategoryScrollRow>
+              {rowItems.map((item, idx) => <NavLink key={item.id || idx} item={item} catMap={catMap} lang={lang} />)}
+            </CategoryScrollRow>
           )}
         </div>
       </div>
