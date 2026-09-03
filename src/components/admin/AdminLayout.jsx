@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon } from "lucide-react";
+import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon, ClipboardCheck } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { canAccess } from "@/lib/adminPermissions";
+import { loadPendingCounts } from "@/lib/approval";
+import NotificationsBell from "@/components/admin/NotificationsBell";
 
 const NAV = [
   { section: "dashboard", label: "Dashboard", path: "/admin", icon: LayoutDashboard, end: true },
+  { section: "approvals", label: "Approvals", path: "/admin/approvals", icon: ClipboardCheck },
   { section: "reports", label: "Reports", path: "/admin/reports", icon: BarChart3 },
   { section: "products", label: "Products", path: "/admin/products", icon: Package },
   { section: "categories", label: "Categories", path: "/admin/categories", icon: Layers },
@@ -33,6 +36,7 @@ export default function AdminLayout() {
   const [customRoles, setCustomRoles] = useState([]);
   const [checking, setChecking] = useState(true);
   const [staffOpen, setStaffOpen] = useState(true);
+  const [pendingCount, setPendingCount] = useState(0);
   const location = useLocation();
 
   useEffect(() => {
@@ -45,6 +49,17 @@ export default function AdminLayout() {
       setChecking(false);
     })();
   }, []);
+
+  // Live pending-approvals counter for the Approvals nav badge. Subscribes to
+  // product/category changes so the badge updates as submissions arrive.
+  const refreshCount = () => { loadPendingCounts().then((c) => setPendingCount((c.products || 0) + (c.categories || 0))); };
+  useEffect(() => {
+    refreshCount();
+    const offP = base44.entities.Product.subscribe(() => refreshCount());
+    const offC = base44.entities.Category.subscribe(() => refreshCount());
+    return () => { offP?.(); offC?.(); };
+  }, []);
+  const canApprove = user && canAccess(user, "approvals", customRoles);
 
   if (checking) {
     return (
@@ -113,9 +128,15 @@ export default function AdminLayout() {
         <nav className="flex-1 space-y-1 p-3">
           {navItems.map((item) => {
             const Icon = item.icon;
+            const badge = item.section === "approvals" && canApprove && pendingCount > 0 ? pendingCount : null;
             return (
               <NavLink key={item.path} to={item.path} end={item.end} className={linkClass}>
                 <Icon className="h-4 w-4" /> {item.label}
+                {badge != null && (
+                  <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-foreground px-1.5 text-[10px] font-semibold text-background">
+                    {badge}
+                  </span>
+                )}
               </NavLink>
             );
           })}
@@ -166,6 +187,7 @@ export default function AdminLayout() {
               </NavLink>
             ))}
           </nav>
+          <NotificationsBell />
           <Link to="/admin/profile" className="ml-auto rounded-lg px-2 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
             Signed in as <span className="font-medium text-foreground">{user.email}</span>
           </Link>

@@ -5,6 +5,7 @@
 
 export const ADMIN_SECTIONS = [
   { id: 'dashboard', label: 'Dashboard' },
+  { id: 'approvals', label: 'Approvals' },
   { id: 'reports', label: 'Reports' },
   { id: 'products', label: 'Products' },
   { id: 'categories', label: 'Categories' },
@@ -17,8 +18,8 @@ export const ADMIN_SECTIONS = [
 ];
 
 export const ROLE_DEFAULTS = {
-  admin: { dashboard: true, reports: true, products: true, categories: true, orders: true, customers: true, reviews: true, posters: true, coupons: true, settings: true },
-  product_manager: { products: true, categories: true, reports: true },
+  admin: { dashboard: true, approvals: true, reports: true, products: true, categories: true, orders: true, customers: true, reviews: true, posters: true, coupons: true, settings: true },
+  product_manager: { products: true, categories: true, reports: true, approvals: true },
   delivery_manager: { orders: true, reports: true },
   marketing_manager: { reviews: true, posters: true, coupons: true },
   user: {},

@@ -1,0 +1,61 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "recipient_id": {
+      "type": "string",
+      "description": "User id of the recipient. Used to scope reads via RLS."
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "approval_requested",
+        "approved",
+        "rejected",
+        "info"
+      ],
+      "description": "Notification category."
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable notification text shown in the bell."
+    },
+    "ref_type": {
+      "type": "string",
+      "description": "Entity type the notification refers to, e.g. 'product' or 'category'."
+    },
+    "ref_id": {
+      "type": "string",
+      "description": "Entity id the notification refers to."
+    },
+    "ref_name": {
+      "type": "string",
+      "description": "Display name of the referenced item, for the bell list."
+    },
+    "reason": {
+      "type": "string",
+      "description": "Rejection reason, when type='rejected'."
+    },
+    "read": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "recipient_id",
+    "message",
+    "type"
+  ],
+  "rls": {
+    "read": {
+      "data.recipient_id": "{{user.id}}"
+    },
+    "create": true,
+    "update": {
+      "data.recipient_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.recipient_id": "{{user.id}}"
+    }
+  }
+}

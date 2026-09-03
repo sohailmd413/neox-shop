@@ -79,11 +79,12 @@
         "active",
         "inactive",
         "draft",
+        "pending_approval",
         "archived",
         "out_of_stock"
       ],
       "default": "active",
-      "description": "active=live on storefront; inactive=temporarily hidden (reactivate later); draft=incomplete, never live; archived=removed from catalog, kept for history and can be restored; out_of_stock=active listing but shown as unavailable to customers."
+      "description": "active=live on storefront; inactive=temporarily hidden (reactivate later); draft=incomplete / not yet submitted, never live; pending_approval=submitted for admin sign-off, not live yet; archived=removed from catalog, kept for history and can be restored; out_of_stock=active listing but shown as unavailable to customers. A draft can never skip straight to active \u2014 it must pass through pending_approval and be approved first."
     },
     "completion_percentage": {
       "type": "number",
@@ -163,6 +164,57 @@
     "archived_by": {
       "type": "string",
       "description": "Name of the admin who archived the product. Cleared on restore."
+    },
+    "submitted_by": {
+      "type": "string",
+      "description": "Display name of the staff member who last submitted this product for approval."
+    },
+    "submitted_by_id": {
+      "type": "string",
+      "description": "User id of the staff member who last submitted this product for approval."
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the product was last submitted for approval."
+    },
+    "rejection_reason": {
+      "type": "string",
+      "description": "Reason entered by the approver the last time this submission was rejected. Cleared on a new submission."
+    },
+    "approval_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "submitted",
+              "approved",
+              "rejected"
+            ]
+          },
+          "by": {
+            "type": "string"
+          },
+          "by_id": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "self": {
+            "type": "boolean",
+            "description": "True if the approver was the same person who submitted (segregation-of-duties flag)."
+          }
+        }
+      },
+      "description": "Audit trail of every approval status change: who submitted / approved / rejected it and when."
     }
   },
   "required": [

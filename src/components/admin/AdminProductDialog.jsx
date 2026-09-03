@@ -10,6 +10,8 @@ import { validateProduct, productCompletion, genSku, hasAnyData, REQUIRED_COUNT 
 import BarcodeView from "@/components/admin/BarcodeView";
 import { generateUniqueBarcode } from "@/lib/barcode";
 import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
+import ApprovalHistory from "@/components/admin/ApprovalHistory";
+import { submitForApproval } from "@/lib/approval";
 
 const EMPTY = {
   name: "", name_ar: "", sku: "", slug: "", barcode: "", barcode_type: "CODE128",
@@ -60,7 +62,10 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
   const [publishing, setPublishing] = useState(false);
   const [publishConfirm, setPublishConfirm] = useState(false);
   const persistedIdRef = useRef(product?.id || null);
+  const [currentUser, setCurrentUser] = useState(null);
   const { toast } = useToast();
+
+  useEffect(() => { base44.auth.me().then(setCurrentUser).catch(() => {}); }, []);
 
   const set = (k) => (e) => {
     const val = e.target.type === "checkbox" ? e.target.checked : e.target.value;
@@ -200,12 +205,23 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
   const doPublish = async () => {
     setPublishing(true);
     try {
-      await persist("active");
+      // Editing an already-live product keeps it live (admins editing a live
+      // listing are not re-running approval). New / draft products go through
+      // the approval queue — there is no direct draft → active path.
+      if (product && product.status === "active") {
+        await persist("active");
+        setPublishConfirm(false);
+        toast({ title: "Saved — product stays live" });
+        onSaved();
+        return;
+      }
+      const rec = await persist("draft");
+      await submitForApproval("Product", rec, currentUser);
       setPublishConfirm(false);
-      toast({ title: "Product published" });
+      toast({ title: "Submitted for approval" });
       onSaved();
     } catch {
-      toast({ title: "Could not publish", variant: "destructive" });
+      toast({ title: "Could not submit", variant: "destructive" });
       setPublishing(false);
       setPublishConfirm(false);
     }
@@ -301,14 +317,11 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
                   <input value={form.slug} onChange={set("slug")} className={baseInput} placeholder="auto if empty" />
                 </Field>
               </div>
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Category" required error={errors.category?.msg} fieldKey="category">
                   <Dropdown type="search" options={[{ label: "None", value: "" }, ...categories.map((c) => ({ label: c.name, value: c.name }))]} value={form.category || ""} onChange={setVal("category")} placeholder="Select category" />
                 </Field>
                 <Field label="Brand"><input value={form.brand} onChange={set("brand")} className={baseInput} /></Field>
-                <Field label="Status">
-                  <Dropdown type="select" options={[{ label: "Active", value: "active" }, { label: "Draft", value: "draft" }, { label: "Archived", value: "archived" }]} value={form.status} onChange={setVal("status")} placeholder="Status" />
-                </Field>
               </div>
               <Field label="Short description"><input value={form.short_description} onChange={set("short_description")} className={baseInput} placeholder="One-line summary" /></Field>
               <Field label="Description (English)" required error={errors.description?.msg} fieldKey="description" hint={`${(form.description || "").trim().length}/50 characters`}>
@@ -403,12 +416,13 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
             </div>
           )}
 
+          {product?.approval_history?.length > 0 && <ApprovalHistory history={product.approval_history} />}
           <div className="flex items-center justify-between gap-2 pt-2">
             <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
             <div className="flex items-center gap-2">
               <Button type="button" variant="outline" onClick={saveAsDraft}>Save as draft</Button>
               <Button type="button" onClick={publish} disabled={publishing}>
-                {product && product.status === "active" && Object.keys(errors).length === 0 ? "Save & keep live" : "Publish"}
+                {product && product.status === "active" && Object.keys(errors).length === 0 ? "Save & keep live" : "Submit for approval"}
               </Button>
             </div>
           </div>
@@ -419,9 +433,9 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
         open={publishConfirm}
         onClose={() => setPublishConfirm(false)}
         variant="create"
-        title={product && product.status === "active" ? "Save & keep this product live?" : "Publish this product?"}
-        description="It will be visible to customers on the storefront. You can archive it later from the products list."
-        confirmLabel={product && product.status === "active" ? "Save" : "Publish"}
+        title={product && product.status === "active" ? "Save & keep this product live?" : "Submit this product for approval?"}
+        description={product && product.status === "active" ? "It will stay visible to customers on the storefront." : "It will be sent for admin sign-off and will NOT go live until approved. You can archive it later from the products list."}
+        confirmLabel={product && product.status === "active" ? "Save" : "Submit for approval"}
         onConfirm={doPublish}
       />
     </div>

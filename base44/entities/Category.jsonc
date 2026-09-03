@@ -18,7 +18,7 @@
     },
     "image_url": {
       "type": "string",
-      "description": "Category icon/thumbnail shown in-tree and on cards."
+      "description": "Category icon/thumbnail shown in-tree and on cards. Required before the category can be submitted for approval."
     },
     "banner_image_url": {
       "type": "string",
@@ -43,8 +43,18 @@
     },
     "active": {
       "type": "boolean",
-      "default": true,
-      "description": "Inactive categories are hidden from the storefront."
+      "default": false,
+      "description": "Storefront visibility flag. Only true once the category has been approved. New / draft / pending categories are inactive."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "pending_approval",
+        "active"
+      ],
+      "default": "draft",
+      "description": "Approval state. draft=incomplete / not submitted; pending_approval=submitted for admin sign-off; active=approved and live on the storefront. Mirrors the active flag (active=true only when status=active)."
     },
     "show_in_nav": {
       "type": "boolean",
@@ -60,6 +70,57 @@
     },
     "meta_description": {
       "type": "string"
+    },
+    "submitted_by": {
+      "type": "string",
+      "description": "Display name of the staff member who last submitted this category for approval."
+    },
+    "submitted_by_id": {
+      "type": "string",
+      "description": "User id of the staff member who last submitted this category for approval."
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the category was last submitted for approval."
+    },
+    "rejection_reason": {
+      "type": "string",
+      "description": "Reason entered by the approver the last time this submission was rejected. Cleared on a new submission."
+    },
+    "approval_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "submitted",
+              "approved",
+              "rejected"
+            ]
+          },
+          "by": {
+            "type": "string"
+          },
+          "by_id": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "self": {
+            "type": "boolean",
+            "description": "True if the approver was the same person who submitted (segregation-of-duties flag)."
+          }
+        }
+      },
+      "description": "Audit trail of every approval status change."
     }
   },
   "required": [
