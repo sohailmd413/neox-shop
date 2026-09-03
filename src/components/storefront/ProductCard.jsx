@@ -24,6 +24,7 @@ export default function ProductCard({ product, index = 0 }) {
   const onSale = product.compare_at_price && product.compare_at_price > product.price;
   const salePct = onSale ? Math.round((1 - product.price / product.compare_at_price) * 100) : 0;
   const display = lf(product, "name", lang);
+  const shortDesc = lf(product, "short_description", lang);
 
   const toggleWish = (e) => {
     e.preventDefault();
@@ -121,6 +122,9 @@ export default function ProductCard({ product, index = 0 }) {
             </p>
           )}
           <h3 className="line-clamp-1 font-heading text-sm font-medium text-foreground">{display}</h3>
+          {shortDesc && (
+            <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{shortDesc}</p>
+          )}
           <div className="flex items-center gap-2">
             <span className={`text-sm font-semibold ${outOfStock ? "select-none text-transparent blur-[3px]" : ""}`}>{formatPrice(product.price)}</span>
             {product.compare_at_price && product.compare_at_price > product.price && (
