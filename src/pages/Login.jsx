@@ -24,7 +24,6 @@ export default function Login() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    setShakeKey((n) => n + (error ? 1 : 0));
     try {
       await base44.auth.loginViaEmailPassword(email, password);
       window.location.href = returnTo;
