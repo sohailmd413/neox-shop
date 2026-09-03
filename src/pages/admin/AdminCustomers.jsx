@@ -55,7 +55,7 @@ export default function AdminCustomers() {
 
   // Compute per-customer metrics live from orders (keyed by order owner = created_by_id).
   const customers = useMemo(() => {
-    const cust = (users || []).filter((u) => !STAFF_ROLES.includes(u.role));
+    const cust = (users || []).filter((u) => u && u.id && !STAFF_ROLES.includes(u.role));
     const byUser = new Map();
     (orders || []).forEach((o) => {
       const uid = o.user_id || o.created_by_id;
