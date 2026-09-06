@@ -1,7 +1,7 @@
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import { Truck, RotateCcw, ShieldCheck } from "lucide-react";
+import { Truck, RotateCcw, ShieldCheck, ShoppingBag } from "lucide-react";
 import Navbar from "./Navbar";
 import CartDrawer from "./CartDrawer";
 import { CartFlyoutProvider } from "@/components/storefront/cart/CartFlyoutContext";
@@ -55,15 +55,10 @@ export default function StorefrontLayout() {
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <Link to="/" className="flex items-center gap-2">
-                {store.logo_url ? (
-                  <img
-                    src="https://media.base44.com/images/public/6a940640f387996e35e2c2db/b80f20a56_generated_image.png"
-                    alt={store.store_name || "NeoX Shop"}
-                    className="h-9 w-auto max-w-[150px] object-contain"
-                  />
-                ) : (
-                  <span className="text-lg font-bold tracking-tight text-white">{store.store_name || "NeoX Shop"}</span>
-                )}
+                <ShoppingBag className="h-6 w-6 text-white" />
+                <span className="text-xl font-extrabold tracking-tight text-white">
+                  NeoX<span className="text-slate-400">.shop</span>
+                </span>
               </Link>
               <p className="mt-3 max-w-xs text-sm text-slate-400">
                 {t("footer.tagline")}
