@@ -14,6 +14,7 @@ import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { springPress, springPop } from "@/lib/motion";
 import SaleCountdown from "@/components/admin/SaleCountdown";
+import BackBar from "@/components/storefront/BackBar";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -191,8 +192,16 @@ export default function ProductDetail() {
 
   return (
     <div className="pt-16">
+      {/* Context-aware back to where the customer came from (Home / Best
+          Sellers / category…), falling back to the product's own category. */}
+      <div className="mx-auto max-w-7xl px-5 pt-5 sm:px-8">
+        <BackBar
+          fallbackTo={product.category ? `/shop?category=${encodeURIComponent(product.category)}` : "/shop"}
+          fallbackLabel={showCategoryCrumb ? categoryName : t("back.shop")}
+        />
+      </div>
       {/* Breadcrumb */}
-      <div className="mx-auto max-w-7xl px-5 pt-6 sm:px-8">
+      <div className="mx-auto max-w-7xl px-5 pt-3 sm:px-8">
         <nav className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <Link to="/" className="hover:text-foreground">{t("product.home")}</Link>
           <ChevronRight className="h-3 w-3 rtl:-scale-x-100" />
