@@ -147,7 +147,7 @@ export default function Navbar() {
       <nav className={`mx-auto flex items-center gap-3 px-4 transition-all duration-300 sm:px-6 ${scrolled ? "h-12" : "h-14"}`}>
         <Link to="/" className="flex shrink-0 items-center gap-2">
           {store.logo_url ? (
-            <Image src={store.logo_url} alt={store.store_name || "NeoX Shop"} fittingType="fit" className="h-8 w-auto max-w-[150px]" />
+            <img src={store.logo_url} alt={store.store_name || "NeoX Shop"} className="h-8 w-auto max-w-[150px] object-contain" />
           ) : (
             <span className="text-lg font-bold tracking-tight">{store.store_name || "NeoX Shop"}</span>
           )}

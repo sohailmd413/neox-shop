@@ -57,7 +57,7 @@ export default function StorefrontLayout() {
               <Link to="/" className="flex items-center gap-2">
                 {store.logo_url ? (
                   <span className="inline-flex rounded-lg bg-white/95 px-2 py-1">
-                    <Image src={store.logo_url} alt={store.store_name || "NeoX Shop"} fittingType="fit" className="h-7 w-auto max-w-[130px]" />
+                    <img src={store.logo_url} alt={store.store_name || "NeoX Shop"} className="h-7 w-auto max-w-[130px] object-contain" />
                   </span>
                 ) : (
                   <span className="text-lg font-bold tracking-tight text-white">{store.store_name || "NeoX Shop"}</span>
