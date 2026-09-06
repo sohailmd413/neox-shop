@@ -56,7 +56,11 @@ export default function StorefrontLayout() {
             <div>
               <Link to="/" className="flex items-center gap-2">
                 {store.logo_url ? (
-                  <img src={store.logo_url} alt={store.store_name || "NeoX Shop"} className="h-8 w-auto max-w-[140px] object-contain" />
+                  <img
+                    src="https://media.base44.com/images/public/6a940640f387996e35e2c2db/b80f20a56_generated_image.png"
+                    alt={store.store_name || "NeoX Shop"}
+                    className="h-9 w-auto max-w-[150px] object-contain"
+                  />
                 ) : (
                   <span className="text-lg font-bold tracking-tight text-white">{store.store_name || "NeoX Shop"}</span>
                 )}
