@@ -149,7 +149,7 @@ export default function Navbar() {
           {store.logo_url ? (
             <Image src={store.logo_url} alt={store.store_name || "Store"} fittingType="fit" className="h-7 w-auto max-w-[120px]" />
           ) : (
-            <span className="text-lg font-bold tracking-tight">{store.store_name || "MarketFlow"}</span>
+            <span className="text-lg font-bold tracking-tight">{store.store_name || "NeoX Shop"}</span>
           )}
         </Link>
 
@@ -177,7 +177,7 @@ export default function Navbar() {
               <Link to="/login" className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted" aria-label={t("nav.signIn")}>
                 <User className="h-5 w-5" />
               </Link>
-              <Link to="/register" className="flex h-9 items-center rounded-full bg-foreground px-4 text-sm font-medium text-background transition-opacity hover:opacity-90">
+              <Link to="/register" className="flex h-9 items-center rounded-full bg-deal px-4 text-sm font-semibold text-deal-foreground transition-opacity hover:opacity-90">
                 {t("nav.register")}
               </Link>
             </div>

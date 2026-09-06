@@ -50,23 +50,27 @@ function CuratedHero() {
   const { t } = useLanguage();
   return (
     <section className="mx-auto max-w-7xl px-5 sm:px-8">
-      <div className="relative mt-4 overflow-hidden rounded-xl bg-gradient-to-r from-foreground to-foreground/80 px-6 py-10 sm:px-10 sm:py-14">
-        <div className="max-w-xl space-y-4">
-          <h1 className="text-3xl font-bold leading-tight text-background sm:text-4xl">
+      <div className="relative mt-4 overflow-hidden rounded-xl bg-brand-gradient px-6 py-10 sm:px-10 sm:py-14">
+        {/* Subtle animated brand-gradient glow echoing the logo's motion. */}
+        <div aria-hidden className="mf-brand-glow absolute inset-0 opacity-70" />
+        {/* Speed-line accent nodding to the logo's cart motion lines. */}
+        <div aria-hidden className="mf-speed-lines absolute inset-0 opacity-40" />
+        <div className="relative max-w-xl space-y-4">
+          <h1 className="font-headline text-3xl text-white sm:text-4xl">
             {t("home.fallbackTitle")}
           </h1>
-          <p className="text-sm text-background/80 sm:text-base">{t("home.fallbackSub")}</p>
+          <p className="text-sm text-white/85 sm:text-base">{t("home.fallbackSub")}</p>
           <div className="flex items-center gap-3 pt-2">
             <Link
               to="/shop?filter=sale"
-              className="inline-flex items-center gap-2 rounded-full bg-deal px-6 py-3 text-sm font-bold text-deal-foreground"
+              className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-brand-blue shadow-lg transition-transform hover:scale-[1.02]"
             >
               {t("home.fallbackCta")}
               <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
             </Link>
             <Link
               to="/shop"
-              className="inline-flex items-center gap-2 rounded-full border border-background/30 px-6 py-3 text-sm font-medium text-background transition-colors hover:bg-background/10"
+              className="inline-flex items-center gap-2 rounded-full border border-white/30 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-white/10"
             >
               {t("home.heroCtaAlt")}
             </Link>

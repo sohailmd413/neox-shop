@@ -48,7 +48,7 @@ export default function StorefrontLayout() {
         </div>
       </div>
 
-      <footer className="border-t border-border bg-background">
+      <footer className="bg-brand-navy text-slate-300">
         <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8">
           {/* Footer banner slot (live Poster; renders nothing when absent) */}
           <PosterBanner page="home" zone="footer" className="mb-10 aspect-[8/1] overflow-hidden rounded-2xl" />
@@ -56,15 +56,17 @@ export default function StorefrontLayout() {
             <div>
               <Link to="/" className="flex items-center gap-2">
                 {store.logo_url ? (
-                  <Image src={store.logo_url} alt={store.store_name || "Store"} fittingType="fit" className="h-8 w-auto max-w-[140px]" />
+                  <span className="inline-flex rounded-lg bg-white/95 px-2 py-1">
+                    <Image src={store.logo_url} alt={store.store_name || "NeoX Shop"} fittingType="fit" className="h-7 w-auto max-w-[130px]" />
+                  </span>
                 ) : (
-                  <span className="text-lg font-bold tracking-tight">{store.store_name || "MarketFlow"}</span>
+                  <span className="text-lg font-bold tracking-tight text-white">{store.store_name || "NeoX Shop"}</span>
                 )}
               </Link>
-              <p className="mt-3 max-w-xs text-sm text-muted-foreground">
+              <p className="mt-3 max-w-xs text-sm text-slate-400">
                 {t("footer.tagline")}
               </p>
-              <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+              <div className="mt-3 space-y-1 text-xs text-slate-400">
                 {store.contact_email && (
                   <p><span dir="ltr" style={{ unicodeBidi: "isolate" }}>{store.contact_email}</span></p>
                 )}
@@ -80,48 +82,48 @@ export default function StorefrontLayout() {
               </div>
             </div>
             <div>
-              <h4 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              <h4 className="text-xs font-medium uppercase tracking-[0.14em] text-slate-200">
                 {t("footer.shop")}
               </h4>
               <ul className="mt-3 space-y-2 text-sm">
-                <li><Link to="/shop" className="hover:underline">{t("footer.allProducts")}</Link></li>
-                <li><Link to="/shop?sort=newest" className="hover:underline">{t("footer.newArrivals")}</Link></li>
-                <li><Link to="/shop?filter=sale" className="hover:underline">{t("footer.sale")}</Link></li>
+                <li><Link to="/shop" className="text-slate-300 hover:text-white hover:underline">{t("footer.allProducts")}</Link></li>
+                <li><Link to="/shop?sort=newest" className="text-slate-300 hover:text-white hover:underline">{t("footer.newArrivals")}</Link></li>
+                <li><Link to="/shop?filter=sale" className="text-slate-300 hover:text-white hover:underline">{t("footer.sale")}</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              <h4 className="text-xs font-medium uppercase tracking-[0.14em] text-slate-200">
                 {t("footer.support")}
               </h4>
-              <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              <ul className="mt-3 space-y-2 text-sm text-slate-400">
                 <li>{t("footer.shipping")}</li>
                 <li>{t("footer.contact")}</li>
                 <li>{t("footer.faq")}</li>
-                <li className="pt-1"><Link to="/policies/terms" className="hover:text-foreground hover:underline">Terms of Service</Link></li>
-                <li><Link to="/policies/privacy" className="hover:text-foreground hover:underline">Privacy Policy</Link></li>
-                <li><Link to="/policies/return" className="hover:text-foreground hover:underline">Return Policy</Link></li>
-                <li><Link to="/policies/shipping" className="hover:text-foreground hover:underline">Shipping Policy</Link></li>
+                <li className="pt-1"><Link to="/policies/terms" className="hover:text-white hover:underline">Terms of Service</Link></li>
+                <li><Link to="/policies/privacy" className="hover:text-white hover:underline">Privacy Policy</Link></li>
+                <li><Link to="/policies/return" className="hover:text-white hover:underline">Return Policy</Link></li>
+                <li><Link to="/policies/shipping" className="hover:text-white hover:underline">Shipping Policy</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+              <h4 className="text-xs font-medium uppercase tracking-[0.14em] text-slate-200">
                 {t("footer.newsletter")}
               </h4>
-              <p className="mt-3 text-sm text-muted-foreground">
+              <p className="mt-3 text-sm text-slate-400">
                 {t("footer.newsletterText")}
               </p>
               <form className="mt-3 flex gap-2" onSubmit={(e) => e.preventDefault()}>
                 <input
                   placeholder={t("footer.emailPlaceholder")}
-                  className="h-9 flex-1 rounded-full border border-border bg-background px-3 text-sm outline-none focus:border-foreground/40"
+                  className="h-9 flex-1 rounded-full border border-white/15 bg-white/10 px-3 text-sm text-white outline-none placeholder:text-slate-400 focus:border-white/40"
                 />
-                <button className="rounded-full bg-foreground px-4 text-sm font-medium text-background transition-opacity hover:opacity-90">
+                <button className="rounded-full bg-brand-gradient px-4 text-sm font-semibold text-white transition-opacity hover:opacity-90">
                   {t("footer.join")}
                 </button>
               </form>
             </div>
           </div>
-          <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 text-xs text-muted-foreground sm:flex-row">
+          <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-slate-400 sm:flex-row">
             <p>{t("footer.rights")}</p>
             <p>{t("footer.crafted")}</p>
           </div>
