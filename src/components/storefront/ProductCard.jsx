@@ -124,10 +124,10 @@ export default function ProductCard({ product, index = 0 }) {
           )}
           <h3 className="line-clamp-2 text-sm font-medium leading-snug text-foreground">{display}</h3>
           {shortDesc && <p className="line-clamp-1 text-xs text-muted-foreground">{shortDesc}</p>}
-          {product.rating > 0 && (
+          {Number(product.rating) > 0 && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-              <span className="font-medium text-foreground">{product.rating.toFixed(1)}</span>
+              <span className="font-medium text-foreground">{Number(product.rating).toFixed(1)}</span>
               <span>({product.num_reviews || 0})</span>
             </div>
           )}
