@@ -119,7 +119,7 @@ export default function MobileMenuDrawer({
             </div>
           ) : (
             <div className="mb-3 space-y-2 rounded-xl border border-border bg-muted/30 p-3">
-              <Link to="/login" onClick={close} className="block w-full rounded-lg bg-foreground px-4 py-2.5 text-center text-sm font-medium text-background">
+              <Link to="/login" onClick={close} className="block w-full rounded-lg bg-deal px-4 py-2.5 text-center text-sm font-semibold text-deal-foreground">
                 {t("nav.signIn")}
               </Link>
               <Link to="/register" onClick={close} className="block w-full rounded-lg border border-border px-4 py-2.5 text-center text-sm font-medium text-foreground">
