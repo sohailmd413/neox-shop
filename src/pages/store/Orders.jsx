@@ -8,6 +8,7 @@ import { Image } from "@/components/ui/image";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState } from "@/components/shared/StateViews";
 import { motionPresets } from "@/lib/motion";
+import BackBar from "@/components/storefront/BackBar";
 
 const STATUS_STEPS = [
   { key: "pending", label: "Placed", icon: Clock },
@@ -45,6 +46,9 @@ export default function Orders() {
 
   return (
     <div className="pt-16">
+      <div className="mx-auto max-w-7xl px-5 pt-5 sm:px-8">
+        <BackBar fallbackTo="/" fallbackLabel="Home" />
+      </div>
       <div className="border-b border-border">
         <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">My orders</h1>

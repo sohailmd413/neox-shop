@@ -10,6 +10,7 @@ import { Image } from "@/components/ui/image";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, CardGridSkeleton } from "@/components/shared/StateViews";
 import { motionPresets } from "@/lib/motion";
+import BackBar from "@/components/storefront/BackBar";
 
 export default function Wishlist() {
   const { ids, removeItem } = useWishlist();
@@ -44,6 +45,9 @@ export default function Wishlist() {
 
   return (
     <div className="pt-16">
+      <div className="mx-auto max-w-7xl px-5 pt-5 sm:px-8">
+        <BackBar fallbackTo="/" fallbackLabel="Home" />
+      </div>
       <div className="border-b border-border">
         <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Wishlist</h1>

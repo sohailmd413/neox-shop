@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { getStoreSetting } from "@/lib/settings";
 import { useLanguage } from "@/lib/i18n";
+import BackBar from "@/components/storefront/BackBar";
 
 // Policy pages use the language the storefront is in: the page title and the
 // rich-text body both pull the `_ar` variant when Arabic is selected, falling
@@ -31,9 +32,7 @@ export default function PolicyPage() {
   return (
     <div className="pt-16" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className="mx-auto max-w-3xl px-5 py-12 sm:px-8">
-        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
-          <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" /> {t("policy.back")}
-        </Link>
+        <BackBar fallbackTo="/" fallbackLabel={t("back.home")} />
         <h1 className="mt-6 text-3xl font-semibold tracking-tight">{title}</h1>
         {loading ? (
           <div className="mt-10 h-4 w-24 animate-pulse rounded bg-muted" />

@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { useSearchParams, useLocation, useNavigationType } from "react-router-dom";
 import { motion } from "framer-motion";
 import { SlidersHorizontal, X, Search } from "lucide-react";
 import { base44 } from "@/api/base44Client";
@@ -15,6 +15,8 @@ import { EmptyState, ErrorState } from "@/components/shared/StateViews";
 import SearchBar from "@/components/storefront/SearchBar";
 import { motionPresets } from "@/lib/motion";
 import { onSaleProducts, newArrivals, bestSellers, maxDiscountPct } from "@/lib/merchandising";
+import BackBar from "@/components/storefront/BackBar";
+import { saveScroll, readScroll } from "@/lib/backNav";
 
 const SORT_KEYS = ["featured", "newest", "discount", "price-asc", "price-desc", "rating", "best"];
 
@@ -135,6 +137,34 @@ export default function Catalog() {
 
   useEffect(() => { loadProducts(); }, [loadProducts]);
 
+  // Preserve scroll position across product detail round-trips. We snapshot
+  // the live scroll offset continuously and persist it on unmount keyed by the
+  // full URL (so each filtered/sorted variant keeps its own spot); on a back
+  // navigation (POP) we restore it once the grid has rendered.
+  const location = useLocation();
+  const navType = useNavigationType();
+  const scrollKey = location.pathname + location.search;
+  const scrollRef = useRef(0);
+
+  useEffect(() => {
+    const onScroll = () => { scrollRef.current = window.scrollY; };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      saveScroll(scrollKey, scrollRef.current);
+    };
+  }, [scrollKey]);
+
+  useEffect(() => {
+    if (loading || navType !== "POP") return;
+    const y = readScroll(scrollKey);
+    if (y != null && y > 0) {
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => window.scrollTo({ top: y, left: 0, behavior: "instant" }))
+      );
+    }
+  }, [loading, navType, scrollKey]);
+
   const updateParam = (key, value) => {
     const next = new URLSearchParams(searchParams);
     if (value) next.set(key, value);
@@ -191,6 +221,14 @@ export default function Catalog() {
 
   return (
     <div className="pt-16 md:pt-24">
+      {/* Context-aware back to where the customer came from, only on curated /
+        filtered / search views (the plain all-products catalog is a top-level
+        destination, so a back button there would be redundant with the nav). */}
+      {(view || category || q) && (
+        <div className="mx-auto max-w-7xl px-5 pt-5 sm:px-8">
+          <BackBar fallbackTo="/" fallbackLabel={t("back.home")} />
+        </div>
+      )}
       {/* Header */}
       <div className="border-b border-border relative">
         {accent && <div className="absolute inset-x-0 top-0 h-1 bg-deal" />}

@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useStoreSetting } from "@/lib/useStoreSetting";
 import { computeTax, computeShipping, PAYMENT_LABELS } from "@/lib/settings";
 import { useLanguage } from "@/lib/i18n";
+import BackBar from "@/components/storefront/BackBar";
 
 const PAYMENT_ICONS = {
   card: "💳",
@@ -215,9 +216,7 @@ export default function Checkout() {
   return (
     <div className="pt-16">
       <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
-        <Link to="/shop" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> {t("checkout.continueShopping")}
-        </Link>
+        <BackBar fallbackTo="/shop" fallbackLabel={t("back.shop")} />
         <h1 className="mt-4 text-3xl font-semibold tracking-tight">{t("checkout.title")}</h1>
 
         <form onSubmit={placeOrder} className="mt-8 grid gap-10 lg:grid-cols-[1fr_400px]">

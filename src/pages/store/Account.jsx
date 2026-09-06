@@ -12,6 +12,7 @@ import OrdersSection from "@/components/storefront/account/OrdersSection";
 import WishlistSection from "@/components/storefront/account/WishlistSection";
 import NotificationsSection from "@/components/storefront/account/NotificationsSection";
 import SecuritySection from "@/components/storefront/account/SecuritySection";
+import BackBar from "@/components/storefront/BackBar";
 
 export default function Account() {
   const [user, setUser] = useState(null);
@@ -50,6 +51,9 @@ export default function Account() {
 
   return (
     <div className="pt-16">
+      <div className="mx-auto max-w-7xl px-5 pt-5 sm:px-8">
+        <BackBar fallbackTo="/" fallbackLabel="Home" />
+      </div>
       <div className="border-b border-border">
         <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
           <div className="flex items-center gap-4">
