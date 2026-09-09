@@ -85,7 +85,7 @@ export default function SearchBar({ placeholder }) {
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => setFocused(true)}
             placeholder={ph}
-            className="h-11 w-full rounded-full border border-border bg-background/80 pl-10 pr-10 text-sm outline-none transition-all focus:border-foreground/40 focus:ring-2 focus:ring-ring/30"
+            className="h-11 w-full rounded-full border border-transparent bg-muted/70 pl-10 pr-10 text-sm outline-none transition-all placeholder:text-muted-foreground/70 focus:border-ring focus:bg-background focus:ring-4 focus:ring-ring/25"
           />
           {query && (
             <button

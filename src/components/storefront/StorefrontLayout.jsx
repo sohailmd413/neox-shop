@@ -1,7 +1,7 @@
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import { Truck, RotateCcw, ShieldCheck, ShoppingBag } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import Navbar from "./Navbar";
 import CartDrawer from "./CartDrawer";
 import { CartFlyoutProvider } from "@/components/storefront/cart/CartFlyoutContext";
@@ -11,12 +11,6 @@ import BackNavTracker from "@/components/storefront/BackNavTracker";
 import { useLanguage } from "@/lib/i18n";
 import { useStoreSetting } from "@/lib/useStoreSetting";
 import { Image } from "@/components/ui/image";
-
-const TRUST = [
-  { key: "trust.freeDelivery", icon: Truck },
-  { key: "trust.returns", icon: RotateCcw },
-  { key: "trust.secure", icon: ShieldCheck },
-];
 
 export default function StorefrontLayout() {
   const { t, lang } = useLanguage();
@@ -37,18 +31,6 @@ export default function StorefrontLayout() {
           </PageTransition>
         </AnimatePresence>
       </main>
-
-      {/* Trust signals strip */}
-      <div className="border-y border-border bg-muted/30">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-10 gap-y-3 px-5 py-5 sm:px-8">
-          {TRUST.map(({ key, icon: Icon }) => (
-            <span key={key} className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <Icon className="h-5 w-5 text-primary" />
-              {t(key)}
-            </span>
-          ))}
-        </div>
-      </div>
 
       <footer className="bg-brand-navy text-slate-300">
         <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8">

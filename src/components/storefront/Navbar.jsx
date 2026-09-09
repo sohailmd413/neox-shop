@@ -148,14 +148,14 @@ export default function Navbar() {
     <header
       className={`fixed inset-x-0 top-0 z-40 transition-all duration-300 ${
         scrolled
-          ? "border-b border-border/60 bg-background/90 backdrop-blur-xl shadow-[0_2px_30px_-18px_rgba(0,0,0,0.25)]"
-          : "border-b border-border bg-background"
+          ? "border-b border-border/60 bg-background/85 backdrop-blur-xl shadow-[0_2px_30px_-18px_rgba(0,0,0,0.28)]"
+          : "border-b border-border bg-background shadow-[0_1px_0_rgba(0,0,0,0.04)]"
       }`}
     >
       {/* Tier 1 — utility bar.
           Mobile: [☰][avatar] … [Logo] … [♡][🛒]  — justify-between centers the logo.
           Desktop: [Logo] [search centered] [cluster] — left cluster is hidden. */}
-      <nav className={`mx-auto flex items-center justify-between gap-2 px-4 transition-all duration-300 sm:gap-3 sm:px-6 ${scrolled ? "h-12" : "h-14"}`}>
+      <nav className={`mx-auto flex items-center justify-between gap-2 px-4 transition-all duration-300 sm:gap-3 sm:px-6 ${scrolled ? "h-14" : "h-16"}`}>
         {/* Left cluster — mobile only: hamburger + profile indicator */}
         <div className="flex shrink-0 items-center gap-1 md:hidden">
           <button onClick={() => setMobileOpen((v) => !v)} className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted" aria-label={t("nav.menu")}>
@@ -178,9 +178,9 @@ export default function Navbar() {
 
         <Link to="/" className="flex shrink-0 items-center gap-2">
           {store.logo_url ? (
-            <img src={store.logo_url} alt={store.store_name || "NeoX Shop"} className="h-10 w-auto max-w-[180px] object-contain" />
+            <img src={store.logo_url} alt={store.store_name || "NeoX Shop"} className="h-12 w-auto max-w-[200px] object-contain" />
           ) : (
-            <span className="text-lg font-bold tracking-tight">{store.store_name || "NeoX Shop"}</span>
+            <span className="text-xl font-extrabold tracking-tight">{store.store_name || "NeoX Shop"}</span>
           )}
         </Link>
 
@@ -248,11 +248,11 @@ export default function Navbar() {
 
       {/* Tier 2 — category navigation bar (desktop only; mobile uses the menu) */}
       <div className="hidden border-t border-border bg-muted/30 md:block">
-        <div className="mx-auto flex h-10 max-w-7xl items-center gap-3 px-4 sm:px-6">
+        <div className="mx-auto flex h-12 max-w-7xl items-center gap-3 px-4 sm:px-6">
           <button
             data-mega-toggle
             onClick={() => setMegaOpen((v) => !v)}
-            className="flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-semibold text-foreground shadow-sm transition-all hover:border-foreground/20 hover:shadow"
             aria-expanded={megaOpen}
           >
             <LayoutGrid className="h-4 w-4" />
@@ -261,7 +261,7 @@ export default function Navbar() {
           </button>
 
           {quickItems.length > 0 && (
-            <div className="flex shrink-0 items-center gap-2.5">
+            <div className="flex shrink-0 items-center gap-1 rounded-full bg-deal/10 px-2.5 py-1">
               {quickItems.map((item, idx) => <NavLink key={item.id || idx} item={item} catMap={catMap} lang={lang} />)}
             </div>
           )}
