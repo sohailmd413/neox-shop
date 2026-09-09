@@ -3,13 +3,14 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, Pencil, Trash2, Copy, Search, Image as ImageIcon, GripVertical } from "lucide-react";
+import { Plus, Pencil, Trash2, Copy, Search, Image as ImageIcon, GripVertical, Eye } from "lucide-react";
 import Dropdown from "@/components/admin/ui/Dropdown";
 import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
 import { showUndoToast } from "@/components/admin/ui/UndoToast";
 import PosterAnalytics from "@/components/admin/posters/PosterAnalytics";
 import PosterForm from "@/components/admin/posters/PosterForm";
 import SlotReorder from "@/components/admin/posters/SlotReorder";
+import PosterPreviewAll from "@/components/admin/posters/PosterPreviewAll";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/shared/StateViews";
 import {
   PAGES, DEVICES, optionsOf, statusOf, placementLabel, ctr, fmtDate, pageLabel,
@@ -41,6 +42,7 @@ export default function AdminPosters() {
   const [confirm, setConfirm] = useState(null);
   const [fDevice, setFDevice] = useState("");
   const [arrange, setArrange] = useState(false);
+  const [preview, setPreview] = useState(false);
   const { toast } = useToast();
 
   const load = async () => {
@@ -206,15 +208,26 @@ export default function AdminPosters() {
           <p className="text-sm text-muted-foreground">Upload banners, add animated taglines, and choose exact placements.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant={arrange ? "default" : "outline"} onClick={() => setArrange((v) => !v)}>
+          <Button variant={preview ? "default" : "outline"} onClick={() => setPreview((v) => !v)}>
+            <Eye className="h-4 w-4" /> {preview ? "Exit preview" : "Preview all"}
+          </Button>
+          <Button variant={arrange ? "default" : "outline"} onClick={() => setArrange((v) => !v)} className={preview ? "hidden" : ""}>
             <GripVertical className="h-4 w-4" /> {arrange ? "Exit arrange" : "Arrange by slot"}
           </Button>
-          <Button onClick={() => setEditing("new")}>
+          <Button onClick={() => setEditing("new")} className={preview ? "hidden" : ""}>
             <Plus className="h-4 w-4" /> New banner
           </Button>
         </div>
       </div>
 
+      {preview ? (
+        <PosterPreviewAll
+          posters={posters}
+          onEdit={(p) => { setPreview(false); setEditing(p); }}
+          onBack={() => setPreview(false)}
+        />
+      ) : (
+      <>
       <PosterAnalytics posters={posters} />
 
       {arrange && <SlotReorder posters={posters} onSaved={load} />}
@@ -337,6 +350,8 @@ export default function AdminPosters() {
         </div>
       )}
       </>)}
+      </>
+      )}
 
       {editing && (
         <PosterForm
