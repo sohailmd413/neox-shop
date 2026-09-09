@@ -1,16 +1,15 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProductCard from "@/components/storefront/ProductCard";
 import SectionShell from "@/components/storefront/SectionShell";
 import SectionHeader from "@/components/storefront/SectionHeader";
-import { useResponsiveColumns } from "@/hooks/useResponsiveColumns";
 
-// Horizontal snap-scrolling product carousel for home rows. Cards use
-// shrink-0 + an explicit min-width floor + flex-nowrap + a fixed 16px gap so
-// they never compress or overlap (the earlier collision bug). Optional
-// `treatments` (rank/tag/soldCount/variant per product), a header `icon`, and
-// an inline `promo` tile inserted every `promoEvery` cards break the monotony
-// of repeated identical grids.
+// Horizontal product carousel. Cards use shrink-0 + an explicit min-width
+// floor + flex-nowrap + a fixed 16px gap so they never compress or overlap.
+// Arrow visibility is driven by REAL overflow (scrollWidth > clientWidth) via
+// a ResizeObserver — not a count heuristic, which hid the arrows exactly when
+// the row still overflowed (count ≤ cols but width didn't fit), leaving the
+// last cards clipped and unscrollable with a mouse.
 export default function ProductRow({
   title,
   subtitle,
@@ -23,8 +22,30 @@ export default function ProductRow({
   promo,
 }) {
   const scroller = useRef(null);
-  const cols = useResponsiveColumns();
-  const showArrows = products.length > cols;
+  const [canScroll, setCanScroll] = useState(false);
+
+  const measure = () => {
+    const el = scroller.current;
+    if (!el) return;
+    setCanScroll(el.scrollWidth - el.clientWidth > 2);
+  };
+
+  useEffect(() => {
+    measure();
+    const el = scroller.current;
+    if (!el) return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener("resize", measure);
+    // Re-measure once images settle (heights can shift the layout).
+    const t = setTimeout(measure, 500);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+      clearTimeout(t);
+    };
+  }, [products.length]);
+
   const scroll = (dir) => {
     const el = scroller.current;
     if (!el) return;
@@ -46,7 +67,7 @@ export default function ProductRow({
       <SectionHeader title={title} subtitle={subtitle} to={to} viewAllLabel={viewAllLabel} icon={icon} />
 
       <div className="relative">
-        {showArrows && (
+        {canScroll && (
           <>
             <button
               onClick={() => scroll(-1)}
