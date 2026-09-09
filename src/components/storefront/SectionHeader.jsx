@@ -13,6 +13,7 @@ export default function SectionHeader({
   viewAllLabel = "See all",
   tone = "default",
   className = "",
+  icon: Icon,
 }) {
   const dark = tone === "dark";
   const titleColor = dark ? "text-white" : "text-foreground";
@@ -26,9 +27,16 @@ export default function SectionHeader({
             {kicker}
           </p>
         )}
-        <h2 className={`font-headline text-3xl leading-[1.05] tracking-tight sm:text-4xl lg:text-5xl ${titleColor}`}>
-          {title}
-        </h2>
+        <div className="flex items-center gap-3">
+          {Icon && (
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-deal/10 text-deal">
+              <Icon className="h-5 w-5" />
+            </span>
+          )}
+          <h2 className={`font-headline text-3xl leading-[1.05] tracking-tight sm:text-4xl lg:text-5xl ${titleColor}`}>
+            {title}
+          </h2>
+        </div>
         {subtitle && <p className={`mt-2 text-sm ${subColor}`}>{subtitle}</p>}
       </div>
       {to && (

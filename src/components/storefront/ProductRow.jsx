@@ -1,16 +1,27 @@
 import React, { useRef } from "react";
-import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProductCard from "@/components/storefront/ProductCard";
 import SectionShell from "@/components/storefront/SectionShell";
 import SectionHeader from "@/components/storefront/SectionHeader";
 import { useResponsiveColumns } from "@/hooks/useResponsiveColumns";
 
-// Horizontal snap-scrolling product carousel for home rows. Built from shared
-// SectionShell + SectionHeader (consistent spacing + hierarchy) instead of a
-// one-off header. Scroll arrows are only rendered when the row actually
-// overflows (products > visible columns) via useResponsiveColumns.
-export default function ProductRow({ title, subtitle, to, viewAllLabel = "See all", products = [] }) {
+// Horizontal snap-scrolling product carousel for home rows. Cards use
+// shrink-0 + an explicit min-width floor + flex-nowrap + a fixed 16px gap so
+// they never compress or overlap (the earlier collision bug). Optional
+// `treatments` (rank/tag/soldCount/variant per product), a header `icon`, and
+// an inline `promo` tile inserted every `promoEvery` cards break the monotony
+// of repeated identical grids.
+export default function ProductRow({
+  title,
+  subtitle,
+  to,
+  viewAllLabel = "See all",
+  products = [],
+  icon,
+  treatments = [],
+  promoEvery = 0,
+  promo,
+}) {
   const scroller = useRef(null);
   const cols = useResponsiveColumns();
   const showArrows = products.length > cols;
@@ -19,10 +30,20 @@ export default function ProductRow({ title, subtitle, to, viewAllLabel = "See al
     if (!el) return;
     el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: "smooth" });
   };
+  const tr = (i) => treatments[i] || {};
+
+  // Insert the promo tile every `promoEvery` products (never first or last).
+  const items = [];
+  products.forEach((p, i) => {
+    items.push({ type: "product", product: p, i });
+    if (promoEvery > 0 && promo && i > 0 && (i + 1) % promoEvery === 0 && i < products.length - 1) {
+      items.push({ type: "promo", i });
+    }
+  });
 
   return (
     <SectionShell>
-      <SectionHeader title={title} subtitle={subtitle} to={to} viewAllLabel={viewAllLabel} />
+      <SectionHeader title={title} subtitle={subtitle} to={to} viewAllLabel={viewAllLabel} icon={icon} />
 
       <div className="relative">
         {showArrows && (
@@ -46,11 +67,18 @@ export default function ProductRow({ title, subtitle, to, viewAllLabel = "See al
 
         <div
           ref={scroller}
-          className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex flex-nowrap gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {products.map((p, i) => (
-            <div key={p.id} className="w-[46%] shrink-0 sm:w-[31%] md:w-[23%] lg:w-[18%] xl:w-[16%]">
-              <ProductCard product={p} index={i} />
+          {items.map((it) => (
+            <div
+              key={it.type === "product" ? it.product.id : `promo-${it.i}`}
+              className="w-[46%] min-w-[150px] shrink-0 sm:w-[31%] md:w-[23%] lg:w-[18%] xl:w-[16%]"
+            >
+              {it.type === "product" ? (
+                <ProductCard product={it.product} index={it.i} {...tr(it.i)} />
+              ) : (
+                promo
+              )}
             </div>
           ))}
         </div>

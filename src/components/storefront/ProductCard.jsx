@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { ShoppingBag, Star, Heart, Check } from "lucide-react";
+import { ShoppingBag, Star, Heart, Check, Sparkles, Flame } from "lucide-react";
 import { formatPrice, lf } from "@/lib/format";
 import ProductImage from "@/components/storefront/ProductImage";
 import { useLanguage } from "@/lib/i18n";
@@ -15,7 +15,7 @@ import SaleCountdown from "@/components/admin/SaleCountdown";
 // name → price stacked cleanly. On hover, a second product image
 // cross-fades in (if available) and an "Add to cart" bar slides up. Badges
 // are small and refined. All cart/wishlist behaviour is in shared hooks.
-function ProductCardBase({ product, index = 0 }) {
+function ProductCardBase({ product, index = 0, rank = null, tag = null, soldCount = 0, variant = "default" }) {
   const { lang, t } = useLanguage();
   const reduce = useReducedMotion();
   const { wished, toggle: toggleWish } = useWishlistToggle(product.id);
@@ -27,6 +27,14 @@ function ProductCardBase({ product, index = 0 }) {
   const shortDesc = lf(product, "short_description", lang);
   const lowStock = !outOfStock && product.stock > 0 && product.stock <= 5;
   const hasSecond = product.images?.length > 1;
+  const youSave = onSale ? product.compare_at_price - product.price : 0;
+  const TAG_STYLES = {
+    best: { en: "Best Seller", ar: "الأكثر مبيعًا", cls: "bg-amber-500 text-white" },
+    new: { en: "New", ar: "جديد", cls: "bg-deal text-white" },
+    limited: { en: "Limited Stock", ar: "كمية محدودة", cls: "bg-red-500 text-white" },
+  };
+  const tagStyle = tag ? TAG_STYLES[tag] : null;
+  const tagLabel = tagStyle ? (lang === "ar" ? tagStyle.ar : tagStyle.en) : "";
 
   return (
     <motion.div
@@ -57,15 +65,29 @@ function ProductCardBase({ product, index = 0 }) {
             />
           )}
 
-          {/* Refined minimal badges */}
-          {onSale && (
-            <span className="absolute left-2 top-2 rounded-full bg-deal/10 px-2 py-0.5 text-[10px] font-semibold text-deal backdrop-blur-sm">
-              −{salePct}%
-            </span>
-          )}
-          {outOfStock && (
-            <span className="absolute left-2 top-2 rounded-full bg-foreground/70 px-2 py-0.5 text-[10px] font-semibold text-background backdrop-blur-sm">
-              Sold out
+          {variant === "new" && <span className="absolute inset-x-0 top-0 z-10 h-1 bg-deal" aria-hidden />}
+          {/* Left badge stack: sale % / sold out / rank */}
+          <div className="absolute left-2 top-2 z-10 flex flex-col items-start gap-1">
+            {onSale && (
+              <span className="rounded-full bg-deal/10 px-2 py-0.5 text-[10px] font-semibold text-deal backdrop-blur-sm">
+                −{salePct}%
+              </span>
+            )}
+            {outOfStock && (
+              <span className="rounded-full bg-foreground/70 px-2 py-0.5 text-[10px] font-semibold text-background backdrop-blur-sm">
+                Sold out
+              </span>
+            )}
+            {rank && (
+              <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-brand-navy px-1.5 text-[11px] font-bold text-white shadow-sm">
+                #{rank}
+              </span>
+            )}
+          </div>
+          {/* Right tag under wishlist */}
+          {tagStyle && (
+            <span className={`absolute right-2 top-12 z-10 rounded-full px-2 py-0.5 text-[10px] font-semibold shadow-sm ${tagStyle.cls}`}>
+              {tagLabel}
             </span>
           )}
 
@@ -117,6 +139,11 @@ function ProductCardBase({ product, index = 0 }) {
         </div>
 
         <div className="mt-3 space-y-1">
+          {variant === "new" && (
+            <p className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-deal">
+              <Sparkles className="h-3 w-3" /> {lang === "ar" ? "أُضيف حديثًا" : "Just added"}
+            </p>
+          )}
           {product.brand && (
             <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               {product.brand}
@@ -140,6 +167,11 @@ function ProductCardBase({ product, index = 0 }) {
                 {formatPrice(product.compare_at_price)}
               </span>
             )}
+            {onSale && youSave > 0 && !outOfStock && (
+              <span className="text-[11px] font-semibold text-deal">
+                {lang === "ar" ? "وفّر" : "Save"} {formatPrice(youSave)}
+              </span>
+            )}
           </div>
           {product.compare_at_price && product.compare_at_price > product.price && product.sale_ends_at && !outOfStock && (
             <SaleCountdown endsAt={product.sale_ends_at} />
@@ -148,6 +180,12 @@ function ProductCardBase({ product, index = 0 }) {
             <p className={`flex items-center gap-1 text-[11px] ${lowStock ? "text-amber-600" : "text-emerald-600"}`}>
               <span className={`inline-block h-1.5 w-1.5 rounded-full ${lowStock ? "bg-amber-500" : "bg-emerald-500"}`} />
               {lowStock ? t("card.lowStock") : t("card.inStock")}
+            </p>
+          )}
+          {soldCount > 0 && (
+            <p className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+              <Flame className="h-3 w-3 text-amber-500" />
+              {soldCount} {lang === "ar" ? "بيعت هذا الأسبوع" : "sold this week"}
             </p>
           )}
         </div>
