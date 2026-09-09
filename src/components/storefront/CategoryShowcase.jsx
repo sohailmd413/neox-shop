@@ -5,13 +5,27 @@ import { Image } from "@/components/ui/image";
 import { lf } from "@/lib/format";
 import SectionShell from "@/components/storefront/SectionShell";
 import SectionHeader from "@/components/storefront/SectionHeader";
+import BannerCarousel from "@/components/storefront/BannerCarousel";
+import { useActiveBanners } from "@/hooks/useActiveBanners";
 
 // Asymmetric, portrait category showcase (Zara/Noon-style): the first
 // category is a large featured tile spanning 2 columns + 2 rows; the rest are
 // single-column portrait tiles. Each tile darkens on hover and reveals a
-// "Shop now →" micro-link. Image scales subtly. White background section.
+// "Shop now →" micro-link. When an admin uploads multiple Posters for a
+// category (page=category, zone=grid_interstitial, category_ref=<id>) the tile
+// auto-rotates between them via the shared BannerCarousel; otherwise it shows
+// the category's single image_url. White background section.
 export default function CategoryShowcase({ categories, lang, t, to = "/shop" }) {
   const tops = categories.slice(0, 5);
+  const { live } = useActiveBanners("category", "grid_interstitial");
+
+  // Group live category-grid banners by their target category.
+  const byCat = {};
+  (live || []).forEach((p) => {
+    if (!p.category_ref) return;
+    (byCat[p.category_ref] ||= []).push(p);
+  });
+
   if (tops.length === 0) return null;
 
   return (
@@ -24,6 +38,7 @@ export default function CategoryShowcase({ categories, lang, t, to = "/shop" }) 
             category={cat}
             lang={lang}
             featured={i === 0}
+            banners={byCat[cat.id] || []}
           />
         ))}
       </div>
@@ -31,7 +46,7 @@ export default function CategoryShowcase({ categories, lang, t, to = "/shop" }) 
   );
 }
 
-function CategoryTile({ category, lang, featured }) {
+function CategoryTile({ category, lang, featured, banners = [] }) {
   const name = lf(category, "name", lang);
   return (
     <Link
@@ -40,16 +55,32 @@ function CategoryTile({ category, lang, featured }) {
         featured ? "col-span-2 aspect-[16/10] lg:row-span-2 lg:aspect-auto lg:h-full" : "aspect-[4/5] lg:aspect-auto lg:h-full"
       }`}
     >
-      {category.image_url ? (
-        <Image
-          src={category.image_url}
-          alt={category.name}
-          fittingType="fill"
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-        />
-      ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-navy to-brand-blue" />
-      )}
+      <div className="absolute inset-0">
+        {banners.length > 0 ? (
+          <BannerCarousel
+            banners={banners}
+            className="h-full w-full"
+            controls="none"
+            renderSlide={(b) => (
+              <Image
+                src={b.image_url}
+                alt={category.name}
+                fittingType="fill"
+                className="h-full w-full object-cover"
+              />
+            )}
+          />
+        ) : category.image_url ? (
+          <Image
+            src={category.image_url}
+            alt={category.name}
+            fittingType="fill"
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-brand-navy to-brand-blue" />
+        )}
+      </div>
       {/* Scrim — darkens further on hover */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent transition-colors duration-300 group-hover:from-black/80 group-hover:via-black/30" />
       <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
