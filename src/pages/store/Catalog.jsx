@@ -13,9 +13,9 @@ import SortDropdown from "@/components/storefront/SortDropdown";
 import CategorySidebarFilter from "@/components/storefront/CategorySidebarFilter";
 import { EmptyState, ErrorState } from "@/components/shared/StateViews";
 import SearchBar from "@/components/storefront/SearchBar";
-import { motionPresets } from "@/lib/motion";
 import { onSaleProducts, newArrivals, bestSellers, maxDiscountPct } from "@/lib/merchandising";
 import BackBar from "@/components/storefront/BackBar";
+import PageHeader from "@/components/storefront/PageHeader";
 import { saveScroll, readScroll } from "@/lib/backNav";
 
 const SORT_KEYS = ["featured", "newest", "discount", "price-asc", "price-desc", "rating", "best"];
@@ -230,22 +230,16 @@ export default function Catalog() {
         </div>
       )}
       {/* Header */}
-      <div className="border-b border-border relative">
-        {accent && <div className="absolute inset-x-0 top-0 h-1 bg-deal" />}
-        <div className="mf-hero-mesh pointer-events-none absolute inset-0 opacity-40" aria-hidden />
-        <div className="relative mx-auto max-w-7xl px-5 py-10 sm:px-8">
-          <motion.h1 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={motionPresets.fade} className={`text-2xl font-bold tracking-tight sm:text-3xl ${accent ? "text-deal" : ""}`}>
-            {title}
-          </motion.h1>
-          {subtitle && <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>}
-          <p className="mt-2 text-sm text-muted-foreground">
-            {loading ? t("catalog.loading") : `${products?.length || 0} ${products?.length === 1 ? t("catalog.item") : t("catalog.items")}`}
-          </p>
-          <div className="mt-5 max-w-md">
-            <SearchBar />
-          </div>
+      <PageHeader
+        title={title}
+        subtitle={subtitle}
+        accent={accent}
+        meta={loading ? t("catalog.loading") : `${products?.length || 0} ${products?.length === 1 ? t("catalog.item") : t("catalog.items")}`}
+      >
+        <div className="mt-5 max-w-md">
+          <SearchBar />
         </div>
-      </div>
+      </PageHeader>
 
       <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
         <div className="flex flex-col gap-6 lg:flex-row">

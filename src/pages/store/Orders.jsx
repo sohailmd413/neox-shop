@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState } from "@/components/shared/StateViews";
 import { motionPresets } from "@/lib/motion";
 import BackBar from "@/components/storefront/BackBar";
+import PageHeader from "@/components/storefront/PageHeader";
 
 const STATUS_STEPS = [
   { key: "pending", label: "Placed", icon: Clock },
@@ -45,16 +46,11 @@ export default function Orders() {
   const stepIndex = (status) => STATUS_STEPS.findIndex((s) => s.key === status);
 
   return (
-    <div className="pt-16">
+    <div className="pt-16 md:pt-24">
       <div className="mx-auto max-w-7xl px-5 pt-5 sm:px-8">
         <BackBar fallbackTo="/" fallbackLabel="Home" />
       </div>
-      <div className="border-b border-border">
-        <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">My orders</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Track and review your purchases.</p>
-        </div>
-      </div>
+      <PageHeader title="My orders" subtitle="Track and review your purchases." />
 
       <div className="mx-auto max-w-4xl px-5 py-10 sm:px-8">
         {orders === null ? (

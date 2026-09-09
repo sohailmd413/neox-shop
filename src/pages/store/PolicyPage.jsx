@@ -30,10 +30,10 @@ export default function PolicyPage() {
     : (setting?.[enField] || "");
 
   return (
-    <div className="pt-16" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div className="pt-16 md:pt-24" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className="mx-auto max-w-3xl px-5 py-12 sm:px-8">
         <BackBar fallbackTo="/" fallbackLabel={t("back.home")} />
-        <h1 className="mt-6 text-3xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="mt-6 font-headline text-3xl tracking-tight sm:text-4xl">{title}</h1>
         {loading ? (
           <div className="mt-10 h-4 w-24 animate-pulse rounded bg-muted" />
         ) : content ? (

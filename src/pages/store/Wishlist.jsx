@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, CardGridSkeleton } from "@/components/shared/StateViews";
 import { motionPresets } from "@/lib/motion";
 import BackBar from "@/components/storefront/BackBar";
+import PageHeader from "@/components/storefront/PageHeader";
 
 export default function Wishlist() {
   const { ids, removeItem } = useWishlist();
@@ -44,18 +45,14 @@ export default function Wishlist() {
   }, [ids]);
 
   return (
-    <div className="pt-16">
+    <div className="pt-16 md:pt-24">
       <div className="mx-auto max-w-7xl px-5 pt-5 sm:px-8">
         <BackBar fallbackTo="/" fallbackLabel="Home" />
       </div>
-      <div className="border-b border-border">
-        <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Wishlist</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {loading ? "Loading…" : `${products.length} saved ${products.length === 1 ? "item" : "items"}`}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Wishlist"
+        meta={loading ? "Loading…" : `${products.length} saved ${products.length === 1 ? "item" : "items"}`}
+      />
 
       <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
         {loading ? (

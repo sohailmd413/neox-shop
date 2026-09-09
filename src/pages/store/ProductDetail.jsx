@@ -123,7 +123,7 @@ export default function ProductDetail() {
 
   if (loading) {
     return (
-      <div className="pt-16">
+      <div className="pt-16 md:pt-24">
         <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
           <div className="grid gap-10 lg:grid-cols-2">
             <div className="aspect-square animate-pulse rounded-2xl bg-muted/50" />
@@ -191,7 +191,7 @@ export default function ProductDetail() {
   });
 
   return (
-    <div className="pt-16">
+    <div className="pt-16 md:pt-24">
       {/* Context-aware back to where the customer came from (Home / Best
           Sellers / category…), falling back to the product's own category. */}
       <div className="mx-auto max-w-7xl px-5 pt-5 sm:px-8">

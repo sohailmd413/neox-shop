@@ -192,7 +192,7 @@ export default function Checkout() {
 
   if (blocked) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-5 pt-16 text-center">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-5 pt-16 md:pt-24 text-center">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-100 text-red-600"><Lock className="h-6 w-6" /></div>
         <h1 className="text-2xl font-semibold tracking-tight">{t("checkout.blocked")}</h1>
         <p className="max-w-sm text-sm text-muted-foreground">{t("checkout.blockedDesc")}</p>
@@ -203,7 +203,7 @@ export default function Checkout() {
 
   if (items.length === 0) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-5 pt-16 text-center">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-5 pt-16 md:pt-24 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">{t("checkout.cartEmpty")}</h1>
         <p className="text-sm text-muted-foreground">{t("checkout.cartEmptyDesc")}</p>
         <Button asChild className="rounded-full">
@@ -214,10 +214,10 @@ export default function Checkout() {
   }
 
   return (
-    <div className="pt-16">
+    <div className="pt-16 md:pt-24">
       <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
         <BackBar fallbackTo="/shop" fallbackLabel={t("back.shop")} />
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight">{t("checkout.title")}</h1>
+        <h1 className="mt-4 font-headline text-3xl tracking-tight sm:text-4xl">{t("checkout.title")}</h1>
 
         <form onSubmit={placeOrder} className="mt-8 grid gap-10 lg:grid-cols-[1fr_400px]">
           {/* Form */}

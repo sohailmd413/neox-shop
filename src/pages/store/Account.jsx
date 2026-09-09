@@ -39,7 +39,7 @@ export default function Account() {
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 px-5 pt-24 pb-20 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Sign in to view your account</h1>
+        <h1 className="font-headline text-3xl tracking-tight sm:text-4xl">Sign in to view your account</h1>
         <p className="max-w-sm text-sm text-muted-foreground">Access your profile, addresses, orders, wishlist and preferences.</p>
         <div className="flex gap-2">
           <Button asChild><Link to="/login?returnTo=/account">Sign in</Link></Button>
@@ -50,7 +50,7 @@ export default function Account() {
   }
 
   return (
-    <div className="pt-16">
+    <div className="pt-16 md:pt-24">
       <div className="mx-auto max-w-7xl px-5 pt-5 sm:px-8">
         <BackBar fallbackTo="/" fallbackLabel="Home" />
       </div>
@@ -67,7 +67,7 @@ export default function Account() {
               )}
             </div>
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">{displayName(user) || "My account"}</h1>
+              <h1 className="font-headline text-3xl tracking-tight sm:text-4xl">{displayName(user) || "My account"}</h1>
               <p className="text-sm text-muted-foreground">{user.email}</p>
             </div>
           </div>
