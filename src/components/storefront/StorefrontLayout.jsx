@@ -39,7 +39,7 @@ export default function StorefrontLayout() {
             <div className="lg:col-span-5">
               <Link to="/" className="flex items-center gap-2.5">
                 {store.logo_url ? (
-                  <img src={store.logo_url} alt={store.store_name || "NeoX Shop"} className="h-9 w-auto max-w-[170px] rounded-lg object-contain ring-1 ring-white/10" />
+                  <img src={store.footer_logo_url || store.logo_url} alt={store.store_name || "NeoX Shop"} className="h-9 w-auto max-w-[170px] object-contain" />
                 ) : (
                   <>
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gradient shadow-lg shadow-ring/20">

@@ -15,7 +15,12 @@
       "description": "Store display name (Arabic). Required for the Arabic storefront."
     },
     "logo_url": {
-      "type": "string"
+      "type": "string",
+      "description": "Primary store logo shown in the header (on light backgrounds). Use a transparent PNG/SVG."
+    },
+    "footer_logo_url": {
+      "type": "string",
+      "description": "Optional footer logo shown on the dark navy footer. Falls back to logo_url when not set. Use a white/transparent PNG/SVG suitable for dark backgrounds."
     },
     "contact_email": {
       "type": "string"
