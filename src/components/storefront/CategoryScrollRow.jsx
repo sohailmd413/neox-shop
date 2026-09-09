@@ -1,12 +1,17 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-// Horizontally scrollable strip for the Tier 2 category row. Items never
-// shrink (caller applies shrink-0). Native scroll (trackpad swipe, touch
-// drag) works, AND we intercept vertical mouse-wheel and convert it to
-// horizontal scroll so a plain desktop mouse can move the row. Edge fades
-// fade the *content* out in the page background color (clearly visible over
-// dark link text), and persistent chevron arrows scroll programmatically.
+// Noon/Flipkart-style horizontal category strip — a plain scrollable list, NOT
+// a carousel. It never moves on its own: no timer, no auto-advance, no
+// pause-on-hover, and no hijacking of vertical page scroll. The only ways to
+// move it are deliberate:
+//   • trackpad horizontal swipe  (native, via overflow-x-auto)
+//   • touch drag                 (native, via overflow-x-auto)
+//   • shift + mouse wheel        (native browser behavior on overflow-x-auto)
+//   • the hover-reveal arrow buttons below
+// Edge fades appear on whichever side still has hidden content and vanish
+// once that edge reaches its end. Arrow positions and fade sides mirror
+// correctly in Arabic/RTL.
 export default function CategoryScrollRow({ children }) {
   const ref = useRef(null);
   const [canLeft, setCanLeft] = useState(false);
@@ -15,8 +20,14 @@ export default function CategoryScrollRow({ children }) {
   const update = () => {
     const el = ref.current;
     if (!el) return;
-    setCanLeft(el.scrollLeft > 8);
-    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
+    const rtl = window.getComputedStyle(el).direction === "rtl";
+    const max = el.scrollWidth - el.clientWidth;
+    // Distance scrolled from the start (0 .. max), normalized across LTR/RTL.
+    // In RTL, browsers report scrollLeft as 0 at the start (right edge) and
+    // increasingly negative toward the end (left edge).
+    const fromStart = rtl ? Math.max(0, -el.scrollLeft) : el.scrollLeft;
+    setCanLeft(rtl ? fromStart < max - 8 : fromStart > 8);
+    setCanRight(rtl ? fromStart > 8 : fromStart < max - 8);
   };
 
   useEffect(() => {
@@ -27,25 +38,16 @@ export default function CategoryScrollRow({ children }) {
     window.addEventListener("resize", update);
     const ro = new ResizeObserver(update);
     ro.observe(el);
-    // Intercept vertical wheel -> horizontal scroll so a plain mouse works.
-    // Only consume the event when the row actually has somewhere to scroll
-    // in that direction, so the page still scrolls normally once the end is
-    // reached.
-    const onWheel = (e) => {
-      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
-      const prev = el.scrollLeft;
-      el.scrollLeft = prev + e.deltaY;
-      if (el.scrollLeft !== prev) e.preventDefault();
-    };
-    el.addEventListener("wheel", onWheel, { passive: false });
     return () => {
       el.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
       ro.disconnect();
-      el.removeEventListener("wheel", onWheel);
     };
   }, []);
 
+  // Scroll one "page" of visible items. Physical left/right is the same in
+  // both directions — the RTL-aware canLeft/canRight flags above are what keep
+  // the arrows and fades pointing the right way.
   const nudge = (dir) => {
     const el = ref.current;
     if (!el) return;
@@ -56,25 +58,32 @@ export default function CategoryScrollRow({ children }) {
     <div className="group/row relative min-w-0 flex-1">
       <div
         ref={ref}
-        className="flex h-full items-center gap-4 overflow-x-auto overflow-y-hidden scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex h-full items-center gap-4 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {children}
       </div>
 
-      {/* Edge fades — fade the content out in the page background so the
-          cut-off text near the edge visibly dissolves (visible over the dark
-          link text even though the bar itself is near-white). */}
+      {/* Edge fades — only on the side that still has hidden content. */}
       <div className={`pointer-events-none absolute inset-y-0 left-0 w-14 bg-gradient-to-r from-background to-transparent transition-opacity duration-200 ${canLeft ? "opacity-100" : "opacity-0"}`} />
       <div className={`pointer-events-none absolute inset-y-0 right-0 w-14 bg-gradient-to-l from-background to-transparent transition-opacity duration-200 ${canRight ? "opacity-100" : "opacity-0"}`} />
 
-      {/* Persistent chevron arrows */}
+      {/* Hover-reveal arrows (desktop only — the Tier 2 row is already md-gated;
+          touch swipe handles mobile). Hidden until the row is hovered. */}
       {canLeft && (
-        <button onClick={() => nudge(-1)} aria-label="Scroll left" className="absolute left-0 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background shadow-md transition-colors hover:bg-muted dark:bg-card">
+        <button
+          onClick={() => nudge(-1)}
+          aria-label="Scroll left"
+          className="absolute left-0 top-1/2 z-10 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background shadow-md opacity-0 transition-opacity duration-150 hover:bg-muted group-hover/row:opacity-100 dark:bg-card md:flex"
+        >
           <ChevronLeft className="h-4 w-4" />
         </button>
       )}
       {canRight && (
-        <button onClick={() => nudge(1)} aria-label="Scroll right" className="absolute right-0 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background shadow-md transition-colors hover:bg-muted dark:bg-card">
+        <button
+          onClick={() => nudge(1)}
+          aria-label="Scroll right"
+          className="absolute right-0 top-1/2 z-10 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background shadow-md opacity-0 transition-opacity duration-150 hover:bg-muted group-hover/row:opacity-100 dark:bg-card md:flex"
+        >
           <ChevronRight className="h-4 w-4" />
         </button>
       )}
