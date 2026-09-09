@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 import { useLanguage } from "@/lib/i18n";
 
 // Full-bleed hero (edge-to-edge, ~72vh). A large editorial headline sits
@@ -20,8 +21,10 @@ export default function HomeHero() {
     let cancelled = false;
     (async () => {
       try {
-        const list = await import("@/api/base44Client").then(({ base44 }) =>
-          base44.entities.Poster.filter({ page: "home", zone: "hero" }, "sort_order", 50)
+        const list = await base44.entities.Poster.filter(
+          { page: "home", zone: "hero" },
+          "sort_order",
+          50
         );
         if (cancelled) return;
         const now = Date.now();
@@ -60,6 +63,7 @@ export default function HomeHero() {
       : poster.cta_text || t("home.heroOverlayCta")
     : t("home.fallbackCta");
   const ctaLink = poster?.cta_link || "/shop?filter=sale";
+  const isExternal = /^https?:\/\//.test(ctaLink);
 
   return (
     <section className="relative w-full">
@@ -67,7 +71,6 @@ export default function HomeHero() {
         <img
           src={image}
           alt=""
-          fetchPriority="high"
           className="absolute inset-0 h-full w-full object-cover"
         />
         {/* Bottom dark scrim for legibility */}
@@ -84,13 +87,25 @@ export default function HomeHero() {
             </h1>
             {sub && <p className="mt-4 max-w-xl text-base text-white/85 sm:text-lg">{sub}</p>}
             <div className="mt-7">
-              <Link
-                to={ctaLink}
-                className="group inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-bold text-foreground shadow-xl transition-transform hover:scale-[1.03]"
-              >
-                {ctaLabel}
-                <ArrowRight className="h-4 w-4 rtl:-scale-x-100 transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
-              </Link>
+              {isExternal ? (
+                <a
+                  href={ctaLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-bold text-foreground shadow-xl transition-transform hover:scale-[1.03]"
+                >
+                  {ctaLabel}
+                  <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
+                </a>
+              ) : (
+                <Link
+                  to={ctaLink}
+                  className="group inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 text-sm font-bold text-foreground shadow-xl transition-transform hover:scale-[1.03]"
+                >
+                  {ctaLabel}
+                  <ArrowRight className="h-4 w-4 rtl:-scale-x-100 transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
+                </Link>
+              )}
             </div>
           </div>
         </div>

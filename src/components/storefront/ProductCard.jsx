@@ -88,7 +88,7 @@ function ProductCardBase({ product, index = 0 }) {
           </motion.button>
 
           {/* Add-to-cart bar — slides up on hover (desktop) */}
-          <div className="absolute inset-x-2 bottom-2 translate-y-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+          <div className="absolute inset-x-2 bottom-2 transition-all duration-300 opacity-100 translate-y-0 lg:translate-y-2 lg:opacity-0 lg:group-hover:translate-y-0 lg:group-hover:opacity-100">
             <motion.button
               onClick={(e) => {
                 e.preventDefault();
