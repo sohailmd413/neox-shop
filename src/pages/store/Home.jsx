@@ -1,18 +1,16 @@
 import React, { Suspense, lazy, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import HomeHero from "@/components/storefront/HomeHero";
+import CategoryShowcase from "@/components/storefront/CategoryShowcase";
+import TrustSection from "@/components/storefront/TrustSection";
 import PosterBanner from "@/components/storefront/PosterBanner";
-import CategoryTile from "@/components/storefront/CategoryTile";
 import SectionShell from "@/components/storefront/SectionShell";
-import SectionHeader from "@/components/storefront/SectionHeader";
 import HomeSkeleton from "@/components/storefront/HomeSkeleton";
 import { useLanguage } from "@/lib/i18n";
 
-// Reference home page for the redesign: every block is built from shared
-// components (SectionShell + SectionHeader + Reveal), below-the-fold
-// merchandising is code-split + lazy-loaded with a skeleton fallback, and the
-// hero carries an ambient parallax accent. All flows (cart, wishlist, search,
-// sections, banners, navigation) stay fully wired.
+// Reference home page — full-bleed hero, asymmetric category showcase,
+// alternating section backgrounds (white → warm-gray merch → navy trust),
+// editorial typography, lazy-loaded merchandising. All flows stay wired.
 const MerchSections = lazy(() => import("@/components/storefront/MerchSections"));
 
 export default function Home() {
@@ -48,22 +46,14 @@ export default function Home() {
 
   return (
     <div className="pt-16 md:pt-24">
-      <div className="relative">
-        <HomeHero />
+      {/* Full-bleed hero (edge-to-edge) */}
+      <HomeHero />
 
-        {tops.length > 0 && (
-          <SectionShell>
-            <SectionHeader title={t("home.shopByCategory")} />
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-              {tops.slice(0, 12).map((cat) => (
-                <CategoryTile key={cat.id} category={cat} lang={lang} />
-              ))}
-            </div>
-          </SectionShell>
-        )}
+      {/* Category showcase — white */}
+      <CategoryShowcase categories={tops} lang={lang} t={t} />
 
-        {/* Admin-configured merchandising sections (or fallback auto rows),
-            lazy-loaded so they don't block initial paint. */}
+      {/* Merchandising sections — warm-gray background for rhythm */}
+      <div className="bg-stone-50">
         {!loading && (
           <Suspense fallback={<HomeSkeleton />}>
             <MerchSections
@@ -76,15 +66,19 @@ export default function Home() {
             />
           </Suspense>
         )}
-
-        <SectionShell spacing="tight">
-          <PosterBanner
-            page="home"
-            zone="secondary"
-            className="aspect-[16/5] overflow-hidden rounded-xl shadow-pop sm:aspect-[16/4]"
-          />
-        </SectionShell>
       </div>
+
+      {/* Dark-navy trust block — deliberate visual break */}
+      <TrustSection />
+
+      {/* Secondary poster — back to white */}
+      <SectionShell spacing="tight">
+        <PosterBanner
+          page="home"
+          zone="secondary"
+          className="aspect-[16/5] overflow-hidden rounded-xl sm:aspect-[16/4]"
+        />
+      </SectionShell>
     </div>
   );
 }

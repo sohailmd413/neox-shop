@@ -10,11 +10,11 @@ import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { useAddToCart } from "@/hooks/useAddToCart";
 import SaleCountdown from "@/components/admin/SaleCountdown";
 
-// Storefront product card — the most-repeated surface. Behaviour lives in
-// shared hooks (useWishlistToggle / useAddToCart) so wishlist + cart + fly-to
-// -cart logic is written once and reused by every product surface. Memoized
-// so a parent re-render (e.g. a single section refreshing) doesn't re-render
-// the whole grid. Reduced-motion safe throughout.
+// Borderless, editorial product card (Zara/Apple-style): the image sits
+// directly on the page background with no card container — just image →
+// name → price stacked cleanly. On hover, a second product image
+// cross-fades in (if available) and an "Add to cart" bar slides up. Badges
+// are small and refined. All cart/wishlist behaviour is in shared hooks.
 function ProductCardBase({ product, index = 0 }) {
   const { lang, t } = useLanguage();
   const reduce = useReducedMotion();
@@ -26,6 +26,7 @@ function ProductCardBase({ product, index = 0 }) {
   const display = lf(product, "name", lang);
   const shortDesc = lf(product, "short_description", lang);
   const lowStock = !outOfStock && product.stock > 0 && product.stock <= 5;
+  const hasSecond = product.images?.length > 1;
 
   return (
     <motion.div
@@ -33,27 +34,37 @@ function ProductCardBase({ product, index = 0 }) {
       whileInView={reduce ? { opacity: 1 } : { opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ ...motionPresets.card, delay: Math.min(index * 0.03, 0.24) }}
-      whileHover={reduce ? undefined : { y: -3, transition: springPress }}
     >
       <Link to={`/product/${product.id}`} className="group block">
         <div
           ref={imgRef}
-          className="relative aspect-square overflow-hidden rounded-xl border border-border/60 bg-muted/40 shadow-card transition-shadow duration-300 group-hover:shadow-pop"
+          className="relative aspect-[4/5] overflow-hidden rounded-lg bg-muted/30"
         >
           <ProductImage
             src={product.images?.[0]}
             alt={product.name}
             fittingType="fill"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            className={`h-full w-full object-cover transition-opacity duration-500 ${
+              hasSecond ? "group-hover:opacity-0" : ""
+            }`}
           />
+          {hasSecond && (
+            <ProductImage
+              src={product.images[1]}
+              alt={product.name}
+              fittingType="fill"
+              className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+            />
+          )}
 
+          {/* Refined minimal badges */}
           {onSale && (
-            <span className="absolute left-2 top-2 rounded-md bg-deal px-2 py-0.5 text-[11px] font-bold text-deal-foreground">
-              -{salePct}%
+            <span className="absolute left-2 top-2 rounded-full bg-deal/10 px-2 py-0.5 text-[10px] font-semibold text-deal backdrop-blur-sm">
+              −{salePct}%
             </span>
           )}
           {outOfStock && (
-            <span className="absolute left-2 top-2 rounded-md bg-red-500 px-2 py-0.5 text-[11px] font-bold text-white">
+            <span className="absolute left-2 top-2 rounded-full bg-foreground/70 px-2 py-0.5 text-[10px] font-semibold text-background backdrop-blur-sm">
               Sold out
             </span>
           )}
@@ -62,7 +73,7 @@ function ProductCardBase({ product, index = 0 }) {
             onClick={toggleWish}
             whileTap={reduce ? undefined : { scale: 0.9 }}
             transition={springPress}
-            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-background/80 text-foreground backdrop-blur transition-colors hover:bg-background"
+            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur transition-colors hover:bg-background"
             aria-label="Toggle wishlist"
           >
             <motion.span
@@ -76,33 +87,36 @@ function ProductCardBase({ product, index = 0 }) {
             </motion.span>
           </motion.button>
 
-          <motion.button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleAdd(1);
-            }}
-            disabled={outOfStock}
-            whileTap={reduce ? undefined : { scale: 0.9 }}
-            transition={springPress}
-            className="absolute bottom-2 right-2 flex h-9 w-9 items-center justify-center rounded-full bg-background/90 text-foreground shadow-pop backdrop-blur transition-colors duration-300 hover:bg-foreground hover:text-background disabled:opacity-40 disabled:hover:bg-background/90 disabled:hover:text-foreground"
-            aria-label="Add to cart"
-          >
-            <AnimatePresence mode="wait" initial={false}>
-              {justAdded ? (
-                <motion.span key="check" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={springPop}>
-                  <Check className="h-4 w-4" />
-                </motion.span>
-              ) : (
-                <motion.span key="bag" initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={springPop}>
-                  <ShoppingBag className="h-4 w-4" />
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.button>
+          {/* Add-to-cart bar — slides up on hover (desktop) */}
+          <div className="absolute inset-x-2 bottom-2 translate-y-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+            <motion.button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleAdd(1);
+              }}
+              disabled={outOfStock}
+              whileTap={reduce ? undefined : { scale: 0.97 }}
+              transition={springPress}
+              className="flex w-full items-center justify-center gap-1.5 rounded-full bg-foreground/95 py-2.5 text-xs font-semibold text-background backdrop-blur transition-colors hover:bg-foreground disabled:opacity-40"
+              aria-label="Add to cart"
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                {justAdded ? (
+                  <motion.span key="added" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }} transition={springPop} className="inline-flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5" /> Added
+                  </motion.span>
+                ) : (
+                  <motion.span key="add" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }} transition={springPop} className="inline-flex items-center gap-1.5">
+                    <ShoppingBag className="h-3.5 w-3.5" /> Add to cart
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
+          </div>
         </div>
 
-        <div className="mt-2 space-y-1">
+        <div className="mt-3 space-y-1">
           {product.brand && (
             <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
               {product.brand}
@@ -118,11 +132,11 @@ function ProductCardBase({ product, index = 0 }) {
             </div>
           )}
           <div className="flex items-baseline gap-2 pt-0.5">
-            <span className={`text-base font-bold text-foreground ${outOfStock ? "select-none text-transparent blur-[3px]" : ""}`}>
+            <span className={`text-sm font-semibold text-foreground ${outOfStock ? "text-muted-foreground" : ""}`}>
               {formatPrice(product.price)}
             </span>
             {onSale && (
-              <span className={`text-xs text-muted-foreground line-through ${outOfStock ? "blur-[3px]" : ""}`}>
+              <span className={`text-xs text-muted-foreground line-through ${outOfStock ? "opacity-50" : ""}`}>
                 {formatPrice(product.compare_at_price)}
               </span>
             )}
@@ -142,7 +156,5 @@ function ProductCardBase({ product, index = 0 }) {
   );
 }
 
-// Memoized so unrelated parent re-renders don't re-paint the whole grid.
-// (Context-driven re-renders from Cart/Wishlist still update as needed.)
 const ProductCard = memo(ProductCardBase);
 export default ProductCard;

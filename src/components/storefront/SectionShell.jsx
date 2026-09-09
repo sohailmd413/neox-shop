@@ -2,17 +2,18 @@ import React from "react";
 import Reveal from "@/components/storefront/Reveal";
 import { tokens } from "@/lib/theme";
 
-// Page-section wrapper: applies the shared max-width shell + a consistent
-// vertical-spacing token, and wraps content in the reusable <Reveal> so every
-// section gets the same scroll-reveal entrance. Use this for every storefront
-// block instead of re-styling `<section className="mx-auto max-w-7xl …">` per
-// page. `spacing` picks a spacing token; `as` controls the semantic tag.
+// Page-section wrapper with shared shell + spacing token + scroll reveal, and
+// a `tone` prop to alternate section backgrounds for visual rhythm:
+//   default — transparent (sits on the page white background)
+//   muted   — warm light gray (bg-stone-50)
+//   dark    — brand navy, reversed (light text) — use for deliberate breaks
 export default function SectionShell({
   children,
   className = "",
   delay = 0,
   as = "section",
   spacing = "default",
+  tone = "default",
 }) {
   const pad =
     spacing === "tight"
@@ -20,8 +21,14 @@ export default function SectionShell({
       : spacing === "loose"
       ? tokens.spacing.sectionLoose
       : tokens.spacing.section;
+  const toneBg =
+    tone === "muted"
+      ? "bg-stone-50"
+      : tone === "dark"
+      ? "bg-brand-navy text-white"
+      : "";
   return (
-    <Reveal as={as} delay={delay} className={`${tokens.section.shell} ${pad} ${className}`}>
+    <Reveal as={as} delay={delay} className={`${toneBg} ${tokens.section.shell} ${pad} ${className}`}>
       {children}
     </Reveal>
   );
