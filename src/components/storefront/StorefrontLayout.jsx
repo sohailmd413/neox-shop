@@ -7,6 +7,7 @@ import CartDrawer from "./CartDrawer";
 import { CartFlyoutProvider } from "@/components/storefront/cart/CartFlyoutContext";
 import PageTransition from "@/components/shared/PageTransition";
 import BackNavTracker from "@/components/storefront/BackNavTracker";
+import StickyPromoBar from "@/components/storefront/StickyPromoBar";
 import { useLanguage } from "@/lib/i18n";
 import { useStoreSetting } from "@/lib/useStoreSetting";
 
@@ -18,6 +19,7 @@ export default function StorefrontLayout() {
     <div className="flex min-h-screen flex-col bg-background">
       <CartFlyoutProvider>
       <BackNavTracker />
+      <StickyPromoBar />
       <Navbar />
       {/* Desktop-only spacer so content clears the second nav row added in
           the marketplace header; mobile keeps a single-row header. */}
