@@ -44,11 +44,12 @@ export default function HomeHero() {
     return () => { cancelled = true; };
   }, []);
 
+  const { t, lang } = useLanguage();
+
   if (!checked) {
     return <div className="h-[72vh] min-h-[480px] w-full bg-muted" aria-hidden />;
   }
 
-  const { t, lang } = useLanguage();
   const image = poster?.image_url || CURATED_IMAGE;
   const kicker = t("home.heroKicker");
   const headline = poster
