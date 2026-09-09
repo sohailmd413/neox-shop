@@ -21,7 +21,7 @@ export default function StorefrontLayout() {
       <Navbar />
       {/* Desktop-only spacer so content clears the second nav row added in
           the marketplace header; mobile keeps a single-row header. */}
-      <div aria-hidden className="hidden h-7 md:block" />
+      <div aria-hidden className="hidden h-11 md:block" />
       <main className="flex-1">
         <AnimatePresence mode="wait">
           <PageTransition key={location.pathname}>
@@ -39,9 +39,7 @@ export default function StorefrontLayout() {
             <div className="lg:col-span-5">
               <Link to="/" className="flex items-center gap-2.5">
                 {store.logo_url ? (
-                  <span className="inline-flex items-center rounded-lg bg-white/95 px-2.5 py-1.5 shadow-sm">
-                    <img src={store.logo_url} alt={store.store_name || "NeoX Shop"} className="h-7 w-auto max-w-[150px] object-contain" />
-                  </span>
+                  <img src={store.logo_url} alt={store.store_name || "NeoX Shop"} className="h-9 w-auto max-w-[170px] rounded-lg object-contain ring-1 ring-white/10" />
                 ) : (
                   <>
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-gradient shadow-lg shadow-ring/20">

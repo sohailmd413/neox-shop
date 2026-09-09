@@ -7,7 +7,6 @@ import { useWishlist } from "@/lib/WishlistContext";
 import { base44 } from "@/api/base44Client";
 import { useLanguage } from "@/lib/i18n";
 import { useStoreSetting } from "@/lib/useStoreSetting";
-import { Image } from "@/components/ui/image";
 import SearchBar from "@/components/storefront/SearchBar";
 import MegaMenu from "@/components/storefront/MegaMenu";
 import CategoryScrollRow from "@/components/storefront/CategoryScrollRow";
@@ -38,11 +37,14 @@ function navLabel(item, lang) {
   return lang === "ar" ? (item.label_ar || item.label_en) : item.label_en;
 }
 
-function NavLink({ item, catMap, lang, onClick }) {
+function NavLink({ item, catMap, lang, onClick, active }) {
   const target = navTarget(item, catMap);
-  const cls = item.is_highlighted
-    ? "shrink-0 whitespace-nowrap text-sm font-semibold text-deal transition-opacity hover:opacity-70"
-    : "shrink-0 whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground";
+  const base = item.is_highlighted
+    ? "shrink-0 whitespace-nowrap text-sm font-semibold text-[#2F6FED] transition-colors duration-150 hover:opacity-80"
+    : "relative shrink-0 whitespace-nowrap px-1.5 text-sm text-muted-foreground transition-colors duration-150 hover:text-[#2F6FED] after:absolute after:-bottom-1 after:left-1/2 after:h-px after:w-0 after:bg-[#2F6FED] after:transition-all after:duration-200 hover:after:left-0 hover:after:w-full";
+  const cls = active && !item.is_highlighted
+    ? base + " font-semibold text-[#2F6FED] after:left-0 after:w-full"
+    : base;
   if (target.href) {
     return <a href={target.href} target="_blank" rel="noopener noreferrer" onClick={onClick} className={cls}>{navLabel(item, lang)}</a>;
   }
@@ -131,6 +133,20 @@ export default function Navbar() {
   const tops = categories.filter((c) => !c.parent_id);
   const catMap = new Map(categories.map((c) => [c.id, c]));
 
+  // Active-nav detection: a nav item is active when the current URL matches
+  // its resolved target (path + every query param present on the target).
+  const isActive = (item) => {
+    const tgt = navTarget(item, catMap);
+    if (!tgt.to) return false;
+    const [path, query] = tgt.to.split("?");
+    if (location.pathname !== path) return false;
+    if (!query) return true;
+    const tp = new URLSearchParams(query);
+    const sp = new URLSearchParams(location.search);
+    for (const k of tp.keys()) if (sp.get(k) !== tp.get(k)) return false;
+    return true;
+  };
+
   // Quick links (highlighted promo group) + category row, read from NavItem.
   // Falls back to the prior hardcoded behavior only while the table is empty
   // (e.g. before the admin first opens the Navigation page to seed it).
@@ -148,14 +164,14 @@ export default function Navbar() {
     <header
       className={`fixed inset-x-0 top-0 z-40 transition-all duration-300 ${
         scrolled
-          ? "border-b border-border/60 bg-background/85 backdrop-blur-xl shadow-[0_2px_30px_-18px_rgba(0,0,0,0.28)]"
+          ? "border-b border-border/60 bg-white/80 backdrop-blur-md shadow-[0_2px_30px_-18px_rgba(0,0,0,0.28)]"
           : "border-b border-border bg-background shadow-[0_1px_0_rgba(0,0,0,0.04)]"
       }`}
     >
       {/* Tier 1 — utility bar.
           Mobile: [☰][avatar] … [Logo] … [♡][🛒]  — justify-between centers the logo.
           Desktop: [Logo] [search centered] [cluster] — left cluster is hidden. */}
-      <nav className={`mx-auto flex items-center justify-between gap-2 px-4 transition-all duration-300 sm:gap-3 sm:px-6 ${scrolled ? "h-14" : "h-16"}`}>
+      <nav className={`mx-auto flex items-center justify-between gap-2 px-4 transition-all duration-300 sm:gap-3 sm:px-6 ${scrolled ? "h-14 md:h-16" : "h-16 md:h-20"}`}>
         {/* Left cluster — mobile only: hamburger + profile indicator */}
         <div className="flex shrink-0 items-center gap-1 md:hidden">
           <button onClick={() => setMobileOpen((v) => !v)} className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted" aria-label={t("nav.menu")}>
@@ -178,7 +194,7 @@ export default function Navbar() {
 
         <Link to="/" className="flex shrink-0 items-center gap-2.5">
           {store.logo_url ? (
-            <img src={store.logo_url} alt={store.store_name || "NeoX Shop"} className="h-10 w-auto max-w-[180px] object-contain mix-blend-multiply" />
+            <img src={store.logo_url} alt={store.store_name || "NeoX Shop"} className="h-10 w-auto max-w-[180px] object-contain" />
           ) : (
             <>
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-gradient shadow-md shadow-ring/20">
@@ -254,8 +270,8 @@ export default function Navbar() {
       </nav>
 
       {/* Tier 2 — category navigation bar (desktop only; mobile uses the menu) */}
-      <div className="hidden border-t border-border bg-muted/30 md:block">
-        <div className="mx-auto flex h-12 max-w-7xl items-center gap-3 px-4 sm:px-6">
+      <div className="hidden border-t border-b border-border bg-muted/40 md:block">
+        <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6">
           <button
             data-mega-toggle
             onClick={() => setMegaOpen((v) => !v)}
@@ -268,8 +284,8 @@ export default function Navbar() {
           </button>
 
           {quickItems.length > 0 && (
-            <div className="flex shrink-0 items-center gap-1 rounded-full bg-deal/10 px-2.5 py-1">
-              {quickItems.map((item, idx) => <NavLink key={item.id || idx} item={item} catMap={catMap} lang={lang} />)}
+            <div className="flex shrink-0 items-center gap-2 rounded-full bg-[rgba(47,111,237,0.1)] px-3 py-1.5">
+              {quickItems.map((item, idx) => <NavLink key={item.id || idx} item={item} catMap={catMap} lang={lang} active={isActive(item)} />)}
             </div>
           )}
 
@@ -277,7 +293,7 @@ export default function Navbar() {
 
           {rowItems.length > 0 && (
             <CategoryScrollRow>
-              {rowItems.map((item, idx) => <NavLink key={item.id || idx} item={item} catMap={catMap} lang={lang} />)}
+              {rowItems.map((item, idx) => <NavLink key={item.id || idx} item={item} catMap={catMap} lang={lang} active={isActive(item)} />)}
             </CategoryScrollRow>
           )}
         </div>
