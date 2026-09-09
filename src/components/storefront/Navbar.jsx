@@ -178,7 +178,7 @@ export default function Navbar() {
 
         <Link to="/" className="flex shrink-0 items-center gap-2.5">
           {store.logo_url ? (
-            <img src={store.logo_url} alt={store.store_name || "NeoX Shop"} className="h-10 w-auto max-w-[180px] object-contain" />
+            <img src={store.logo_url} alt={store.store_name || "NeoX Shop"} className="h-10 w-auto max-w-[180px] object-contain mix-blend-multiply" />
           ) : (
             <>
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-gradient shadow-md shadow-ring/20">
