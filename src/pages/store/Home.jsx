@@ -1,19 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
-import ProductRow from "@/components/storefront/ProductRow";
-import ProductCard from "@/components/storefront/ProductCard";
 import HomeHero from "@/components/storefront/HomeHero";
 import PosterBanner from "@/components/storefront/PosterBanner";
 import CategoryTile from "@/components/storefront/CategoryTile";
-import { lf } from "@/lib/format";
+import SectionShell from "@/components/storefront/SectionShell";
+import SectionHeader from "@/components/storefront/SectionHeader";
+import HomeSkeleton from "@/components/storefront/HomeSkeleton";
 import { useLanguage } from "@/lib/i18n";
-import { onSaleProducts, newArrivals, bestSellers } from "@/lib/merchandising";
 
-// Marketplace home: hero + shop-by-category grid, then admin-configured
-// HomeSection rows in display_order (manual picks render in admin-set order;
-// auto_* types compute live via the shared merchandising helpers), then a
-// secondary Poster banner. When no sections are configured yet, auto-computed
-// fallback rows keep the page populated.
+// Reference home page for the redesign: every block is built from shared
+// components (SectionShell + SectionHeader + Reveal), below-the-fold
+// merchandising is code-split + lazy-loaded with a skeleton fallback, and the
+// hero carries an ambient parallax accent. All flows (cart, wishlist, search,
+// sections, banners, navigation) stay fully wired.
+const MerchSections = lazy(() => import("@/components/storefront/MerchSections"));
+
 export default function Home() {
   const [data, setData] = useState(null);
   const { lang, t } = useLanguage();
@@ -43,25 +44,7 @@ export default function Home() {
 
   const loading = !data;
   const { products = [], categories = [], sections = [], hsp = [], orders = [] } = data || {};
-
-  const sectionProducts = (section) => {
-    let list = [];
-    if (section.section_type === "manual_picks") {
-      const rows = hsp.filter((r) => r.section_id === section.id).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-      const map = new Map(products.map((p) => [p.id, p]));
-      list = rows.map((r) => map.get(r.product_id)).filter(Boolean);
-    } else if (section.section_type === "auto_bestsellers") {
-      list = bestSellers(products, orders);
-    } else if (section.section_type === "auto_new_arrivals") {
-      list = newArrivals(products);
-    } else if (section.section_type === "auto_on_sale") {
-      list = onSaleProducts(products);
-    }
-    return list.slice(0, section.max_items_shown || 12);
-  };
-
   const tops = categories.filter((c) => !c.parent_id);
-  const hasSections = sections.length > 0;
 
   return (
     <div className="pt-16 md:pt-24">
@@ -69,53 +52,39 @@ export default function Home() {
         <HomeHero />
 
         {tops.length > 0 && (
-          <section className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
-            <h2 className="mb-4 text-lg font-bold tracking-tight text-foreground sm:text-xl">{t("home.shopByCategory")}</h2>
+          <SectionShell>
+            <SectionHeader title={t("home.shopByCategory")} />
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
               {tops.slice(0, 12).map((cat) => (
                 <CategoryTile key={cat.id} category={cat} lang={lang} />
               ))}
             </div>
-          </section>
+          </SectionShell>
         )}
 
-        {/* Admin-configured merchandising sections, in display order */}
-        {!loading && sections.map((sec) => (
-          <SectionBlock key={sec.id} section={sec} products={sectionProducts(sec)} lang={lang} />
-        ))}
-
-        {/* Fallback auto rows when no merchandising sections are configured yet */}
-        {!loading && !hasSections && (
-          <>
-            <ProductRow title={t("home.deals")} to="/shop?view=deals" viewAllLabel={t("home.seeAll")} products={onSaleProducts(products).slice(0, 12)} />
-            <ProductRow title={t("home.newArrivals")} to="/shop?view=new" viewAllLabel={t("home.seeAll")} products={newArrivals(products).slice(0, 12)} />
-          </>
+        {/* Admin-configured merchandising sections (or fallback auto rows),
+            lazy-loaded so they don't block initial paint. */}
+        {!loading && (
+          <Suspense fallback={<HomeSkeleton />}>
+            <MerchSections
+              products={products}
+              sections={sections}
+              hsp={hsp}
+              orders={orders}
+              lang={lang}
+              t={t}
+            />
+          </Suspense>
         )}
 
-        <section className="mx-auto max-w-7xl px-5 py-4 sm:px-8">
-          <PosterBanner page="home" zone="secondary" className="aspect-[16/5] overflow-hidden rounded-xl sm:aspect-[16/4]" />
-        </section>
+        <SectionShell spacing="tight">
+          <PosterBanner
+            page="home"
+            zone="secondary"
+            className="aspect-[16/5] overflow-hidden rounded-xl shadow-pop sm:aspect-[16/4]"
+          />
+        </SectionShell>
       </div>
     </div>
   );
-}
-
-function SectionBlock({ section, products, lang }) {
-  if (!products || products.length === 0) return null;
-  const title = lang === "ar" ? (section.title_ar || section.title_en) : section.title_en;
-  const subtitle = lang === "ar" ? (section.subtitle_ar || section.subtitle_en) : (section.subtitle_en || "");
-  if (section.layout_style === "grid") {
-    return (
-      <section className="mx-auto max-w-7xl px-5 py-6 sm:px-8">
-        <div className="mb-3">
-          <h2 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">{title}</h2>
-          {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
-        </div>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {products.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
-        </div>
-      </section>
-    );
-  }
-  return <ProductRow title={title} subtitle={subtitle} products={products} />;
 }

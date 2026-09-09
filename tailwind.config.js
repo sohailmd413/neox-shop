@@ -5,6 +5,11 @@ module.exports = {
   theme: {
   	extend: {
   		opacity: Object.fromEntries(Array.from({ length: 101 }, (_, i) => [i, `${i / 100}`])),
+  		boxShadow: {
+  			card: 'var(--shadow-card)',
+  			pop: 'var(--shadow-pop)',
+  			elevated: 'var(--shadow-elevated)',
+  		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',

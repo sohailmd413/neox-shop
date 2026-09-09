@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import PosterBanner from "@/components/storefront/PosterBanner";
 import { base44 } from "@/api/base44Client";
@@ -7,8 +8,9 @@ import { useLanguage } from "@/lib/i18n";
 
 // Compact marketplace hero strip. If an admin configured a live hero Poster
 // (page=home, zone=hero) it renders that banner with its tagline animation;
-// otherwise a compact deal-focused fallback banner is shown — never the old
-// full-viewport editorial hero.
+// otherwise a curated deal-focused fallback banner with an ambient, slow-
+// drifting gradient blob (parallax on scroll). Reduced-motion users get a
+// static banner. Never the old full-viewport editorial hero.
 export default function HomeHero() {
   const [poster, setPoster] = useState(null);
   const [checked, setChecked] = useState(false);
@@ -39,28 +41,52 @@ export default function HomeHero() {
   if (checked && poster) {
     return (
       <section className="mx-auto max-w-7xl px-5 sm:px-8">
-        <PosterBanner poster={poster} className="mt-4 aspect-[16/5] overflow-hidden rounded-xl sm:aspect-[16/4]" />
+        <PosterBanner poster={poster} className="mt-4 aspect-[16/5] overflow-hidden rounded-xl shadow-elevated sm:aspect-[16/4]" />
       </section>
     );
   }
   return <CuratedHero />;
 }
 
+// Ambient, very-slow-drifting gradient blob behind the hero content. Purely
+// decorative (pointer-events-none), low-amplitude parallax tied to scroll,
+// disabled entirely for reduced-motion users. Never blocks interaction.
+function AmbientBlob() {
+  const reduce = useReducedMotion();
+  const { scrollY } = useScroll();
+  const y = useTransform(scrollY, [0, 700], [0, 40]);
+  if (reduce) return null;
+  return (
+    <motion.div
+      aria-hidden
+      style={{ y }}
+      className="pointer-events-none absolute -right-16 -top-20 h-72 w-72 rounded-full bg-white/15 blur-3xl"
+      animate={{ x: [0, 14, 0], y: [0, 10, 0] }}
+      transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+    />
+  );
+}
+
 function CuratedHero() {
   const { t } = useLanguage();
   return (
     <section className="mx-auto max-w-7xl px-5 sm:px-8">
-      <div className="relative mt-4 overflow-hidden rounded-xl bg-brand-gradient px-6 py-10 sm:px-10 sm:py-14">
+      <div className="relative mt-4 overflow-hidden rounded-xl bg-brand-gradient px-6 py-10 shadow-elevated sm:px-10 sm:py-14">
         {/* Subtle animated brand-gradient glow echoing the logo's motion. */}
         <div aria-hidden className="mf-brand-glow absolute inset-0 opacity-70" />
         {/* Speed-line accent nodding to the logo's cart motion lines. */}
         <div aria-hidden className="mf-speed-lines absolute inset-0 opacity-40" />
+        {/* Ambient drifting gradient blob (parallax, reduced-motion safe). */}
+        <AmbientBlob />
         <div className="relative max-w-xl space-y-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">
+            {t("home.heroKicker")}
+          </p>
           <h1 className="font-headline text-3xl text-white sm:text-4xl">
             {t("home.fallbackTitle")}
           </h1>
           <p className="text-sm text-white/85 sm:text-base">{t("home.fallbackSub")}</p>
-          <div className="flex items-center gap-3 pt-2">
+          <div className="flex flex-wrap items-center gap-3 pt-2">
             <Link
               to="/shop?filter=sale"
               className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-brand-blue shadow-lg transition-transform hover:scale-[1.02]"

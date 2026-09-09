@@ -1,49 +1,31 @@
-import React, { useRef, useState } from "react";
+import React, { memo } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ShoppingBag, Star, Heart, Check } from "lucide-react";
-import { useCart } from "@/lib/CartContext";
-import { useCartFlyout } from "@/components/storefront/cart/CartFlyoutContext";
-import { useWishlist } from "@/lib/WishlistContext";
 import { formatPrice, lf } from "@/lib/format";
 import ProductImage from "@/components/storefront/ProductImage";
 import { useLanguage } from "@/lib/i18n";
 import { motionPresets, springPress, springPop } from "@/lib/motion";
+import { useWishlistToggle } from "@/hooks/useWishlistToggle";
+import { useAddToCart } from "@/hooks/useAddToCart";
 import SaleCountdown from "@/components/admin/SaleCountdown";
 
-export default function ProductCard({ product, index = 0 }) {
-  const { addItem } = useCart();
-  const { toggleItem, isInWishlist } = useWishlist();
-  const flyToCart = useCartFlyout()?.flyToCart;
+// Storefront product card — the most-repeated surface. Behaviour lives in
+// shared hooks (useWishlistToggle / useAddToCart) so wishlist + cart + fly-to
+// -cart logic is written once and reused by every product surface. Memoized
+// so a parent re-render (e.g. a single section refreshing) doesn't re-render
+// the whole grid. Reduced-motion safe throughout.
+function ProductCardBase({ product, index = 0 }) {
   const { lang, t } = useLanguage();
   const reduce = useReducedMotion();
-  const imgRef = useRef(null);
-  const [justAdded, setJustAdded] = useState(false);
-  const outOfStock = product.stock <= 0;
-  const wished = isInWishlist(product.id);
+  const { wished, toggle: toggleWish } = useWishlistToggle(product.id);
+  const { add: handleAdd, imgRef, justAdded, outOfStock } = useAddToCart(product);
+
   const onSale = product.compare_at_price && product.compare_at_price > product.price;
   const salePct = onSale ? Math.round((1 - product.price / product.compare_at_price) * 100) : 0;
   const display = lf(product, "name", lang);
   const shortDesc = lf(product, "short_description", lang);
   const lowStock = !outOfStock && product.stock > 0 && product.stock <= 5;
-
-  const toggleWish = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleItem(product.id);
-  };
-
-  const handleAdd = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (outOfStock) return;
-    addItem(product, 1);
-    if (flyToCart && product.images?.[0]) flyToCart(product.images[0], imgRef.current);
-    if (!reduce) {
-      setJustAdded(true);
-      setTimeout(() => setJustAdded(false), 800);
-    }
-  };
 
   return (
     <motion.div
@@ -56,7 +38,7 @@ export default function ProductCard({ product, index = 0 }) {
       <Link to={`/product/${product.id}`} className="group block">
         <div
           ref={imgRef}
-          className="relative aspect-square overflow-hidden rounded-xl border border-border/60 bg-muted/40"
+          className="relative aspect-square overflow-hidden rounded-xl border border-border/60 bg-muted/40 shadow-card transition-shadow duration-300 group-hover:shadow-pop"
         >
           <ProductImage
             src={product.images?.[0]}
@@ -95,11 +77,15 @@ export default function ProductCard({ product, index = 0 }) {
           </motion.button>
 
           <motion.button
-            onClick={handleAdd}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleAdd(1);
+            }}
             disabled={outOfStock}
             whileTap={reduce ? undefined : { scale: 0.9 }}
             transition={springPress}
-            className="absolute bottom-2 right-2 flex h-9 w-9 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition-colors duration-300 hover:bg-foreground hover:text-background disabled:opacity-40 disabled:hover:bg-background/90 disabled:hover:text-foreground"
+            className="absolute bottom-2 right-2 flex h-9 w-9 items-center justify-center rounded-full bg-background/90 text-foreground shadow-pop backdrop-blur transition-colors duration-300 hover:bg-foreground hover:text-background disabled:opacity-40 disabled:hover:bg-background/90 disabled:hover:text-foreground"
             aria-label="Add to cart"
           >
             <AnimatePresence mode="wait" initial={false}>
@@ -155,3 +141,8 @@ export default function ProductCard({ product, index = 0 }) {
     </motion.div>
   );
 }
+
+// Memoized so unrelated parent re-renders don't re-paint the whole grid.
+// (Context-driven re-renders from Cart/Wishlist still update as needed.)
+const ProductCard = memo(ProductCardBase);
+export default ProductCard;

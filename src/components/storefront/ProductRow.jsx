@@ -1,14 +1,19 @@
 import React, { useRef } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProductCard from "@/components/storefront/ProductCard";
+import SectionShell from "@/components/storefront/SectionShell";
+import SectionHeader from "@/components/storefront/SectionHeader";
+import { useResponsiveColumns } from "@/hooks/useResponsiveColumns";
 
-// Horizontal, snap-scrolling product carousel used for the marketplace home rows
-// (Deals, Trending in <category>, New arrivals). Cards keep a fixed width per
-// breakpoint so 4–6 are visible at once on desktop. All cards stay wired to the
-// shared Cart/Wishlist contexts via ProductCard.
+// Horizontal snap-scrolling product carousel for home rows. Built from shared
+// SectionShell + SectionHeader (consistent spacing + hierarchy) instead of a
+// one-off header. Scroll arrows are only rendered when the row actually
+// overflows (products > visible columns) via useResponsiveColumns.
 export default function ProductRow({ title, subtitle, to, viewAllLabel = "See all", products = [] }) {
   const scroller = useRef(null);
+  const cols = useResponsiveColumns();
+  const showArrows = products.length > cols;
   const scroll = (dir) => {
     const el = scroller.current;
     if (!el) return;
@@ -16,35 +21,28 @@ export default function ProductRow({ title, subtitle, to, viewAllLabel = "See al
   };
 
   return (
-    <section className="mx-auto max-w-7xl px-5 py-6 sm:px-8">
-      <div className="mb-3 flex items-end justify-between">
-        <div>
-          <h2 className="text-lg font-bold tracking-tight text-foreground sm:text-xl">{title}</h2>
-          {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
-        </div>
-        {to && (
-          <Link to={to} className="group inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-            {viewAllLabel}
-            <ArrowRight className="h-3.5 w-3.5 rtl:-scale-x-100" />
-          </Link>
-        )}
-      </div>
+    <SectionShell>
+      <SectionHeader title={title} subtitle={subtitle} to={to} viewAllLabel={viewAllLabel} />
 
       <div className="relative">
-        <button
-          onClick={() => scroll(-1)}
-          className="absolute -left-2 top-1/3 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-sm hover:bg-muted lg:flex"
-          aria-label="Previous"
-        >
-          <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
-        </button>
-        <button
-          onClick={() => scroll(1)}
-          className="absolute -right-2 top-1/3 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-sm hover:bg-muted lg:flex"
-          aria-label="Next"
-        >
-          <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
-        </button>
+        {showArrows && (
+          <>
+            <button
+              onClick={() => scroll(-1)}
+              className="absolute -left-2 top-1/3 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-pop backdrop-blur hover:bg-muted lg:flex"
+              aria-label="Previous"
+            >
+              <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
+            </button>
+            <button
+              onClick={() => scroll(1)}
+              className="absolute -right-2 top-1/3 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background/90 shadow-pop backdrop-blur hover:bg-muted lg:flex"
+              aria-label="Next"
+            >
+              <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
+            </button>
+          </>
+        )}
 
         <div
           ref={scroller}
@@ -57,6 +55,6 @@ export default function ProductRow({ title, subtitle, to, viewAllLabel = "See al
           ))}
         </div>
       </div>
-    </section>
+    </SectionShell>
   );
 }
