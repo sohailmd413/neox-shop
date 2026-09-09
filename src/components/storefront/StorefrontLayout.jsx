@@ -6,11 +6,9 @@ import Navbar from "./Navbar";
 import CartDrawer from "./CartDrawer";
 import { CartFlyoutProvider } from "@/components/storefront/cart/CartFlyoutContext";
 import PageTransition from "@/components/shared/PageTransition";
-import PosterBanner from "@/components/storefront/PosterBanner";
 import BackNavTracker from "@/components/storefront/BackNavTracker";
 import { useLanguage } from "@/lib/i18n";
 import { useStoreSetting } from "@/lib/useStoreSetting";
-import { Image } from "@/components/ui/image";
 
 export default function StorefrontLayout() {
   const { t, lang } = useLanguage();
@@ -36,8 +34,6 @@ export default function StorefrontLayout() {
         {/* Brand-blue accent line across the top */}
         <div className="h-px w-full bg-gradient-to-r from-transparent via-ring/50 to-transparent" />
         <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8 lg:py-16">
-          {/* Footer banner slot (live Poster; renders nothing when absent) */}
-          <PosterBanner page="home" zone="footer" className="mb-12 aspect-[8/1] overflow-hidden rounded-2xl" />
           <div className="grid gap-12 lg:grid-cols-12">
             {/* Brand + contact */}
             <div className="lg:col-span-5">

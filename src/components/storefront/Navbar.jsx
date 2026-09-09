@@ -176,11 +176,18 @@ export default function Navbar() {
           )}
         </div>
 
-        <Link to="/" className="flex shrink-0 items-center gap-2">
+        <Link to="/" className="flex shrink-0 items-center gap-2.5">
           {store.logo_url ? (
-            <img src={store.logo_url} alt={store.store_name || "NeoX Shop"} className="h-12 w-auto max-w-[200px] object-contain" />
+            <img src={store.logo_url} alt={store.store_name || "NeoX Shop"} className="h-10 w-auto max-w-[180px] object-contain" />
           ) : (
-            <span className="text-xl font-extrabold tracking-tight">{store.store_name || "NeoX Shop"}</span>
+            <>
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-gradient shadow-md shadow-ring/20">
+                <ShoppingBag className="h-5 w-5 text-white" />
+              </span>
+              <span className="text-xl font-extrabold tracking-tight text-foreground">
+                NeoX<span className="text-muted-foreground">.shop</span>
+              </span>
+            </>
           )}
         </Link>
 
@@ -252,7 +259,7 @@ export default function Navbar() {
           <button
             data-mega-toggle
             onClick={() => setMegaOpen((v) => !v)}
-            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-semibold text-foreground shadow-sm transition-all hover:border-foreground/20 hover:shadow"
+            className="flex shrink-0 items-center gap-1.5 rounded-lg bg-brand-gradient px-3.5 py-2 text-sm font-semibold text-white shadow-sm shadow-ring/20 transition-transform hover:scale-[1.02]"
             aria-expanded={megaOpen}
           >
             <LayoutGrid className="h-4 w-4" />
