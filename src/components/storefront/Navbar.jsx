@@ -49,6 +49,13 @@ function NavLink({ item, catMap, lang, onClick }) {
   return <Link to={target.to} onClick={onClick} className={cls}>{navLabel(item, lang)}</Link>;
 }
 
+function initialsOf(u) {
+  const name = u?.full_name || u?.name || u?.email || "";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return (name[0] || "U").toUpperCase();
+}
+
 export default function Navbar() {
   const { count, setIsOpen } = useCart();
   const { count: wishCount } = useWishlist();
@@ -56,6 +63,7 @@ export default function Navbar() {
   const store = useStoreSetting();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [highlightAccount, setHighlightAccount] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState(null);
@@ -118,6 +126,7 @@ export default function Navbar() {
   }, [megaOpen]);
 
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+  useEffect(() => { if (!mobileOpen) setHighlightAccount(false); }, [mobileOpen]);
 
   const tops = categories.filter((c) => !c.parent_id);
   const catMap = new Map(categories.map((c) => [c.id, c]));
@@ -143,8 +152,30 @@ export default function Navbar() {
           : "border-b border-border bg-background"
       }`}
     >
-      {/* Tier 1 — utility bar: logo → search → icon cluster */}
-      <nav className={`mx-auto flex items-center gap-3 px-4 transition-all duration-300 sm:px-6 ${scrolled ? "h-12" : "h-14"}`}>
+      {/* Tier 1 — utility bar.
+          Mobile: [☰][avatar] … [Logo] … [♡][🛒]  — justify-between centers the logo.
+          Desktop: [Logo] [search centered] [cluster] — left cluster is hidden. */}
+      <nav className={`mx-auto flex items-center justify-between gap-2 px-4 transition-all duration-300 sm:gap-3 sm:px-6 ${scrolled ? "h-12" : "h-14"}`}>
+        {/* Left cluster — mobile only: hamburger + profile indicator */}
+        <div className="flex shrink-0 items-center gap-1 md:hidden">
+          <button onClick={() => setMobileOpen((v) => !v)} className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted" aria-label={t("nav.menu")}>
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+          {user ? (
+            <button
+              onClick={() => { setHighlightAccount(true); setMobileOpen(true); }}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background transition-transform hover:scale-105"
+              aria-label={t("nav.account")}
+            >
+              {initialsOf(user)}
+            </button>
+          ) : (
+            <Link to="/login" className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted" aria-label={t("nav.signIn")}>
+              <User className="h-5 w-5" />
+            </Link>
+          )}
+        </div>
+
         <Link to="/" className="flex shrink-0 items-center gap-2">
           {store.logo_url ? (
             <img src={store.logo_url} alt={store.store_name || "NeoX Shop"} className="h-10 w-auto max-w-[180px] object-contain" />
@@ -212,9 +243,6 @@ export default function Navbar() {
               )}
             </AnimatePresence>
           </button>
-          <button onClick={() => setMobileOpen((v) => !v)} className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted md:hidden" aria-label={t("nav.menu")}>
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
         </div>
       </nav>
 
@@ -279,6 +307,7 @@ export default function Navbar() {
         lang={lang}
         t={t}
         toggle={toggle}
+        highlightAccount={highlightAccount}
       />
     </header>
   );

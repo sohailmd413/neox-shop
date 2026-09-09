@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
@@ -59,8 +59,18 @@ export default function MobileMenuDrawer({
   lang,
   t,
   toggle,
+  highlightAccount,
 }) {
   const [expanded, setExpanded] = useState(() => new Set());
+  const [flash, setFlash] = useState(false);
+  useEffect(() => {
+    if (open && highlightAccount) {
+      setFlash(true);
+      const id = setTimeout(() => setFlash(false), 1600);
+      return () => clearTimeout(id);
+    }
+  }, [open, highlightAccount]);
+  const accountRing = flash ? "ring-2 ring-deal ring-offset-2 ring-offset-background" : "";
 
   const tops = useMemo(() => categories.filter((c) => !c.parent_id), [categories]);
   const childrenByParent = useMemo(() => {
@@ -94,7 +104,7 @@ export default function MobileMenuDrawer({
         <div className="flex-1 overflow-y-auto px-4 py-4">
           {/* Account */}
           {user ? (
-            <div className="mb-3 rounded-xl border border-border bg-muted/30 p-3">
+            <div className={`mb-3 rounded-xl border border-border bg-muted/30 p-3 ${accountRing}`}>
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
                   {initialsOf(user)}
@@ -118,7 +128,7 @@ export default function MobileMenuDrawer({
               </div>
             </div>
           ) : (
-            <div className="mb-3 space-y-2 rounded-xl border border-border bg-muted/30 p-3">
+            <div className={`mb-3 space-y-2 rounded-xl border border-border bg-muted/30 p-3 ${accountRing}`}>
               <Link to="/login" onClick={close} className="block w-full rounded-lg bg-deal px-4 py-2.5 text-center text-sm font-semibold text-deal-foreground">
                 {t("nav.signIn")}
               </Link>
