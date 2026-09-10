@@ -158,17 +158,19 @@ function ProductCardBase({ product, index = 0, rank = null, tag = null, soldCoun
               <span>({product.num_reviews || 0})</span>
             </div>
           )}
-          <div className="flex items-baseline gap-2 pt-0.5">
-            <span className={`text-sm font-semibold text-foreground ${outOfStock ? "text-muted-foreground" : ""}`}>
-              {formatPrice(product.price)}
-            </span>
-            {onSale && (
-              <span className={`text-xs text-muted-foreground line-through ${outOfStock ? "opacity-50" : ""}`}>
-                {formatPrice(product.compare_at_price)}
+          <div className="max-w-full space-y-1 overflow-hidden pt-0.5">
+            <div className="flex max-w-full flex-wrap items-baseline gap-x-2 gap-y-0.5 overflow-hidden">
+              <span className={`text-sm font-semibold text-foreground ${outOfStock ? "text-muted-foreground" : ""}`}>
+                {formatPrice(product.price)}
               </span>
-            )}
+              {onSale && (
+                <span className={`text-xs text-muted-foreground line-through ${outOfStock ? "opacity-50" : ""}`}>
+                  {formatPrice(product.compare_at_price)}
+                </span>
+              )}
+            </div>
             {onSale && youSave > 0 && !outOfStock && (
-              <span className="text-[11px] font-semibold text-deal">
+              <span className="inline-flex w-fit items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
                 {lang === "ar" ? "وفّر" : "Save"} {formatPrice(youSave)}
               </span>
             )}
