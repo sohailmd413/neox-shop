@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/shared/StateViews";
 import { useToast } from "@/components/ui/use-toast";
 import { MapPin, Plus, Pencil, Trash2, Star } from "lucide-react";
 import AddressForm from "./AddressForm";
+import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
 import { useLanguage } from "@/lib/i18n";
 
 export default function AddressesSection() {
@@ -13,6 +14,7 @@ export default function AddressesSection() {
   const [addresses, setAddresses] = useState(null);
   const [editing, setEditing] = useState(null);
   const [open, setOpen] = useState(false);
+  const [confirmId, setConfirmId] = useState(null);
 
   const load = async () => {
     setAddresses(null);
@@ -33,9 +35,11 @@ export default function AddressesSection() {
     } catch { toast({ title: t("address.defaultError"), variant: "destructive" }); }
   };
 
-  const remove = async (id) => {
-    try { await base44.entities.Address.delete(id); toast({ title: t("address.removed") }); load(); }
+  const remove = async () => {
+    if (!confirmId) return;
+    try { await base44.entities.Address.delete(confirmId); toast({ title: t("address.removed") }); load(); }
     catch { toast({ title: t("address.removeError"), variant: "destructive" }); }
+    finally { setConfirmId(null); }
   };
 
   return (
@@ -68,13 +72,22 @@ export default function AddressesSection() {
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 {!a.is_default && <Button size="sm" variant="outline" onClick={() => setDefault(a.id)}><Star className="mr-1.5 h-3.5 w-3.5" /> {t("address.setDefault")}</Button>}
                 <Button size="sm" variant="ghost" onClick={() => { setEditing(a); setOpen(true); }}><Pencil className="mr-1.5 h-3.5 w-3.5" /> {t("address.edit")}</Button>
-                <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => remove(a.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => setConfirmId(a.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
               </div>
             </div>
           ))}
         </div>
       )}
 
+      <ConfirmDialog
+        open={!!confirmId}
+        onClose={() => setConfirmId(null)}
+        onConfirm={remove}
+        variant="danger"
+        title={t("address.deleteConfirmTitle")}
+        description={t("address.deleteConfirmDesc")}
+        confirmLabel={t("address.delete")}
+      />
       <AddressForm open={open} onClose={() => setOpen(false)} address={editing} onSaved={load} />
     </div>
   );

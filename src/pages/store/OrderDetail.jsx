@@ -151,6 +151,7 @@ export default function OrderDetail() {
             </p>
             <p className="font-medium">{ship.name}</p>
             <p className="text-muted-foreground">{ship.line1}</p>
+            {ship.line2 && <p className="text-muted-foreground">{ship.line2}</p>}
             <p className="text-muted-foreground">
               {ship.city}
               {ship.state ? `, ${ship.state}` : ""} {ship.postal_code}

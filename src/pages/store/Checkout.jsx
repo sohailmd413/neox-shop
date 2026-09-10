@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Check, Lock } from "lucide-react";
+import { ArrowLeft, Check, Lock, Plus } from "lucide-react";
 import OrderSuccess from "@/components/storefront/OrderSuccess";
 import AnimatedNumber from "@/components/storefront/AnimatedNumber";
 import Pressable from "@/components/storefront/Pressable";
@@ -51,8 +51,38 @@ export default function Checkout() {
       .catch(() => {});
   }, []);
 
-  // Prefill the checkout form with the signed-in customer's saved default
-  // address and profile (name/email/phone) for a faster checkout.
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    line1: "",
+    line2: "",
+    city: "",
+    state: "",
+    postal_code: "",
+    country: "",
+    phone: "",
+  });
+  // Saved address book (scoped to the customer via RLS) + which entry is
+  // selected for this order ("new" = enter a fresh address inline).
+  const [addresses, setAddresses] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [saveNew, setSaveNew] = useState(true);
+  const [setDefault, setSetDefault] = useState(false);
+
+  const applyAddress = (a) =>
+    setForm((f) => ({
+      ...f,
+      name: a.full_name || f.name,
+      phone: a.phone || f.phone,
+      line1: a.line1 || "",
+      line2: a.line2 || "",
+      city: a.city || "",
+      state: a.state || "",
+      postal_code: a.postal_code || "",
+      country: a.country || "",
+    }));
+
+  // Prefill from the signed-in customer's profile and saved default address.
   useEffect(() => {
     (async () => {
       try {
@@ -68,32 +98,21 @@ export default function Checkout() {
       } catch {}
       try {
         const list = await base44.entities.Address.list("-created_date", 50);
-        const def = (list || []).find((a) => a.is_default);
+        const addrs = list || [];
+        setAddresses(addrs);
+        const def = addrs.find((a) => a.is_default) || addrs[0];
         if (def) {
-          setForm((f) => ({
-            ...f,
-            name: def.full_name || f.name,
-            phone: def.phone || f.phone,
-            line1: def.line1 || f.line1,
-            city: def.city || f.city,
-            state: def.state || f.state,
-            postal_code: def.postal_code || f.postal_code,
-            country: def.country || f.country,
-          }));
+          setSelectedId(def.id);
+          applyAddress(def);
+          setSetDefault(!!def.is_default);
+        } else {
+          setSelectedId("new");
         }
-      } catch {}
+      } catch {
+        setSelectedId("new");
+      }
     })();
   }, []);
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    line1: "",
-    city: "",
-    state: "",
-    postal_code: "",
-    country: "",
-    phone: "",
-  });
 
   const discount = coupon
     ? coupon.discount_type === "percent"
@@ -137,6 +156,17 @@ export default function Checkout() {
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
+  const selectAddress = (a) => {
+    setSelectedId(a.id);
+    applyAddress(a);
+    setSetDefault(!!a.is_default);
+  };
+  const startNewAddress = () => {
+    setSelectedId("new");
+    setSetDefault(false);
+    setForm((f) => ({ ...f, line1: "", line2: "", city: "", state: "", postal_code: "", country: "" }));
+  };
+
   const placeOrder = async (e) => {
     e.preventDefault();
     if (items.length === 0) return;
@@ -149,6 +179,33 @@ export default function Checkout() {
     }
     setPlacing(true);
     try {
+      // Snapshot the address used at checkout time so historical orders are
+      // unaffected by later edits/deletes in the address book. When a saved
+      // address is selected, copy from the Address record (preserves line2);
+      // otherwise copy from the entered form.
+      const selected = selectedId && selectedId !== "new" ? addresses.find((a) => a.id === selectedId) : null;
+      const shipping_address = selected
+        ? {
+            name: selected.full_name || form.name,
+            line1: selected.line1 || form.line1,
+            line2: selected.line2 || "",
+            city: selected.city || form.city,
+            state: selected.state || form.state,
+            postal_code: selected.postal_code || form.postal_code,
+            country: selected.country || form.country,
+            phone: selected.phone || form.phone,
+          }
+        : {
+            name: form.name,
+            line1: form.line1,
+            line2: form.line2 || "",
+            city: form.city,
+            state: form.state,
+            postal_code: form.postal_code,
+            country: form.country,
+            phone: form.phone,
+          };
+
       const order = await base44.entities.Order.create({
         status: "pending",
         items: items.map((i) => ({
@@ -167,16 +224,39 @@ export default function Checkout() {
         customer_email: form.email,
         payment_method: paymentMethod,
         timeline: [{ status: "pending", by: "system", at: new Date().toISOString() }],
-        shipping_address: {
-          name: form.name,
-          line1: form.line1,
-          city: form.city,
-          state: form.state,
-          postal_code: form.postal_code,
-          country: form.country,
-          phone: form.phone,
-        },
+        shipping_address,
       });
+
+      // Persist address-book changes made at checkout (best-effort — the
+      // order is already placed, so failures here don't block it).
+      try {
+        if (selectedId === "new" && saveNew) {
+          const created = await base44.entities.Address.create({
+            label: "Home",
+            full_name: form.name,
+            phone: form.phone,
+            line1: form.line1,
+            line2: form.line2 || "",
+            city: form.city,
+            state: form.state,
+            postal_code: form.postal_code,
+            country: form.country,
+            is_default: setDefault,
+          });
+          if (setDefault && created) {
+            const all = await base44.entities.Address.list("-created_date", 50);
+            await Promise.all(
+              (all || []).filter((a) => a.id !== created.id && a.is_default).map((a) => base44.entities.Address.update(a.id, { is_default: false }))
+            );
+          }
+        } else if (selected && setDefault && !selected.is_default) {
+          await base44.entities.Address.update(selected.id, { is_default: true });
+          await Promise.all(
+            addresses.filter((a) => a.id !== selected.id && a.is_default).map((a) => base44.entities.Address.update(a.id, { is_default: false }))
+          );
+        }
+      } catch {}
+
       setPlaced(order);
       clearCart();
     } catch (err) {
@@ -232,16 +312,67 @@ export default function Checkout() {
 
             <section>
               <h2 className="text-lg font-medium">{t("checkout.shippingAddress")}</h2>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div className="sm:col-span-2">
-                  <Input label={t("checkout.address")} value={form.line1} onChange={set("line1")} required />
+
+              {addresses.length > 0 && (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  {addresses.map((a) => {
+                    const on = selectedId === a.id;
+                    return (
+                      <button
+                        type="button"
+                        key={a.id}
+                        onClick={() => selectAddress(a)}
+                        className={`flex flex-col gap-1 rounded-2xl border p-4 text-left transition-colors ${on ? "border-foreground bg-muted/40" : "border-border hover:border-foreground/30"}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          {a.label ? (
+                            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{a.label}</span>
+                          ) : <span />}
+                          {a.is_default && <span className="rounded-full bg-foreground px-2 py-0.5 text-[10px] font-medium text-background">{t("address.default")}</span>}
+                        </div>
+                        <p className="mt-1 text-sm font-medium">{a.full_name || "—"}</p>
+                        <p className="text-xs text-muted-foreground"><span dir="ltr" style={{ unicodeBidi: "isolate" }}>{a.line1}{a.line2 ? `, ${a.line2}` : ""}</span></p>
+                        <p className="text-xs text-muted-foreground"><span dir="ltr" style={{ unicodeBidi: "isolate" }}>{[a.city, a.state, a.postal_code].filter(Boolean).join(", ")}</span></p>
+                        <p className="text-xs text-muted-foreground"><span dir="ltr" style={{ unicodeBidi: "isolate" }}>{a.country}</span></p>
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={startNewAddress}
+                    className={`flex items-center justify-center gap-1.5 rounded-2xl border border-dashed p-4 text-sm font-medium transition-colors ${selectedId === "new" ? "border-foreground bg-muted/40 text-foreground" : "border-border text-muted-foreground hover:border-foreground/30"}`}
+                  >
+                    <Plus className="h-4 w-4" /> {t("checkout.addNewAddress")}
+                  </button>
                 </div>
-                <Input label={t("checkout.city")} value={form.city} onChange={set("city")} required />
-                <Input label={t("checkout.state")} value={form.state} onChange={set("state")} />
-                <Input label={t("checkout.postalCode")} dir="ltr" value={form.postal_code} onChange={set("postal_code")} required />
-                <Input label={t("checkout.country")} value={form.country} onChange={set("country")} required />
-                <Input label={t("checkout.phone")} dir="ltr" value={form.phone} onChange={set("phone")} />
-              </div>
+              )}
+
+              {(addresses.length === 0 || selectedId === "new") && (
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <Input label={t("checkout.address")} value={form.line1} onChange={set("line1")} required />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Input label={t("address.line2")} value={form.line2} onChange={set("line2")} />
+                  </div>
+                  <Input label={t("checkout.city")} value={form.city} onChange={set("city")} required />
+                  <Input label={t("checkout.state")} value={form.state} onChange={set("state")} />
+                  <Input label={t("checkout.postalCode")} dir="ltr" value={form.postal_code} onChange={set("postal_code")} required />
+                  <Input label={t("checkout.country")} value={form.country} onChange={set("country")} required />
+                  <Input label={t("checkout.phone")} dir="ltr" value={form.phone} onChange={set("phone")} />
+                  {selectedId === "new" && (
+                    <label className="flex items-center gap-2.5 rounded-xl bg-muted/40 px-4 py-3 sm:col-span-2">
+                      <input type="checkbox" checked={saveNew} onChange={(e) => setSaveNew(e.target.checked)} className="h-4 w-4 rounded border-border" />
+                      <span className="text-sm font-medium">{t("checkout.saveForFuture")}</span>
+                    </label>
+                  )}
+                </div>
+              )}
+
+              <label className="mt-4 flex items-center gap-2.5 rounded-xl bg-muted/40 px-4 py-3">
+                <input type="checkbox" checked={setDefault} onChange={(e) => setSetDefault(e.target.checked)} className="h-4 w-4 rounded border-border" />
+                <span className="text-sm font-medium">{t("checkout.setAsDefault")}</span>
+              </label>
             </section>
 
             <section>
