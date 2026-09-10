@@ -10,6 +10,7 @@ import { useLanguage } from "@/lib/i18n";
 import BecauseYouViewed from "@/components/storefront/BecauseYouViewed";
 import RecentlyViewedRow from "@/components/storefront/RecentlyViewedRow";
 import { mergeGuestHistory } from "@/lib/recentlyViewed";
+import { mergeGuestRecentSearches } from "@/lib/recentSearches";
 
 // Reference home page — full-bleed hero, asymmetric category showcase,
 // alternating section backgrounds (white → warm-gray merch → navy trust),
@@ -47,6 +48,7 @@ export default function Home() {
   // account's backend-tracked history once on mount.
   useEffect(() => {
     mergeGuestHistory();
+    mergeGuestRecentSearches();
   }, []);
 
   const loading = !data;

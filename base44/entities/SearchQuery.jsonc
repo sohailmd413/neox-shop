@@ -1,0 +1,46 @@
+{
+  "name": "SearchQuery",
+  "type": "object",
+  "properties": {
+    "query_text": {
+      "type": "string",
+      "description": "Original (display) search term as typed by the customer, used to render trending suggestions."
+    },
+    "query_text_lower": {
+      "type": "string",
+      "description": "Lower-cased, trimmed copy of query_text used as the dedup/match key so the same term in different casing increments one counter."
+    },
+    "search_count": {
+      "type": "number",
+      "default": 1,
+      "description": "Number of times this term has been submitted. Drives the trending ranking."
+    },
+    "last_searched_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this term was last searched."
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "ar"
+      ],
+      "description": "Language the customer was using when they submitted the search."
+    }
+  },
+  "required": [
+    "query_text",
+    "query_text_lower"
+  ],
+  "rls": {
+    "read": true,
+    "create": true,
+    "update": true,
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

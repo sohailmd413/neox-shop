@@ -1,0 +1,43 @@
+{
+  "name": "RecentSearch",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "type": "string",
+      "description": "User id of the customer who searched (denormalized; the owner is also stamped on created_by_id)."
+    },
+    "query_text": {
+      "type": "string",
+      "description": "The submitted search term."
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "ar"
+      ]
+    },
+    "searched_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the search was submitted. Updated (moved to most-recent) on repeat searches so there is one entry per customer per term."
+    }
+  },
+  "required": [
+    "query_text"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
