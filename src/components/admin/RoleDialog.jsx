@@ -100,7 +100,7 @@ export default function RoleDialog({ role, onClose, onSaved, builtin }) {
             <Label className="mb-2 block">Permission</Label>
             <p className="mb-2 text-xs text-muted-foreground">Pick the modules this role can access.</p>
             <div className="grid grid-cols-2 gap-2">
-              {ADMIN_SECTIONS.map((s) => {
+              {ADMIN_SECTIONS.filter((s) => s.id !== 'settings').map((s) => {
                 const eff = permissions[s.id] === "allow";
                 return (
                   <button
@@ -119,6 +119,7 @@ export default function RoleDialog({ role, onClose, onSaved, builtin }) {
                 );
               })}
             </div>
+            <p className="mt-2 text-xs text-muted-foreground">Settings is restricted to the Main admin role and cannot be assigned to other roles.</p>
           </div>
         </div>
 

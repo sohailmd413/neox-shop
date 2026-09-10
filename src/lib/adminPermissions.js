@@ -85,7 +85,7 @@ export function roleOptions(customRoles = []) {
 // Staff & access + Roles pages themselves are reserved for the main admin.
 export function canAccess(user, section, customRoles = []) {
   if (!user) return false;
-  if (section === 'users' || section === 'roles') return user.role === 'admin';
+  if (section === 'users' || section === 'roles' || section === 'settings') return user.role === 'admin';
   if (user.role === 'admin') return true;
   const perms = user.permissions || {};
   const explicit = perms[section];

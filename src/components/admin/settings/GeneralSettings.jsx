@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Dropdown from "@/components/admin/ui/Dropdown";
-import Dropzone from "@/components/admin/ui/Dropzone";
+
 
 const LANG_OPTS = [
   { label: "English", value: "en" },
@@ -54,7 +54,17 @@ export default function GeneralSettings({ setting, onSave }) {
 
       <div className="space-y-1.5">
         <span className="text-xs font-medium text-muted-foreground">Logo</span>
-        <Dropzone value={f.logo_url || ""} onChange={(u) => set("logo_url", u)} hint="PNG/SVG with transparent background recommended" />
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/20 p-3">
+          {f.logo_url ? (
+            <img src={f.logo_url} alt="Store logo" className="h-12 w-12 rounded bg-white object-contain p-1" />
+          ) : (
+            <div className="flex h-12 w-12 items-center justify-center rounded bg-muted text-[11px] text-muted-foreground">No logo</div>
+          )}
+          <div className="text-xs">
+            <p className="font-medium text-foreground">Logo locked</p>
+            <p className="mt-0.5 text-muted-foreground">Logo changes require direct asset replacement — contact your developer to update this.</p>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

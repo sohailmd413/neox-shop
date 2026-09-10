@@ -18,6 +18,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight, ChevronDown, Plus, Pencil, Trash2, Layers, GripVertical, Power, CornerDownRight } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 export default function CategoryTree({
   categories,
@@ -31,9 +32,27 @@ export default function CategoryTree({
   onReorder,
   onMove,
 }) {
+  // Accordion-style expansion: at any level only one branch stays open at a
+  // time. The initial state opens the ancestor chain of the selected category
+  // (so the active row is visible) and falls back to the first top-level
+  // category when nothing is selected.
   const [expanded, setExpanded] = useState(() => {
     const s = new Set();
-    categories.filter((c) => !c.parent_id).forEach((c) => s.add(c.id));
+    if (selectedId) {
+      let cur = categories.find((c) => c.id === selectedId);
+      const guard = new Set();
+      while (cur?.parent_id && !guard.has(cur.parent_id)) {
+        s.add(cur.parent_id);
+        guard.add(cur.parent_id);
+        cur = categories.find((c) => c.id === cur.parent_id);
+      }
+    }
+    if (s.size === 0) {
+      const firstTop = categories
+        .filter((c) => !c.parent_id)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))[0];
+      if (firstTop) s.add(firstTop.id);
+    }
     return s;
   });
   const [activeId, setActiveId] = useState(null);
@@ -50,10 +69,36 @@ export default function CategoryTree({
 
   const count = (cat) => products.filter((p) => p.category === cat.name).length;
 
+  // Full breadcrumb path for a category, e.g. "Electronics → Mobiles → Smartphones".
+  const pathOf = (cat) => {
+    const parts = [];
+    let cur = cat;
+    const guard = new Set();
+    while (cur && !guard.has(cur.id)) {
+      parts.unshift(cur.name);
+      guard.add(cur.id);
+      cur = cur.parent_id ? categories.find((c) => c.id === cur.parent_id) : null;
+    }
+    return parts.join(" → ");
+  };
+
+  // Toggle one branch; when expanding, auto-collapse every other expanded
+  // sibling at the same parent level so only one branch stays open per level.
   const toggleExpand = (id) =>
     setExpanded((s) => {
       const n = new Set(s);
-      n.has(id) ? n.delete(id) : n.add(id);
+      if (n.has(id)) {
+        n.delete(id);
+      } else {
+        const cat = categories.find((c) => c.id === id);
+        if (cat) {
+          const parentId = cat.parent_id || null;
+          categories
+            .filter((c) => (c.parent_id || null) === parentId && c.id !== id && n.has(c.id))
+            .forEach((sib) => n.delete(sib.id));
+        }
+        n.add(id);
+      }
       return n;
     });
 
@@ -65,7 +110,6 @@ export default function CategoryTree({
     const activeCat = categories.find((c) => c.id === active.id);
     if (!activeCat) return;
 
-    // Dropped on a "make child" drop-target → re-parent onto that category (or top level).
     if (overId.startsWith("child:")) {
       const target = overId.slice(6);
       const newParent = target === "root" ? null : target;
@@ -74,7 +118,6 @@ export default function CategoryTree({
       return;
     }
 
-    // Dropped next to a sibling item.
     if (active.id === over.id) return;
     const overCat = categories.find((c) => c.id === over.id);
     if (!overCat) return;
@@ -110,6 +153,7 @@ export default function CategoryTree({
               onToggleExpand={() => toggleExpand(c.id)}
               onSelect={() => onSelect(c)}
               selectedId={selectedId}
+              path={pathOf(c)}
               onEdit={() => onEdit(c)}
               onAddSub={() => onAddSub(c)}
               onDelete={() => onDelete(c)}
@@ -126,42 +170,45 @@ export default function CategoryTree({
   };
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="mb-3 flex items-center gap-2 px-1">
-        <Layers className="h-4 w-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium">Category tree</h3>
-        <span className="ml-auto text-xs text-muted-foreground">{categories.length} total</span>
+    <TooltipProvider delayDuration={300}>
+      <div className="flex h-full flex-col">
+        <div className="mb-3 flex items-center gap-2 px-1">
+          <Layers className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-sm font-medium">Category tree</h3>
+          <span className="ml-auto text-xs text-muted-foreground">{categories.length} total</span>
+        </div>
+        <div className="flex-1 overflow-y-auto pr-1">
+          {categories.length === 0 ? (
+            <p className="py-10 text-center text-sm text-muted-foreground">No categories yet.</p>
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCorners}
+              onDragStart={(e) => setActiveId(e.active.id)}
+              onDragEnd={handleEnd}
+              onDragCancel={() => setActiveId(null)}
+            >
+              {renderGroup(null)}
+              {activeId != null && <TopLevelDrop />}
+            </DndContext>
+          )}
+          {activeId != null && (
+            <p className="mt-2 px-1 text-[11px] text-muted-foreground">
+              Drag onto a row's <span className="font-medium">↳</span> tag to nest it as a sub-category.
+            </p>
+          )}
+        </div>
       </div>
-      <div className="flex-1 overflow-y-auto pr-1">
-        {categories.length === 0 ? (
-          <p className="py-10 text-center text-sm text-muted-foreground">No categories yet.</p>
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCorners}
-            onDragStart={(e) => setActiveId(e.active.id)}
-            onDragEnd={handleEnd}
-            onDragCancel={() => setActiveId(null)}
-          >
-            {renderGroup(null)}
-            {activeId != null && <TopLevelDrop />}
-          </DndContext>
-        )}
-        {activeId != null && (
-          <p className="mt-2 px-1 text-[11px] text-muted-foreground">
-            Drag onto a row's <span className="font-medium">↳</span> tag to nest it as a sub-category.
-          </p>
-        )}
-      </div>
-    </div>
+    </TooltipProvider>
   );
 }
 
-function TreeRow({ c, depth, subs, isOpen, onToggleExpand, onSelect, selectedId, onEdit, onAddSub, onDelete, onToggleActive, count, dragging, children }) {
+function TreeRow({ c, depth, subs, isOpen, onToggleExpand, onSelect, selectedId, path, onEdit, onAddSub, onDelete, onToggleActive, count, dragging, children }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: c.id });
   const { setNodeRef: setChildRef, isOver: childOver } = useDroppable({ id: `child:${c.id}` });
   const [hovered, setHovered] = useState(false);
   const style = { transform: CSS.Transform.toString(transform), transition };
+  const selected = selectedId === c.id;
 
   return (
     <div>
@@ -170,7 +217,11 @@ function TreeRow({ c, depth, subs, isOpen, onToggleExpand, onSelect, selectedId,
         style={style}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className={`group flex items-center gap-1.5 rounded-lg py-1.5 pr-2 ${selectedId === c.id ? "bg-foreground/5" : "hover:bg-muted/50"} ${isDragging ? "opacity-40" : ""}`}
+        className={`group flex items-center gap-1.5 rounded-lg py-1.5 pr-2 ${
+          selected
+            ? "bg-foreground/[0.07] ring-1 ring-inset ring-foreground/30"
+            : "hover:bg-muted/50"
+        } ${isDragging ? "opacity-40" : ""}`}
       >
         <span {...attributes} {...listeners} className="cursor-grab touch-none text-muted-foreground/40 hover:text-foreground">
           <GripVertical className="h-4 w-4" />
@@ -183,9 +234,16 @@ function TreeRow({ c, depth, subs, isOpen, onToggleExpand, onSelect, selectedId,
         ) : (
           <div className="flex h-6 w-6 items-center justify-center rounded bg-muted"><Layers className="h-3.5 w-3.5 text-muted-foreground" /></div>
         )}
-        <button type="button" onClick={onSelect} className="flex-1 text-left">
-          <span className="line-clamp-1 text-sm font-medium">{c.name}</span>
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button type="button" onClick={onSelect} className="flex-1 text-left">
+              <span className="line-clamp-1 text-sm font-medium">{c.name}</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs normal-case">
+            {path || c.name}
+          </TooltipContent>
+        </Tooltip>
         <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">{count}</span>
         {c.featured && <span className="h-1.5 w-1.5 rounded-full bg-amber-500" title="Featured" />}
         {c.active === false && <span className="text-[11px] text-muted-foreground">off</span>}
