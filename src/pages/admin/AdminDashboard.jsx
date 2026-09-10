@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import DashboardKpis from "@/components/admin/DashboardKpis";
 import DashboardCharts from "@/components/admin/DashboardCharts";
 import DashboardQuickActions from "@/components/admin/DashboardQuickActions";
+import LoyaltyDashboardWidget from "@/components/admin/LoyaltyDashboardWidget";
 
 const RANGES = [
   { id: "1", label: "Today" },
@@ -219,28 +220,31 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Pending approvals */}
-        <div className="rounded-2xl border border-border bg-background p-6">
-          <h2 className="flex items-center gap-2 text-base font-medium">
-            <MessageSquare className="h-4 w-4" /> Pending approvals
-          </h2>
-          <ul className="mt-4 space-y-3">
-            {pendingReviews.length === 0 && (
-              <li className="text-sm text-muted-foreground">Nothing pending.</li>
+        {/* Pending approvals + loyalty summary stacked */}
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-border bg-background p-6">
+            <h2 className="flex items-center gap-2 text-base font-medium">
+              <MessageSquare className="h-4 w-4" /> Pending approvals
+            </h2>
+            <ul className="mt-4 space-y-3">
+              {pendingReviews.length === 0 && (
+                <li className="text-sm text-muted-foreground">Nothing pending.</li>
+              )}
+              {pendingReviews.map((r) => (
+                <li key={r.id} className="flex items-start gap-2 text-sm">
+                  <Star className="mt-0.5 h-3.5 w-3.5 text-amber-500 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="line-clamp-1">{r.comment || "No comment"}</p>
+                    <p className="text-xs text-muted-foreground">Review pending · {r.rating}★</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            {pendingReviews.length > 0 && (
+              <Link to="/admin/reviews" className="mt-4 block text-xs text-muted-foreground hover:text-foreground">Moderate reviews →</Link>
             )}
-            {pendingReviews.map((r) => (
-              <li key={r.id} className="flex items-start gap-2 text-sm">
-                <Star className="mt-0.5 h-3.5 w-3.5 text-amber-500 shrink-0" />
-                <div className="min-w-0">
-                  <p className="line-clamp-1">{r.comment || "No comment"}</p>
-                  <p className="text-xs text-muted-foreground">Review pending · {r.rating}★</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-          {pendingReviews.length > 0 && (
-            <Link to="/admin/reviews" className="mt-4 block text-xs text-muted-foreground hover:text-foreground">Moderate reviews →</Link>
-          )}
+          </div>
+          <LoyaltyDashboardWidget />
         </div>
       </div>
     </div>

@@ -4,6 +4,8 @@ import { ensureProfile } from "../../shared/loyalty.ts";
 // Admin manual loyalty adjustment for a customer — goodwill gestures or
 // correcting errors. Requires a reason. A positive `points` adds, a negative
 // one subtracts (clamped so the balance never goes below zero). Admin-only.
+// Records the acting staff member's name in `actor` so the admin Loyalty tab
+// can show who made each manual change (system transactions leave actor null).
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -23,6 +25,7 @@ export default async function(req) {
     let newBalance = balance + points;
     if (newBalance < 0) { effective = -balance; newBalance = 0; }
 
+    const actor = user.full_name || user.email || 'admin';
     await base44.asServiceRole.entities.LoyaltyTransaction.create({
       customer_id: userId,
       order_id: null,
@@ -30,6 +33,7 @@ export default async function(req) {
       points: effective,
       remaining_points: 0,
       reason_code: 'admin_manual',
+      actor,
       description: `Admin adjustment (${effective > 0 ? '+' : ''}${effective}): ${reason}`,
     });
     await base44.asServiceRole.entities.CustomerProfile.update(profile.id, { loyalty_points_balance: newBalance });

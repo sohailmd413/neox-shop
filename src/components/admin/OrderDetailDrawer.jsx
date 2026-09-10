@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import Dropdown from "@/components/admin/ui/Dropdown";
 import { useToast } from "@/components/ui/use-toast";
 import { downloadInvoicePDF } from "@/lib/invoice";
+import OrderLoyaltyLine from "@/components/admin/OrderLoyaltyLine";
 
 const STATUSES = ["pending", "paid", "packed", "shipped", "out_for_delivery", "delivered", "cancelled", "refunded"];
 const METHODS = [
@@ -150,6 +151,7 @@ export default function OrderDetailDrawer({ order, onClose, onChanged, adminName
                 </div>
               ))}
               <Totals order={order} />
+              <OrderLoyaltyLine order={order} />
             </div>
           )}
 

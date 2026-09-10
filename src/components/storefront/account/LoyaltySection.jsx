@@ -50,6 +50,17 @@ export default function LoyaltySection() {
     expired: { icon: Clock, color: "text-amber-600", bg: "bg-amber-50", label: t("loyalty.expired") },
     admin_adjustment: { icon: Sparkles, color: "text-foreground", bg: "bg-muted", label: t("loyalty.adjusted") },
   };
+  // Reason-code labels mirror the admin panel so customers and admins see the
+  // same type wording (e.g. a refund clawback shows "Refund clawback", not the
+  // generic "Adjusted").
+  const reasonLabel = {
+    earn: t("loyalty.earned"),
+    redeem: t("loyalty.redeemed"),
+    expire: t("loyalty.expired"),
+    clawback_refund: t("loyalty.clawback"),
+    redeem_refund: t("loyalty.redeemRefund"),
+    admin_manual: t("loyalty.adjusted"),
+  };
 
   return (
     <div className="space-y-6">
@@ -101,11 +112,11 @@ export default function LoyaltySection() {
                   <div className="min-w-0 flex-1">
                     <p className="break-words text-sm font-medium">{tr.description}</p>
                     <p className="text-xs text-muted-foreground">
-                      {m.label} · {new Date(tr.created_date).toLocaleDateString(locale)}
+                      {reasonLabel[tr.reason_code] || m.label} · {new Date(tr.created_date).toLocaleDateString(locale)}
                     </p>
                   </div>
-                  <span className={`shrink-0 text-sm font-semibold ${positive ? "text-emerald-600" : "text-foreground"}`}>
-                    {positive ? "+" : ""}{Number(tr.points).toLocaleString(locale)}
+                  <span className={`shrink-0 text-sm font-semibold ${positive ? "text-emerald-600" : "text-red-600"}`}>
+                    {positive ? "+" : "−"}{Math.abs(Number(tr.points)).toLocaleString(locale)}
                   </span>
                 </li>
               );

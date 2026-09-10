@@ -30,7 +30,7 @@
         "redeem_refund",
         "admin_manual"
       ],
-      "description": "Fine-grained reason disambiguating system actions within a type. Used for idempotency checks (e.g. only one clawback_refund per order)."
+      "description": "Fine-grained reason disambiguating system actions within a type. Used for idempotency checks (e.g. only one clawback_refund per order) and for admin-facing labels (Refund clawback vs Redeem refund vs Admin adjustment)."
     },
     "points": {
       "type": "integer",
@@ -40,6 +40,10 @@
       "type": "integer",
       "default": 0,
       "description": "For type=earned: points from this earning still unredeemed/unexpired (FIFO ledger). Redeem, expire and clawback reduce this on the source earned transaction. Always 0 for other types."
+    },
+    "actor": {
+      "type": "string",
+      "description": "For type=admin_adjustment with reason_code=admin_manual: display name of the staff member who made the manual change. Null/empty for system-authored transactions (earned, redeemed, expired, clawback_refund, redeem_refund)."
     },
     "description": {
       "type": "string",
