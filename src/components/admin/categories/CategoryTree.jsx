@@ -32,59 +32,47 @@ export default function CategoryTree({
   onReorder,
   onMove,
 }) {
-  // Accordion-style expansion: at any level only one branch stays open at a
-  // time. The initial state opens the ancestor chain of the selected category
-  // (so the active row is visible) and falls back to the first top-level
-  // category when nothing is selected.
-  const [expanded, setExpanded] = useState(() => {
-    const s = new Set();
+  // Single-open-path accordion: at any moment there is exactly ONE open path
+  // from the tree root down to the deepest expanded node — never two branches
+  // expanded simultaneously anywhere in the tree. We track that path as an
+  // ordered array of category ids (root → … → deepest open node) rather than a
+  // per-node boolean set, which naturally enforces "one path only" without
+  // manually collapsing every other node on each click.
+  const chainOf = (id) => {
+    const chain = [];
+    let cur = categories.find((c) => c.id === id);
+    const guard = new Set();
+    while (cur && !guard.has(cur.id)) {
+      chain.unshift(cur.id);
+      guard.add(cur.id);
+      cur = cur.parent_id ? categories.find((c) => c.id === cur.parent_id) : null;
+    }
+    return chain;
+  };
+
+  const computeInitialPath = () => {
     if (selectedId) {
-      let cur = categories.find((c) => c.id === selectedId);
-      const guard = new Set();
-      while (cur?.parent_id && !guard.has(cur.parent_id)) {
-        s.add(cur.parent_id);
-        guard.add(cur.parent_id);
-        cur = categories.find((c) => c.id === cur.parent_id);
-      }
+      const ancestors = chainOf(selectedId).slice(0, -1);
+      if (ancestors.length) return ancestors;
     }
-    if (s.size === 0) {
-      const firstTop = categories
-        .filter((c) => !c.parent_id)
-        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))[0];
-      if (firstTop) s.add(firstTop.id);
-    }
-    return s;
-  });
+    const firstTop = categories
+      .filter((c) => !c.parent_id)
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))[0];
+    return firstTop ? [firstTop.id] : [];
+  };
+
+  const [openPath, setOpenPath] = useState([]);
   const [activeId, setActiveId] = useState(null);
 
-  // The initializer above runs once on mount, but categories load
-  // asynchronously (empty on first render), so the tree would otherwise start
-  // fully collapsed. Seed the open branches the first time categories arrive:
-  // reveal the selected category's ancestor chain, or fall back to the first
-  // top-level category so the tree isn't a wall of closed chevrons.
+  // Categories load asynchronously (empty on first render), so seed the initial
+  // open path the first time they arrive: reveal the selected category's
+  // ancestor chain, or fall back to the first top-level category so the tree
+  // isn't a wall of closed chevrons.
   const didInit = useRef(false);
   useEffect(() => {
     if (didInit.current || !categories.length) return;
     didInit.current = true;
-    setExpanded(() => {
-      const s = new Set();
-      if (selectedId) {
-        let cur = categories.find((c) => c.id === selectedId);
-        const guard = new Set();
-        while (cur?.parent_id && !guard.has(cur.parent_id)) {
-          s.add(cur.parent_id);
-          guard.add(cur.parent_id);
-          cur = categories.find((c) => c.id === cur.parent_id);
-        }
-      }
-      if (s.size === 0) {
-        const firstTop = categories
-          .filter((c) => !c.parent_id)
-          .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))[0];
-        if (firstTop) s.add(firstTop.id);
-      }
-      return s;
-    });
+    setOpenPath(computeInitialPath());
   }, [categories, selectedId]);
 
   const sensors = useSensors(
@@ -112,47 +100,16 @@ export default function CategoryTree({
     return parts.join(" → ");
   };
 
-  // All descendants of a category (its entire subtree), used so collapsing a
-  // branch also clears every open node beneath it — otherwise re-expanding a
-  // parent would show stale-open children and the accordion feels broken.
-  const descendantsOf = (id) => {
-    const out = new Set();
-    const stack = [id];
-    while (stack.length) {
-      const cur = stack.pop();
-      childrenOf(cur).forEach((c) => {
-        if (!out.has(c.id)) {
-          out.add(c.id);
-          stack.push(c.id);
-        }
-      });
-    }
-    return out;
-  };
-
-  // Accordion toggle: expanding a node collapses any currently-open sibling at
-  // the same parent level (and that sibling's subtree); collapsing a node also
-  // collapses everything beneath it. Keeps one branch open per level.
+  // Replace the entire open path with the clicked node's root→node chain. If
+  // the node is already on the open path, clicking it collapses it and
+  // everything beneath it (truncating the path). This single replacement
+  // naturally collapses any previously-open branch — unrelated top-levels,
+  // siblings, and subtrees — because they simply fall off the new path. The
+  // framer-motion height transition on each row animates the collapse/expand.
   const toggleExpand = (id) =>
-    setExpanded((s) => {
-      const n = new Set(s);
-      if (n.has(id)) {
-        n.delete(id);
-        descendantsOf(id).forEach((d) => n.delete(d));
-      } else {
-        const cat = categories.find((c) => c.id === id);
-        if (cat) {
-          const parentId = cat.parent_id || null;
-          categories
-            .filter((c) => (c.parent_id || null) === parentId && c.id !== id && n.has(c.id))
-            .forEach((sib) => {
-              n.delete(sib.id);
-              descendantsOf(sib.id).forEach((d) => n.delete(d));
-            });
-        }
-        n.add(id);
-      }
-      return n;
+    setOpenPath((path) => {
+      if (path.includes(id)) return path.slice(0, path.indexOf(id));
+      return chainOf(id);
     });
 
   const handleEnd = (e) => {
@@ -195,7 +152,7 @@ export default function CategoryTree({
       <SortableContext items={list.map((c) => c.id)} strategy={verticalListSortingStrategy}>
         {list.map((c) => {
           const subs = childrenOf(c.id);
-          const isOpen = expanded.has(c.id);
+          const isOpen = openPath.includes(c.id);
           return (
             <TreeRow
               key={c.id}
