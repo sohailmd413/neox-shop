@@ -2,12 +2,12 @@
 // Edit these values to match the real business. All fields are bilingual (EN + AR)
 // so the bilingual invoice can render both languages without a separate Store Settings entity.
 export const STORE_INFO = {
-  name_en: "MarketFlow",
-  name_ar: "ماركت فلو",
+  name_en: "NeoX Shop",
+  name_ar: "NeoX شوب",
   address_en: "123 Commerce Street, Riyadh, Saudi Arabia",
   address_ar: "١٢٣ شارع التجارة، الرياض، المملكة العربية السعودية",
   phone: "+966 11 000 0000",
-  email: "billing@marketflow.com",
+  email: "billing@neoxshop.com",
   tax_id_en: "VAT: 300000000000003",
   tax_id_ar: "الرقم الضريبي: ٣٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠٣",
   currency: "SAR",

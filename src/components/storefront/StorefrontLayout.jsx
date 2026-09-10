@@ -118,7 +118,7 @@ export default function StorefrontLayout() {
             </div>
           </div>
           <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-slate-500 sm:flex-row">
-            <p>{t("footer.rights")}</p>
+            <p>© {new Date().getFullYear()} {(lang === "ar" ? (store.store_name_ar || store.store_name) : store.store_name) || "NeoX Shop"}. {t("footer.rights")}</p>
             <p>{t("footer.crafted")}</p>
           </div>
         </div>

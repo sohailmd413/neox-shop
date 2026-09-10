@@ -92,7 +92,7 @@ const translations = {
     "footer.newsletterText": "Join for early access to new collections.",
     "footer.emailPlaceholder": "Email address",
     "footer.join": "Join",
-    "footer.rights": `© ${new Date().getFullYear()} Maison. All rights reserved.`,
+    "footer.rights": "All rights reserved.",
     "footer.crafted": "Crafted with care.",
     "lang.btn": "العربية",
     // Home
@@ -528,7 +528,7 @@ const translations = {
     "footer.newsletterText": "اشترك للحصول على وصول مبكر للمجموعات الجديدة.",
     "footer.emailPlaceholder": "البريد الإلكتروني",
     "footer.join": "اشترك",
-    "footer.rights": `© ${new Date().getFullYear()} ميزون. جميع الحقوق محفوظة.`,
+    "footer.rights": "جميع الحقوق محفوظة.",
     "footer.crafted": "صُنع بعناية.",
     "lang.btn": "English",
     "home.heroKicker": "خريف / شتاء 2026",
