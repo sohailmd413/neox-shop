@@ -16,6 +16,9 @@ import SaleCountdown from "@/components/admin/SaleCountdown";
 import BackBar from "@/components/storefront/BackBar";
 import ReviewSection from "@/components/storefront/reviews/ReviewSection";
 import QuestionSection from "@/components/storefront/qa/QuestionSection";
+import RecentlyViewedRow from "@/components/storefront/RecentlyViewedRow";
+import { getRelatedProducts } from "@/lib/relatedProducts";
+import { recordView, mergeGuestHistory } from "@/lib/recentlyViewed";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -49,12 +52,16 @@ export default function ProductDetail() {
           const cats = await base44.entities.Category.list("sort_order", 200);
           if (!cancelled) setCategories(cats || []);
         } catch {}
-        if (p.category) {
-          try {
-            const rel = await base44.entities.Product.filter({ status: "active", category: p.category }, "-created_date", 8);
-            if (!cancelled) setRelated(rel.filter((r) => r.id !== p.id).slice(0, 8));
-          } catch {}
-        }
+        try {
+          const rel = await getRelatedProducts(p, { limit: 10 });
+          if (!cancelled) setRelated(rel);
+        } catch {}
+        // Record this view (backend for logged-in, localStorage for guests),
+        // merging any guest history first so mid-session logins carry over.
+        try {
+          await mergeGuestHistory();
+          recordView(p.id);
+        } catch {}
         try {
           const rv = await base44.entities.Review.filter({ product_id: id, approved: true }, "-created_date", 50);
           if (!cancelled) setReviews(rv);
@@ -393,6 +400,9 @@ export default function ProductDetail() {
             <ProductRow title={t("product.relatedTitle")} products={related} />
           </div>
         )}
+
+        {/* Recently viewed — excludes this product, hidden when empty */}
+        <RecentlyViewedRow excludeId={product.id} />
       </div>
     </div>
   );

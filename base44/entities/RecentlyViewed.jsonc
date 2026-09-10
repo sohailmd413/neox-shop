@@ -1,0 +1,36 @@
+{
+  "name": "RecentlyViewed",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "type": "string",
+      "description": "User id of the viewer (denormalized; the owner is also stamped on created_by_id)."
+    },
+    "product_id": {
+      "type": "string",
+      "description": "Product that was viewed."
+    },
+    "viewed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the product was last viewed. Updated (moved to most-recent) on repeat views so there is one entry per customer per product."
+    }
+  },
+  "required": [
+    "product_id"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

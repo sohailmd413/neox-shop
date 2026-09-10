@@ -7,6 +7,9 @@ import PosterBanner from "@/components/storefront/PosterBanner";
 import SectionShell from "@/components/storefront/SectionShell";
 import HomeSkeleton from "@/components/storefront/HomeSkeleton";
 import { useLanguage } from "@/lib/i18n";
+import BecauseYouViewed from "@/components/storefront/BecauseYouViewed";
+import RecentlyViewedRow from "@/components/storefront/RecentlyViewedRow";
+import { mergeGuestHistory } from "@/lib/recentlyViewed";
 
 // Reference home page — full-bleed hero, asymmetric category showcase,
 // alternating section backgrounds (white → warm-gray merch → navy trust),
@@ -40,6 +43,12 @@ export default function Home() {
     })();
   }, []);
 
+  // Merge any guest (localStorage) browsing history into the logged-in
+  // account's backend-tracked history once on mount.
+  useEffect(() => {
+    mergeGuestHistory();
+  }, []);
+
   const loading = !data;
   const { products = [], categories = [], sections = [], hsp = [], orders = [] } = data || {};
   const tops = categories.filter((c) => !c.parent_id);
@@ -68,6 +77,9 @@ export default function Home() {
         )}
       </div>
 
+      {/* "Because you viewed X" — personalized, only when history exists */}
+      {!loading && <BecauseYouViewed products={products} orders={orders} />}
+
       {/* Dark-navy trust block — deliberate visual break */}
       <TrustSection />
 
@@ -79,6 +91,9 @@ export default function Home() {
           className="aspect-[16/5] overflow-hidden rounded-xl sm:aspect-[16/4]"
         />
       </SectionShell>
+
+      {/* Recently viewed — static manual-scroll, hidden when empty */}
+      <RecentlyViewedRow />
     </div>
   );
 }
