@@ -50,6 +50,7 @@ import ResetPassword from '@/pages/ResetPassword';
 import AdminAbandonedCarts from '@/pages/admin/AdminAbandonedCarts';
 import AdminSupport from '@/pages/admin/AdminSupport';
 import AdminFAQ from '@/pages/admin/AdminFAQ';
+import AdminCannedResponses from '@/pages/admin/AdminCannedResponses';
 import RecoverCart from '@/pages/store/RecoverCart';
 // Add page imports here
 
@@ -128,6 +129,7 @@ const AuthenticatedApp = () => {
             <Route path="abandoned-carts" element={<AdminAbandonedCarts />} />
             <Route path="support" element={<AdminSupport />} />
             <Route path="faq" element={<AdminFAQ />} />
+            <Route path="canned-responses" element={<AdminCannedResponses />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route path="roles" element={<AdminRoles />} />
             <Route path="users" element={<AdminUsers />} />

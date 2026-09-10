@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon, ClipboardCheck, FileX, Languages, LayoutList, Compass, Search, ShoppingCart as CartIcon, MessageSquare, HelpCircle } from "lucide-react";
+import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon, ClipboardCheck, FileX, Languages, LayoutList, Compass, Search, ShoppingCart as CartIcon, MessageSquare, HelpCircle, Bookmark } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { canAccess } from "@/lib/adminPermissions";
 import { loadPendingCounts, loadRejectedCounts } from "@/lib/approval";
@@ -30,6 +30,7 @@ const SECTION_META = {
   roles: { label: "Roles", path: "/admin/roles", icon: ShieldCheck },
   support: { label: "Support", path: "/admin/support", icon: MessageSquare },
   faq: { label: "FAQ", path: "/admin/faq", icon: HelpCircle },
+  canned_responses: { label: "Canned Responses", path: "/admin/canned-responses", icon: Bookmark },
 };
 
 // Logical groups. Dashboard stays standalone; every other item belongs to a
@@ -39,7 +40,7 @@ const GROUPS = [
   { id: "moderation", label: "Moderation", sections: ["approvals", "rejected", "translations"] },
   { id: "sales", label: "Sales", sections: ["orders", "customers", "coupons", "abandoned_carts"] },
   { id: "content", label: "Content", sections: ["reviews", "posters"] },
-  { id: "support", label: "Support", sections: ["support", "faq"] },
+  { id: "support", label: "Support", sections: ["support", "faq", "canned_responses"] },
   { id: "insights", label: "Insights", sections: ["reports"] },
   { id: "configuration", label: "Configuration", sections: ["settings"] },
 ];

@@ -1,0 +1,101 @@
+{
+  "name": "CannedResponse",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Short internal label, e.g. 'Order delay apology'."
+    },
+    "message_text_en": {
+      "type": "string",
+      "description": "English message text inserted into the staff reply box. Supports {customer_name}, {order_id}, {order_status} placeholders."
+    },
+    "message_text_ar": {
+      "type": "string",
+      "description": "Arabic message text used when replying in an Arabic context. Supports the same placeholders."
+    },
+    "category": {
+      "type": "string",
+      "description": "Grouping label e.g. Shipping, Returns, Payment, General."
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Keywords used to auto-suggest this response based on the customer's most recent message."
+    },
+    "usage_count": {
+      "type": "integer",
+      "default": 0,
+      "description": "Incremented each time this response is actually sent. Used to rank the manual search list (most-used first)."
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Only active responses appear in the staff quick-replies list."
+    }
+  },
+  "required": [
+    "title",
+    "message_text_en"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    }
+  }
+}

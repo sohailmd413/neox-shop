@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Loader2, Send, Paperclip, X } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Loader2, Send, Paperclip, X, Sparkles } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 import { displayName } from "@/lib/users";
@@ -22,20 +22,9 @@ const PRIORITY_OPTS = [
   { label: "High", value: "high" },
 ];
 
-const STATUS_STYLE = {
-  open: "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
-  pending: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
-  resolved: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
-  closed: "bg-muted text-muted-foreground",
-};
-const PRIORITY_STYLE = {
-  high: "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300",
-  medium: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
-  low: "bg-muted text-muted-foreground",
-};
-
 // Right-side chat thread drawer for a single support ticket. Staff can read the
-// full conversation, reply, and change status/priority/assignment. Polls for new
+// full conversation, reply (with canned/quick replies + smart suggestions and
+// variable substitution), and change status/priority/assignment. Polls for new
 // customer messages every 7s and marks them read_by_staff on view.
 export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, onUpdated }) {
   const { toast } = useToast();
@@ -48,6 +37,9 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
   const [status, setStatus] = useState(ticket?.status || "open");
   const [priority, setPriority] = useState(ticket?.priority || "medium");
   const [assigneeId, setAssigneeId] = useState(ticket?.assigned_to_id || "");
+  const [canned, setCanned] = useState([]);
+  const [orderContext, setOrderContext] = useState(null);
+  const [lastInsertedCannedId, setLastInsertedCannedId] = useState(null);
   const scrollRef = useRef(null);
   const fileRef = useRef(null);
 
@@ -72,6 +64,19 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
     }
   };
 
+  // Load canned responses (active, most-used first) + best-effort order context.
+  useEffect(() => {
+    base44.entities.CannedResponse.filter({ is_active: true }, "-usage_count", 200)
+      .then(setCanned).catch(() => setCanned([]));
+    if (ticket?.customer_id) {
+      base44.entities.Order.filter({ user_id: ticket.customer_id }, "-created_date", 1)
+        .then((ords) => setOrderContext(ords?.[0] || null))
+        .catch(() => setOrderContext(null));
+    } else {
+      setOrderContext(null);
+    }
+  }, [ticket?.id, ticket?.customer_id]);
+
   useEffect(() => {
     setLoading(true);
     loadMessages(true);
@@ -83,6 +88,54 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages.length]);
+
+  // Smart suggestions: keyword/category match against the customer's most recent message.
+  const lastCustomerMsg = useMemo(
+    () => [...messages].reverse().find((m) => m.sender_type === "customer")?.message_text || "",
+    [messages]
+  );
+  const isArabicContext = /[\u0600-\u06FF]/.test(lastCustomerMsg);
+
+  const suggestions = useMemo(() => {
+    if (!lastCustomerMsg || canned.length === 0) return [];
+    const msg = lastCustomerMsg.toLowerCase();
+    const scored = canned
+      .map((c) => {
+        const terms = [...(c.keywords || []), c.category].filter(Boolean).map((t) => t.toLowerCase());
+        let score = 0;
+        for (const t of terms) if (t && msg.includes(t)) score++;
+        return { c, score };
+      })
+      .filter((x) => x.score > 0)
+      .sort((a, b) => b.score - a.score || (b.c.usage_count || 0) - (a.c.usage_count || 0))
+      .slice(0, 3)
+      .map((x) => x.c);
+    return scored;
+  }, [lastCustomerMsg, canned]);
+
+  const substitute = (raw) => {
+    if (!raw) return "";
+    const name = ticket?.customer_name || ticket?.customer_email || "there";
+    const orderId = orderContext ? (orderContext.invoice_number || "#" + String(orderContext.id).slice(-6).toUpperCase()) : null;
+    const orderStatus = orderContext ? orderContext.status : null;
+    return raw
+      .replace(/\{customer_name\}/g, name)
+      .replace(/\{order_id\}/g, orderId || "{order_id}")
+      .replace(/\{order_status\}/g, orderStatus || "{order_status}");
+  };
+
+  const insertCanned = (c) => {
+    if (!c) return;
+    const raw = isArabicContext ? (c.message_text_ar || c.message_text_en) : (c.message_text_en || c.message_text_ar);
+    const body = substitute(raw);
+    setText((prev) => (prev.trim() ? `${prev.trim()}\n\n${body}` : body));
+    setLastInsertedCannedId(c.id);
+  };
+
+  const cannedOptions = canned.map((c) => ({
+    label: c.category ? `${c.title} · ${c.category}` : c.title,
+    value: c.id,
+  }));
 
   const addImage = async (file) => {
     if (!file) return;
@@ -116,11 +169,17 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
         last_message_preview: msg.slice(0, 160) || (attachments.length ? "[image]" : ""),
         status: status === "open" ? "pending" : status,
       });
+      // Increment usage_count for the canned response actually sent (best-effort).
+      if (lastInsertedCannedId) {
+        try {
+          await base44.entities.CannedResponse.updateMany({ id: lastInsertedCannedId }, { $inc: { usage_count: 1 } });
+        } catch { /* best-effort */ }
+      }
       setText("");
       setAttachments([]);
+      setLastInsertedCannedId(null);
       await loadMessages(false);
       onUpdated();
-      // Notify the customer (in-app) if they're a registered user.
       if (ticket.customer_id) {
         try {
           await base44.entities.Notification.create({
@@ -218,8 +277,26 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
           )}
         </div>
 
-        {/* Composer */}
-        <form onSubmit={reply} className="border-t border-border p-3">
+        {/* Smart suggestions + quick replies + composer */}
+        <div className="border-t border-border p-3">
+          {suggestions.length > 0 && (
+            <div className="mb-2 flex flex-wrap items-center gap-1.5">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+                <Sparkles className="h-3 w-3 text-amber-500" /> Suggested:
+              </span>
+              {suggestions.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => insertCanned(c)}
+                  className="rounded-full border border-border bg-background px-2.5 py-1 text-xs transition-colors hover:border-foreground/30 hover:bg-muted"
+                >
+                  {c.title}
+                </button>
+              ))}
+            </div>
+          )}
+
           {attachments.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-1.5">
               {attachments.map((u, i) => (
@@ -232,7 +309,21 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
               ))}
             </div>
           )}
-          <div className="flex items-end gap-2">
+
+          <div className="mb-2">
+            <Dropdown
+              type="search"
+              options={cannedOptions}
+              value=""
+              onChange={(id) => insertCanned(canned.find((c) => c.id === id))}
+              placeholder="Quick replies"
+              emptyText="No canned responses."
+              className="w-full"
+              size="sm"
+            />
+          </div>
+
+          <form onSubmit={reply} className="flex items-end gap-2">
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { addImage(e.target.files?.[0]); e.target.value = ""; }} />
             <Button type="button" variant="outline" size="icon" onClick={() => fileRef.current?.click()} disabled={uploading} className="h-9 w-9 shrink-0">
               {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
@@ -248,8 +339,8 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
             <Button type="submit" size="icon" disabled={sending || (!text.trim() && attachments.length === 0)} className="h-9 w-9 shrink-0">
               {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 rtl:rotate-180" />}
             </Button>
-          </div>
-        </form>
+          </form>
+        </div>
       </SheetContent>
     </Sheet>
   );
