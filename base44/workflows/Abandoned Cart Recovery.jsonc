@@ -1,0 +1,45 @@
+{
+  "name": "Abandoned Cart Recovery",
+  "description": "Every hour, flags carts idle past the configured delay as abandoned, marks recovered carts when the customer completed an order, and sends due recovery reminders (first nudge, then an optional second nudge with a single-use discount coupon).",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 * * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Riyadh",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "abandoned_cart_recovery",
+      "version": "1",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "process": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "processAbandonedCarts",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Process abandoned carts",
+            "description": "Flag abandoned carts, mark recovered, send due reminders"
+          }
+        }
+      }
+    ]
+  }
+}

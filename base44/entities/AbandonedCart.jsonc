@@ -1,0 +1,125 @@
+{
+  "name": "AbandonedCart",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "type": "string",
+      "description": "App user id of the logged-in customer. Null for guests."
+    },
+    "email": {
+      "type": "string",
+      "description": "Contact email for recovery. For logged-in customers, their account email; for guests, the email they entered at checkout."
+    },
+    "customer_name": {
+      "type": "string"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "image": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "quantity": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Snapshot of the cart contents at the last update."
+    },
+    "total": {
+      "type": "number",
+      "default": 0
+    },
+    "last_updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time the customer added/changed an item. The abandonment clock counts from here."
+    },
+    "is_abandoned": {
+      "type": "boolean",
+      "default": false
+    },
+    "abandoned_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reminder_sent_count": {
+      "type": "integer",
+      "default": 0
+    },
+    "last_reminder_sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recovered": {
+      "type": "boolean",
+      "default": false,
+      "description": "True once the customer completed an order after this cart was tracked."
+    },
+    "recovered_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "recovered_order_id": {
+      "type": "string"
+    },
+    "coupon_code": {
+      "type": "string",
+      "description": "Single-use recovery coupon generated for the second reminder, if the discount incentive is enabled."
+    },
+    "restore_token": {
+      "type": "string",
+      "description": "Opaque token used by the restore link to load this cart without authentication."
+    },
+    "marketing_opt_in": {
+      "type": "boolean",
+      "default": true,
+      "description": "Snapshot of the customer's marketing preference. Recovery emails are transactional by default (sent regardless); only honored when the admin enables 'respect opt-out'."
+    }
+  },
+  "required": [
+    "items"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

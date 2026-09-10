@@ -142,6 +142,41 @@
       "type": "number",
       "description": "If set, earned points expire this many days after they were earned. Leave blank/null to disable expiry. A daily workflow creates expired transactions for aged, unredeemed points."
     },
+    "abandoned_cart_recovery_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Master toggle for abandoned-cart recovery. When off, no carts are flagged and no recovery emails are sent."
+    },
+    "abandoned_cart_delay_hours": {
+      "type": "number",
+      "default": 1,
+      "description": "Hours a cart must sit idle (no edits) with at least one item before it is flagged abandoned and the first reminder becomes due."
+    },
+    "abandoned_cart_second_reminder_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Send a second recovery nudge after abandoned_cart_second_reminder_hours."
+    },
+    "abandoned_cart_second_reminder_hours": {
+      "type": "number",
+      "default": 24,
+      "description": "Hours after the first reminder before the second reminder is sent."
+    },
+    "abandoned_cart_discount_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include a single-use discount coupon in the second reminder as a recovery incentive."
+    },
+    "abandoned_cart_discount_percent": {
+      "type": "number",
+      "default": 10,
+      "description": "Percent off offered by the second-reminder recovery coupon."
+    },
+    "abandoned_cart_respect_opt_out": {
+      "type": "boolean",
+      "default": false,
+      "description": "When off (default), recovery emails are treated as transactional and sent regardless of marketing opt-in (the customer initiated the cart). When on, customers who opted out of marketing are skipped."
+    },
     "terms_policy": {
       "type": "string",
       "description": "Terms of Service HTML content (English)."
