@@ -1,0 +1,120 @@
+{
+  "name": "SupportTicket",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "type": "string",
+      "description": "App user id of a logged-in customer. Null for guests (keyed by customer_email)."
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "Display name of the customer (account name for logged-in, entered name for guests)."
+    },
+    "customer_email": {
+      "type": "string",
+      "description": "Contact email. For logged-in customers their account email; for guests the email they entered. Used to follow up and to scope guest chats."
+    },
+    "subject": {
+      "type": "string",
+      "description": "Short summary of the customer's question/issue."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "open",
+        "pending",
+        "resolved",
+        "closed"
+      ],
+      "default": "open",
+      "description": "open=awaiting a staff reply; pending=waiting on the customer; resolved=issue handled but not closed; closed=finished."
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Display name of the staff member assigned to this ticket. Null when unassigned."
+    },
+    "assigned_to_id": {
+      "type": "string",
+      "description": "User id of the assigned staff member. Null when unassigned."
+    },
+    "last_message_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the last message (by either side) was added. Drives the inbox sort order and last-activity display."
+    },
+    "last_message_preview": {
+      "type": "string",
+      "description": "Truncated preview of the most recent message, shown in the inbox list."
+    }
+  },
+  "required": [
+    "subject"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "name": "SupportMessage",
+  "type": "object",
+  "properties": {
+    "ticket_id": {
+      "type": "string",
+      "description": "The SupportTicket this message belongs to."
+    },
+    "sender_type": {
+      "type": "string",
+      "enum": [
+        "customer",
+        "staff"
+      ],
+      "description": "Who sent this message."
+    },
+    "sender_id": {
+      "type": "string",
+      "description": "App user id of the sender. Empty for guest customers; staff user id for staff messages."
+    },
+    "sender_name": {
+      "type": "string",
+      "description": "Display name shown next to the bubble (customer name/email or staff name)."
+    },
+    "message_text": {
+      "type": "string"
+    },
+    "attachments": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Image URLs uploaded by the sender (optional)."
+    },
+    "read_by_customer": {
+      "type": "boolean",
+      "default": false,
+      "description": "True once the customer has seen this staff message in their widget."
+    },
+    "read_by_staff": {
+      "type": "boolean",
+      "default": false,
+      "description": "True once a staff member has seen this customer message in the inbox."
+    }
+  },
+  "required": [
+    "ticket_id",
+    "sender_type",
+    "message_text"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    }
+  }
+}
