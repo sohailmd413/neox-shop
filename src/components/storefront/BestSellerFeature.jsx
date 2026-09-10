@@ -14,12 +14,12 @@ function RankedListItem({ product, rank, soldCount, lang }) {
   return (
     <Link
       to={`/product/${product.id}`}
-      className="group flex items-center gap-3 rounded-xl border border-border bg-background p-2.5 transition-colors hover:border-foreground/20 hover:bg-muted/40"
+      className="group flex items-center gap-3.5 rounded-xl border border-border bg-background p-3 transition-colors hover:border-foreground/20 hover:bg-muted/40"
     >
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-navy text-xs font-bold text-white">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-navy text-sm font-bold text-white">
         #{rank}
       </span>
-      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted/40">
+      <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted/40">
         <ProductImage src={product.images?.[0]} alt={product.name} fittingType="fill" className="h-full w-full object-cover" />
       </div>
       <div className="min-w-0 flex-1">
@@ -49,7 +49,7 @@ export default function BestSellerFeature({ products, soldMap = {}, lang, title,
       <SectionHeader title={title} subtitle={subtitle} to={to} viewAllLabel={viewAllLabel} icon={Trophy} />
       <div className="grid gap-4 lg:grid-cols-2">
         <ProductCard product={featured} index={0} rank={1} tag="best" soldCount={soldMap[featured.id] || 0} />
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3.5 sm:grid-cols-2">
           {rest.map((p, i) => (
             <RankedListItem key={p.id} product={p} rank={i + 2} soldCount={soldMap[p.id] || 0} lang={lang} />
           ))}
