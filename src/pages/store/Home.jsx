@@ -77,7 +77,7 @@ export default function Home() {
   return (
     <div className="pt-16 md:pt-24">
       <Seo title={`${storeName} — ${lang === "ar" ? "متجر إلكتروني حديث" : "Modern Tech Marketplace"}`} description={homeDescription} url={`${origin}/`} image={logo} jsonld={[orgJsonld, siteJsonld]} />
-      {/* Top promotional ribbon (above hero, text-only, auto-rotating) */}
+      {/* Top promotional ribbon (above hero) — sale/brand images + EN/AR tagline, auto-rotating */}
       <TopRibbon />
       {/* Full-bleed hero (edge-to-edge) */}
       <HomeHero />
