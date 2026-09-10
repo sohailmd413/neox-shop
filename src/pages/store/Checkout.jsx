@@ -350,7 +350,7 @@ export default function Checkout() {
               {(addresses.length === 0 || selectedId === "new") && (
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <div className="sm:col-span-2">
-                    <Input label={t("checkout.address")} value={form.line1} onChange={set("line1")} required />
+                    <Textarea label={t("checkout.address")} value={form.line1} onChange={set("line1")} required rows={3} />
                   </div>
                   <div className="sm:col-span-2">
                     <Input label={t("address.line2")} value={form.line2} onChange={set("line2")} />
@@ -502,7 +502,19 @@ function Input({ label, ...props }) {
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
       <input
         {...props}
-        className="mt-1.5 h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus:border-foreground/40"
+        className="mt-1.5 h-11 w-full rounded-xl border border-border bg-background px-3 text-sm outline-none transition-colors focus:border-foreground/40"
+      />
+    </label>
+  );
+}
+
+function Textarea({ label, ...props }) {
+  return (
+    <label className="block">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <textarea
+        {...props}
+        className="mt-1.5 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm leading-relaxed outline-none transition-colors focus:border-foreground/40"
       />
     </label>
   );
