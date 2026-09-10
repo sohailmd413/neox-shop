@@ -100,24 +100,18 @@ export default function CategoryTree({
     return parts.join(" → ");
   };
 
-  // Replace the entire open path with the clicked node's root→node chain. If
-  // the node is already on the open path, clicking it collapses it and
-  // everything beneath it (truncating the path). This single replacement
-  // naturally collapses any previously-open branch — unrelated top-levels,
-  // siblings, and subtrees — because they simply fall off the new path. The
-  // framer-motion height transition on each row animates the collapse/expand.
-  const toggleExpand = (id) =>
-    setOpenPath((path) => {
-      if (path.includes(id)) return path.slice(0, path.indexOf(id));
-      return chainOf(id);
-    });
-
-  // Clicking a category row (its name) selects it AND replaces the open path
-  // with that category's root→node chain, so any other open branch collapses.
-  // The chevron stays the toggle-off control; the name always expands.
-  const selectAndExpand = (c) => {
+  // Clicking anywhere on a category row selects it and drives the single
+  // open-path accordion: if the node is already on the open path it collapses
+  // (truncating the path at that node, so the whole subtree below closes too),
+  // otherwise the whole path is replaced with this node's root→node chain —
+  // collapsing any other open branch (top-level, sibling, subtree) and
+  // expanding this one. One handler for the whole row so the click always lands.
+  const activateRow = (c) => {
     onSelect(c);
-    setOpenPath(chainOf(c.id));
+    setOpenPath((path) => {
+      if (path.includes(c.id)) return path.slice(0, path.indexOf(c.id));
+      return chainOf(c.id);
+    });
   };
 
   const handleEnd = (e) => {
@@ -168,8 +162,7 @@ export default function CategoryTree({
               depth={depth}
               subs={subs}
               isOpen={isOpen}
-              onToggleExpand={() => toggleExpand(c.id)}
-              onSelect={() => selectAndExpand(c)}
+              onActivate={() => activateRow(c)}
               selectedId={selectedId}
               path={pathOf(c)}
               onEdit={() => onEdit(c)}
@@ -221,7 +214,7 @@ export default function CategoryTree({
   );
 }
 
-function TreeRow({ c, depth, subs, isOpen, onToggleExpand, onSelect, selectedId, path, onEdit, onAddSub, onDelete, onToggleActive, count, dragging, children }) {
+function TreeRow({ c, depth, subs, isOpen, onActivate, selectedId, path, onEdit, onAddSub, onDelete, onToggleActive, count, dragging, children }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: c.id });
   const { setNodeRef: setChildRef, isOver: childOver } = useDroppable({ id: `child:${c.id}` });
   const [hovered, setHovered] = useState(false);
@@ -233,20 +226,26 @@ function TreeRow({ c, depth, subs, isOpen, onToggleExpand, onSelect, selectedId,
       <div
         ref={setNodeRef}
         style={style}
+        onClick={onActivate}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        className={`group flex items-center gap-1.5 rounded-lg py-1.5 pr-2 ${
+        className={`group flex cursor-pointer items-center gap-1.5 rounded-lg py-1.5 pr-2 ${
           selected
             ? "bg-foreground/[0.07] ring-1 ring-inset ring-foreground/30"
             : "hover:bg-muted/50"
         } ${isDragging ? "opacity-40" : ""}`}
       >
-        <span {...attributes} {...listeners} className="cursor-grab touch-none text-muted-foreground/40 hover:text-foreground">
+        <span
+          {...attributes}
+          {...listeners}
+          onClick={(e) => e.stopPropagation()}
+          className="cursor-grab touch-none text-muted-foreground/40 hover:text-foreground"
+        >
           <GripVertical className="h-4 w-4" />
         </span>
-        <button type="button" onClick={onToggleExpand} className="text-muted-foreground">
+        <span className="text-muted-foreground">
           {subs.length > 0 ? (isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />) : <span className="inline-block w-4" />}
-        </button>
+        </span>
         {c.image_url ? (
           <img src={c.image_url} alt="" className="h-6 w-6 rounded object-cover" />
         ) : (
@@ -254,9 +253,9 @@ function TreeRow({ c, depth, subs, isOpen, onToggleExpand, onSelect, selectedId,
         )}
         <Tooltip>
           <TooltipTrigger asChild>
-            <button type="button" onClick={onSelect} className="flex-1 text-left">
+            <span className="flex-1 text-left">
               <span className="line-clamp-1 text-sm font-medium">{c.name}</span>
-            </button>
+            </span>
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-xs normal-case">
             {path || c.name}
@@ -280,6 +279,7 @@ function TreeRow({ c, depth, subs, isOpen, onToggleExpand, onSelect, selectedId,
           <button
             type="button"
             ref={setChildRef}
+            onClick={(e) => e.stopPropagation()}
             title={`Nest as sub-category of ${c.name}`}
             className={`ml-1 flex items-center gap-0.5 rounded-md px-1.5 py-1 text-[11px] transition-colors ${childOver ? "bg-foreground text-background" : "border border-dashed border-border text-muted-foreground"}`}
           >
@@ -321,7 +321,7 @@ function IconBtn({ title, onClick, danger, children }) {
     <button
       type="button"
       title={title}
-      onClick={onClick}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
       className={`rounded-md p-1.5 text-muted-foreground hover:bg-muted ${danger ? "hover:bg-destructive/10 hover:text-destructive" : "hover:text-foreground"}`}
     >
       {children}
