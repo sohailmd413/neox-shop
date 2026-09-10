@@ -77,6 +77,9 @@ export default function Home() {
         )}
       </div>
 
+      {/* Recently viewed — static manual-scroll, hidden when empty */}
+      <RecentlyViewedRow />
+
       {/* "Because you viewed X" — personalized, only when history exists */}
       {!loading && <BecauseYouViewed products={products} orders={orders} />}
 
@@ -91,9 +94,6 @@ export default function Home() {
           className="aspect-[16/5] overflow-hidden rounded-xl sm:aspect-[16/4]"
         />
       </SectionShell>
-
-      {/* Recently viewed — static manual-scroll, hidden when empty */}
-      <RecentlyViewedRow />
     </div>
   );
 }
