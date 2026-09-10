@@ -11,6 +11,7 @@ import SearchBar from "@/components/storefront/SearchBar";
 import MegaMenu from "@/components/storefront/MegaMenu";
 import CategoryScrollRow from "@/components/storefront/CategoryScrollRow";
 import MobileMenuDrawer from "@/components/storefront/MobileMenuDrawer";
+import { displayName, initials } from "@/lib/users";
 
 // Resolve an admin-managed NavItem to a router target. Returns either
 // { to } for an internal route or { href } for an external link.
@@ -51,12 +52,6 @@ function NavLink({ item, catMap, lang, onClick, active }) {
   return <Link to={target.to} onClick={onClick} className={cls}>{navLabel(item, lang)}</Link>;
 }
 
-function initialsOf(u) {
-  const name = u?.full_name || u?.name || u?.email || "";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  return (name[0] || "U").toUpperCase();
-}
 
 export default function Navbar() {
   const { count, setIsOpen } = useCart();
@@ -90,6 +85,20 @@ export default function Navbar() {
         setNavItems(ni || []);
       } catch {}
     })();
+  }, []);
+
+  // Refresh the header/drawer account name + avatar instantly when the
+  // customer saves their Profile (the Profile page dispatches this event),
+  // so the mobile drawer and avatar initials update without a full reload.
+  useEffect(() => {
+    const refresh = async () => {
+      try {
+        const me = await base44.auth.me();
+        if (me) { setUser(me); setIsAdmin(me?.role === "admin"); }
+      } catch {}
+    };
+    window.addEventListener("profile-updated", refresh);
+    return () => window.removeEventListener("profile-updated", refresh);
   }, []);
 
   // Reflect admin changes to nav items live, without a code change.
@@ -183,7 +192,7 @@ export default function Navbar() {
               className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background transition-transform hover:scale-105"
               aria-label={t("nav.account")}
             >
-              {initialsOf(user)}
+              {initials(displayName(user)) || "U"}
             </button>
           ) : (
             <Link to="/login" className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-muted" aria-label={t("nav.signIn")}>

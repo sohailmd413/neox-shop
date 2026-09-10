@@ -13,6 +13,7 @@ import {
   ChevronRight,
   ChevronDown,
 } from "lucide-react";
+import { displayName, initials } from "@/lib/users";
 
 // Resolve an admin-managed NavItem to a router target (mirrors Navbar.navTarget).
 function navTarget(item, catMap) {
@@ -38,13 +39,6 @@ function navLabel(item, lang) {
 }
 function catLabel(c, lang) {
   return lang === "ar" ? (c.name_ar || c.name) : c.name;
-}
-
-function initialsOf(u) {
-  const name = u?.full_name || u?.name || u?.email || "";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  return (name[0] || "U").toUpperCase();
 }
 
 export default function MobileMenuDrawer({
@@ -107,10 +101,10 @@ export default function MobileMenuDrawer({
             <div className={`mb-3 rounded-xl border border-border bg-muted/30 p-3 ${accountRing}`}>
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
-                  {initialsOf(user)}
+                  {initials(displayName(user)) || "U"}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{user.full_name || user.name || t("nav.account")}</p>
+                  <p className="truncate text-sm font-medium">{displayName(user) || t("nav.account")}</p>
                   <p className="truncate text-xs text-muted-foreground">{user.email}</p>
                 </div>
               </div>

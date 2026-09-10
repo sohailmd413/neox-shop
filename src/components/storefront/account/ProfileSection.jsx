@@ -68,6 +68,9 @@ export default function ProfileSection({ user, reload }) {
         return;
       }
       await reload();
+      // Notify the header, mobile drawer, and admin account menu so the
+      // name/avatar refresh everywhere instantly without a full reload.
+      window.dispatchEvent(new CustomEvent("profile-updated"));
       toast({ title: "Profile updated" });
     } catch (err) {
       toast({ title: err?.message || "Could not save", variant: "destructive" });

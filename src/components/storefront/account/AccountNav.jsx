@@ -15,8 +15,8 @@ const ITEMS = [
 export default function AccountNav({ tab, setTab, loyaltyEnabled }) {
   const items = ITEMS.filter((it) => !it.loyalty || loyaltyEnabled);
   return (
-    <nav className="lg:sticky lg:top-24">
-      <ul className="no-scrollbar flex gap-1 overflow-x-auto pb-2 lg:flex-col lg:pb-0">
+    <nav className="min-w-0 lg:sticky lg:top-24">
+      <ul className="flex flex-wrap gap-2 pb-2 lg:flex-col lg:pb-0">
         {items.map((it) => {
           const Icon = it.icon;
           const active = tab === it.key;
@@ -25,7 +25,7 @@ export default function AccountNav({ tab, setTab, loyaltyEnabled }) {
               <button
                 onClick={() => setTab(it.key)}
                 className={cn(
-                  "flex w-full items-center gap-2.5 whitespace-nowrap rounded-full px-4 py-2.5 text-sm transition-colors lg:rounded-xl lg:w-full",
+                  "flex items-center gap-2.5 whitespace-nowrap rounded-full px-4 py-2.5 text-sm transition-colors lg:rounded-xl lg:w-full",
                   active ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
