@@ -16,7 +16,7 @@ export default function StorefrontLayout() {
   const store = useStoreSetting();
   const location = useLocation();
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-background">
       <CartFlyoutProvider>
       <BackNavTracker />
       <StickyPromoBar />
@@ -109,7 +109,7 @@ export default function StorefrontLayout() {
               <form className="mt-5 flex items-center gap-2 rounded-full border border-white/15 bg-white/5 p-1.5 pl-4 transition-colors focus-within:border-ring" onSubmit={(e) => e.preventDefault()}>
                 <input
                   placeholder={t("footer.emailPlaceholder")}
-                  className="h-9 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-400"
+                  className="h-9 min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-slate-400"
                 />
                 <button className="shrink-0 rounded-full bg-brand-gradient px-5 h-9 text-sm font-semibold text-white transition-transform hover:scale-[1.03]">
                   {t("footer.join")}
