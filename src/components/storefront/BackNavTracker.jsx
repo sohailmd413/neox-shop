@@ -12,8 +12,16 @@ export default function BackNavTracker() {
 
   useEffect(() => {
     const cur = location.pathname + location.search;
-    if (ref.current && ref.current !== cur) setPrevPath(ref.current);
-    ref.current = cur;
+    if (ref.current) {
+      // Only record a new "previous page" when the pathname actually changes,
+      // so in-page state changes that use replace (e.g. the Account tab query
+      // param, catalog filters) don't overwrite the real origin page — BackBar
+      // should leave the current page, not bounce between tabs/filters.
+      if (ref.current.pathname !== location.pathname) setPrevPath(ref.current.url);
+      ref.current = { url: cur, pathname: location.pathname };
+    } else {
+      ref.current = { url: cur, pathname: location.pathname };
+    }
   }, [location.pathname, location.search]);
 
   return null;
