@@ -157,7 +157,7 @@ export default function OrderDetail() {
               {ship.state ? `, ${ship.state}` : ""} {ship.postal_code}
             </p>
             <p className="text-muted-foreground">{ship.country}</p>
-            {ship.phone && <p className="mt-1 text-muted-foreground">{ship.phone}</p>}
+            {ship.phone && <p className="mt-1 break-words text-muted-foreground">{ship.phone}</p>}
           </div>
           <div className="rounded-xl border border-border p-4 text-sm">
             <p className="mb-1 font-medium">{t("order.paymentMethod")}</p>

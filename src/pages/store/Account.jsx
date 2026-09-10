@@ -66,18 +66,18 @@ export default function Account() {
                 </div>
               )}
             </div>
-            <div>
-              <h1 className="font-headline text-3xl tracking-tight sm:text-4xl">{displayName(user) || "My account"}</h1>
-              <p className="text-sm text-muted-foreground">{user.email}</p>
+            <div className="min-w-0">
+              <h1 className="break-words font-headline text-3xl tracking-tight sm:text-4xl">{displayName(user) || "My account"}</h1>
+              <p className="break-words text-sm text-muted-foreground">{user.email}</p>
             </div>
           </div>
         </div>
       </div>
 
       <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
-        <div className="grid gap-8 lg:grid-cols-[240px_1fr]">
+        <div className="grid min-w-0 gap-8 lg:grid-cols-[240px_1fr]">
           <AccountNav tab={tab} setTab={setTab} />
-          <div>
+          <div className="min-w-0">
             <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }}>
               {tab === "profile" && <ProfileSection user={user} reload={reload} />}
               {tab === "addresses" && <AddressesSection />}

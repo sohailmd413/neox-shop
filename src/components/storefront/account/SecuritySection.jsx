@@ -36,7 +36,7 @@ export default function SecuritySection({ user }) {
           <Button variant="outline" size="sm" onClick={signOut}><LogOut className="mr-1.5 h-4 w-4" /> Sign out</Button>
         </div>
       </div>
-      <p className="text-xs text-muted-foreground">Signed in as {user.email}.</p>
+      <p className="break-words text-xs text-muted-foreground">Signed in as {user.email}.</p>
     </div>
   );
 }
