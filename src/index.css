@@ -99,6 +99,13 @@
 
   html, body {
     @apply bg-background text-foreground font-body overflow-x-clip;
+    /* Hide the main page vertical scrollbar (track/thumb) on every route while
+       keeping touch swipe, mouse wheel, and keyboard scroll fully intact.
+       Scoped to the root scroll element only; the ::-webkit-scrollbar rules
+       below target only html/body, so internal overflow:auto containers
+       (mega-menu panel, admin tables) keep their own scrollbars. */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     /* Safety net against page-wide horizontal scroll: clip any element that
        momentarily exceeds the viewport (long LTR email/phone strings, a
        drawer mid-animation, a carousel before it measures) so it can never
@@ -106,6 +113,11 @@
        sections like the navy footer. overflow-x-clip (not hidden) avoids the
        CSS gotcha where overflow-x:hidden forces overflow-y:auto and creates a
        nested scroll container that breaks sticky/scroll-to-top. */
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
   }
 
   }
