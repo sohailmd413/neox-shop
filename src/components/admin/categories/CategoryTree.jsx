@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   DndContext,
   PointerSensor,
@@ -57,6 +57,36 @@ export default function CategoryTree({
   });
   const [activeId, setActiveId] = useState(null);
 
+  // The initializer above runs once on mount, but categories load
+  // asynchronously (empty on first render), so the tree would otherwise start
+  // fully collapsed. Seed the open branches the first time categories arrive:
+  // reveal the selected category's ancestor chain, or fall back to the first
+  // top-level category so the tree isn't a wall of closed chevrons.
+  const didInit = useRef(false);
+  useEffect(() => {
+    if (didInit.current || !categories.length) return;
+    didInit.current = true;
+    setExpanded(() => {
+      const s = new Set();
+      if (selectedId) {
+        let cur = categories.find((c) => c.id === selectedId);
+        const guard = new Set();
+        while (cur?.parent_id && !guard.has(cur.parent_id)) {
+          s.add(cur.parent_id);
+          guard.add(cur.parent_id);
+          cur = categories.find((c) => c.id === cur.parent_id);
+        }
+      }
+      if (s.size === 0) {
+        const firstTop = categories
+          .filter((c) => !c.parent_id)
+          .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))[0];
+        if (firstTop) s.add(firstTop.id);
+      }
+      return s;
+    });
+  }, [categories, selectedId]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -82,20 +112,43 @@ export default function CategoryTree({
     return parts.join(" → ");
   };
 
-  // Toggle one branch; when expanding, auto-collapse every other expanded
-  // sibling at the same parent level so only one branch stays open per level.
+  // All descendants of a category (its entire subtree), used so collapsing a
+  // branch also clears every open node beneath it — otherwise re-expanding a
+  // parent would show stale-open children and the accordion feels broken.
+  const descendantsOf = (id) => {
+    const out = new Set();
+    const stack = [id];
+    while (stack.length) {
+      const cur = stack.pop();
+      childrenOf(cur).forEach((c) => {
+        if (!out.has(c.id)) {
+          out.add(c.id);
+          stack.push(c.id);
+        }
+      });
+    }
+    return out;
+  };
+
+  // Accordion toggle: expanding a node collapses any currently-open sibling at
+  // the same parent level (and that sibling's subtree); collapsing a node also
+  // collapses everything beneath it. Keeps one branch open per level.
   const toggleExpand = (id) =>
     setExpanded((s) => {
       const n = new Set(s);
       if (n.has(id)) {
         n.delete(id);
+        descendantsOf(id).forEach((d) => n.delete(d));
       } else {
         const cat = categories.find((c) => c.id === id);
         if (cat) {
           const parentId = cat.parent_id || null;
           categories
             .filter((c) => (c.parent_id || null) === parentId && c.id !== id && n.has(c.id))
-            .forEach((sib) => n.delete(sib.id));
+            .forEach((sib) => {
+              n.delete(sib.id);
+              descendantsOf(sib.id).forEach((d) => n.delete(d));
+            });
         }
         n.add(id);
       }
