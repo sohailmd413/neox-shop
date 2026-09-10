@@ -16,6 +16,7 @@ import { useLanguage } from "@/lib/i18n";
 import BackBar from "@/components/storefront/BackBar";
 import LoyaltyRedeem from "@/components/storefront/checkout/LoyaltyRedeem";
 import { getLoyaltyConfig, pointsValue, maxApplicablePoints } from "@/lib/loyalty";
+import { syncCart, markCartRecovered } from "@/lib/abandonedCart";
 
 const PAYMENT_ICONS = {
   card: "💳",
@@ -129,6 +130,25 @@ export default function Checkout() {
     })();
   }, []);
 
+  // Auto-apply a single-use recovery coupon carried over from a recovery email
+  // restore (stashed by the /recover-cart page).
+  useEffect(() => {
+    const code = sessionStorage.getItem("recovery_coupon");
+    if (code) {
+      sessionStorage.removeItem("recovery_coupon");
+      applyCoupon(code);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Guest cart tracking: once an email is entered at checkout, persist a
+  // snapshot so recovery can reach the guest. Logged-in carts are already
+  // tracked by CartContext; this updates the same record with the email/name.
+  useEffect(() => {
+    if (!form.email || items.length === 0) return;
+    syncCart(items, form.email, form.name);
+  }, [items, form.email, form.name]);
+
   const couponDiscount = coupon
     ? coupon.discount_type === "percent"
       ? subtotal * (coupon.discount_value / 100)
@@ -147,12 +167,13 @@ export default function Checkout() {
   const shipping = subtotal === 0 ? 0 : computeShipping(subtotal, form.country, store.shipping_zones);
   const total = taxable + tax + shipping;
 
-  const applyCoupon = async () => {
+  const applyCoupon = async (codeArg) => {
     setCouponMsg("");
-    if (!couponInput.trim()) return;
+    const code = (codeArg ?? couponInput).trim();
+    if (!code) return;
     try {
       const res = await base44.functions.invoke("validateCoupon", {
-        code: couponInput.trim(),
+        code: code,
         cart_items: items.map((i) => ({ product_id: i.productId, quantity: i.quantity, price: i.price })),
         subtotal,
       });
@@ -284,6 +305,8 @@ export default function Checkout() {
         try { await base44.functions.invoke("redeemLoyaltyPoints", { orderId: order.id }); }
         catch { /* best-effort; order already placed */ }
       }
+      // Mark this customer's abandoned cart as recovered so recovery emails stop.
+      markCartRecovered(order.id, form.email);
       setPlaced(order);
       clearCart();
     } catch (err) {

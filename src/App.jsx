@@ -47,6 +47,8 @@ import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
+import AdminAbandonedCarts from '@/pages/admin/AdminAbandonedCarts';
+import RecoverCart from '@/pages/store/RecoverCart';
 // Add page imports here
 
 // Boot the singleton store Setting once so the currency formatter and
@@ -102,6 +104,7 @@ const AuthenticatedApp = () => {
             <Route path="/orders/:id" element={<OrderDetail />} />
             <Route path="/account" element={<Account />} />
             <Route path="/policies/:type" element={<PolicyPage />} />
+            <Route path="/recover-cart" element={<RecoverCart />} />
           </Route>
           {/* Admin */}
           <Route path="/admin" element={<AdminLayout />}>
@@ -120,6 +123,7 @@ const AuthenticatedApp = () => {
             <Route path="home-sections" element={<AdminHomeSections />} />
             <Route path="navigation" element={<AdminNavigation />} />
             <Route path="coupons" element={<AdminCoupons />} />
+            <Route path="abandoned-carts" element={<AdminAbandonedCarts />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route path="roles" element={<AdminRoles />} />
             <Route path="users" element={<AdminUsers />} />

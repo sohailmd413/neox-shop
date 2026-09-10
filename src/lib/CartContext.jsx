@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { base44 } from "@/api/base44Client";
+import { syncCart } from "@/lib/abandonedCart";
 
 const CartContext = createContext(null);
 const STORAGE_KEY = "ecom_cart_v1";
@@ -17,6 +19,16 @@ export function CartProvider({ children }) {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items]);
+
+  // Persist a cart snapshot for logged-in customers so abandoned carts can be
+  // detected and recovered. Guests are tracked later, once they enter an email
+  // at checkout (see Checkout). Debounced inside syncCart.
+  const [tracked, setTracked] = useState(false);
+  useEffect(() => { base44.auth.isAuthenticated().then(setTracked).catch(() => {}); }, []);
+  useEffect(() => {
+    if (!tracked || items.length === 0) return;
+    syncCart(items);
+  }, [items, tracked]);
 
   const addItem = useCallback((product, quantity = 1) => {
     const maxStock = Number.isFinite(product.stock) ? product.stock : Infinity;
