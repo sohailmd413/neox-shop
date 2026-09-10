@@ -112,6 +112,14 @@ export default function CategoryTree({
       return chainOf(id);
     });
 
+  // Clicking a category row (its name) selects it AND replaces the open path
+  // with that category's root→node chain, so any other open branch collapses.
+  // The chevron stays the toggle-off control; the name always expands.
+  const selectAndExpand = (c) => {
+    onSelect(c);
+    setOpenPath(chainOf(c.id));
+  };
+
   const handleEnd = (e) => {
     const { active, over } = e;
     setActiveId(null);
@@ -161,7 +169,7 @@ export default function CategoryTree({
               subs={subs}
               isOpen={isOpen}
               onToggleExpand={() => toggleExpand(c.id)}
-              onSelect={() => onSelect(c)}
+              onSelect={() => selectAndExpand(c)}
               selectedId={selectedId}
               path={pathOf(c)}
               onEdit={() => onEdit(c)}
