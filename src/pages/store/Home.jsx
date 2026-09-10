@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import HomeHero from "@/components/storefront/HomeHero";
+import TopRibbon from "@/components/storefront/TopRibbon";
 import CategoryShowcase from "@/components/storefront/CategoryShowcase";
 import TrustSection from "@/components/storefront/TrustSection";
 import PosterBanner from "@/components/storefront/PosterBanner";
@@ -76,6 +77,8 @@ export default function Home() {
   return (
     <div className="pt-16 md:pt-24">
       <Seo title={`${storeName} — ${lang === "ar" ? "متجر إلكتروني حديث" : "Modern Tech Marketplace"}`} description={homeDescription} url={`${origin}/`} image={logo} jsonld={[orgJsonld, siteJsonld]} />
+      {/* Top promotional ribbon (above hero, text-only, auto-rotating) */}
+      <TopRibbon />
       {/* Full-bleed hero (edge-to-edge) */}
       <HomeHero />
 

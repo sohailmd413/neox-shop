@@ -30,7 +30,7 @@
     },
     "image_url": {
       "type": "string",
-      "description": "Desktop banner image (recommended 1920x600px)."
+      "description": "Desktop banner image (recommended 1920x600px). Optional for text-first slots (top_ribbon, in_grid, sticky_bar)."
     },
     "image_mobile_url": {
       "type": "string",
@@ -163,7 +163,9 @@
         "grid_interstitial",
         "footer",
         "popup",
-        "sticky_bar"
+        "sticky_bar",
+        "top_ribbon",
+        "in_grid"
       ],
       "default": "hero"
     },
@@ -216,8 +218,7 @@
     }
   },
   "required": [
-    "title",
-    "image_url"
+    "title"
   ],
   "rls": {
     "read": true,

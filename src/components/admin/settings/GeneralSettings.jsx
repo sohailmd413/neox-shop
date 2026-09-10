@@ -31,6 +31,7 @@ export default function GeneralSettings({ setting, onSave }) {
         currency: f.currency,
         currency_symbol: f.currency_symbol,
         default_language: f.default_language,
+        in_grid_insert_every_n_products: Number(f.in_grid_insert_every_n_products) || 4,
       });
     } catch {
       /* toast handled by parent */
@@ -107,6 +108,16 @@ export default function GeneralSettings({ setting, onSave }) {
           <Dropdown type="select" value={f.default_language || "en"} onChange={(v) => set("default_language", v)} options={LANG_OPTS} />
         </div>
       </div>
+
+      <Label className="space-y-1.5">
+        <span className="text-xs font-medium text-muted-foreground">In-grid promo interval (products per tile)</span>
+        <Input
+          type="number"
+          min="2"
+          value={f.in_grid_insert_every_n_products ?? 4}
+          onChange={(e) => set("in_grid_insert_every_n_products", Math.max(2, Number(e.target.value) || 4))}
+        />
+      </Label>
 
       <div className="flex justify-end pt-2">
         <Button onClick={save} disabled={saving}>

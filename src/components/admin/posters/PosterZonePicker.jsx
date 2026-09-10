@@ -4,22 +4,26 @@ import { ZONES } from "./posterConfig";
 
 // Schematic coordinates (percentages) of each zone inside the page wireframe.
 const COORDS = {
+  top_ribbon: { top: "1.5%", left: "5%", width: "90%", height: "3%" },
   hero: { top: "6%", left: "5%", width: "90%", height: "15%" },
   secondary: { top: "24%", left: "5%", width: "90%", height: "7%" },
   mid_strip: { top: "36%", left: "5%", width: "64%", height: "7%" },
   sidebar: { top: "36%", left: "73%", width: "22%", height: "30%" },
   grid_interstitial: { top: "62%", left: "5%", width: "64%", height: "9%" },
+  in_grid: { top: "62%", left: "47%", width: "22%", height: "9%" },
   footer: { top: "83%", left: "5%", width: "90%", height: "6%" },
   popup: { top: "38%", left: "30%", width: "40%", height: "28%" },
   sticky_bar: { top: "73%", left: "5%", width: "90%", height: "8%" },
 };
 
 const LABELS = {
+  top_ribbon: "Top ribbon",
   hero: "Hero",
   secondary: "Secondary",
   sidebar: "Sidebar",
   mid_strip: "Mid strip",
   grid_interstitial: "Grid",
+  in_grid: "In-grid",
   footer: "Footer",
   popup: "Popup",
   sticky_bar: "Sticky",

@@ -5,6 +5,7 @@ import { lf } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import BannerCarousel from "@/components/storefront/BannerCarousel";
 import BannerSlide from "@/components/storefront/BannerSlide";
+import InGridBannerTile from "@/components/storefront/InGridBannerTile";
 import { PAGES, ZONES, pageLabel, zoneLabel, fmtDate } from "./posterConfig";
 
 // Admin "Preview all" screen: renders every assigned Poster grouped by page
@@ -23,6 +24,8 @@ const ZONE_ASPECT = {
   footer: "aspect-[16/4]",
   popup: "aspect-[4/3]",
   sticky_bar: "h-16",
+  top_ribbon: "h-12",
+  in_grid: "aspect-[3/4]",
 };
 
 const STATUS = {
@@ -54,8 +57,21 @@ function StickySlide({ p, lang }) {
   );
 }
 
+function RibbonPrevSlide({ p, lang }) {
+  return (
+    <div className="flex h-full w-full items-center justify-center gap-2 bg-brand-gradient px-4">
+      {p.brand_logo_url && <img src={p.brand_logo_url} alt="" className="h-5 w-5 rounded-full object-cover" />}
+      <span className="truncate text-center text-xs font-semibold text-white sm:text-sm">
+        {lf(p, "tagline", lang) || "—"}
+      </span>
+    </div>
+  );
+}
+
 function renderSlide(p, lang, zone) {
   if (zone === "sticky_bar") return <StickySlide p={p} lang={lang} />;
+  if (zone === "top_ribbon") return <RibbonPrevSlide p={p} lang={lang} />;
+  if (zone === "in_grid") return <InGridBannerTile poster={p} />;
   return <BannerSlide poster={p} lang={lang} overlay />;
 }
 

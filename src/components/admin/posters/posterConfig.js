@@ -19,6 +19,8 @@ export const ZONES = [
   { id: "footer", label: "Footer Banner" },
   { id: "popup", label: "Popup / Modal" },
   { id: "sticky_bar", label: "Floating / Sticky Bar" },
+  { id: "top_ribbon", label: "Top Ribbon (above hero)" },
+  { id: "in_grid", label: "In-Grid Promo Tile" },
 ];
 
 export const ANIMATIONS = [

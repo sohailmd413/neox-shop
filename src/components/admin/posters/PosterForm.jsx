@@ -69,8 +69,10 @@ export default function PosterForm({ poster, onClose, onSaved }) {
   }, []);
 
   const save = async () => {
-    if (!draft.title || !draft.image_url) {
-      toast({ title: "Title and desktop image are required", variant: "destructive" });
+    // Ribbon / in-grid / sticky-bar banners are text-first — no image required.
+    const needsImage = !["top_ribbon", "in_grid", "sticky_bar"].includes(draft.zone);
+    if (!draft.title || (needsImage && !draft.image_url)) {
+      toast({ title: needsImage ? "Title and desktop image are required" : "Banner title is required", variant: "destructive" });
       return;
     }
     setSaving(true);

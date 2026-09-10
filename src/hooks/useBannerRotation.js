@@ -37,6 +37,11 @@ export function useBannerRotation(banners = [], { getInterval } = {}) {
 
   useEffect(() => {
     if (paused || count <= 1) return;
+    // Respect prefers-reduced-motion: freeze on the first banner instead of
+    // auto-advancing. Applies to every carousel / ribbon / sticky bar using
+    // this hook (hero, secondary, top_ribbon, sticky_bar, in-grid, previews).
+    const reduce = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    if (reduce) return;
     const cur = banners[index];
     const sec = getInterval ? getInterval(cur) : speedToSeconds(cur?.animation_speed);
     const id = setTimeout(() => go(1), Math.max(1.5, sec) * 1000);

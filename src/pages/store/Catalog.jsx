@@ -11,6 +11,8 @@ import { lf } from "@/lib/format";
 import { useLanguage } from "@/lib/i18n";
 import SortDropdown from "@/components/storefront/SortDropdown";
 import CategorySidebarFilter from "@/components/storefront/CategorySidebarFilter";
+import InGridBannerTile from "@/components/storefront/InGridBannerTile";
+import { useInGridBanners, useInGridInterval, interleaveAds } from "@/lib/inGridBanner";
 import { EmptyState, ErrorState } from "@/components/shared/StateViews";
 import SearchBar from "@/components/storefront/SearchBar";
 import { onSaleProducts, newArrivals, bestSellers, maxDiscountPct } from "@/lib/merchandising";
@@ -53,6 +55,8 @@ export default function Catalog() {
   const [error, setError] = useState(null);
   const [countsBase, setCountsBase] = useState([]);
   const { lang, t } = useLanguage();
+  const inGridBanners = useInGridBanners("catalog");
+  const inGridN = useInGridInterval();
   const sortOptions = SORT_KEYS.map((v) => ({ value: v, label: t(`cat.sort.${v}`) }));
 
   const q = searchParams.get("q") || "";
@@ -283,9 +287,13 @@ export default function Catalog() {
               <EmptyState icon={Search} title={t("catalog.noProducts")} description={t("catalog.noProductsDesc")} action={<Button variant="outline" onClick={clearFilters}>{t("filter.clear")}</Button>} className="py-24" />
             ) : (
               <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {products.map((p, i) => (
-                  <ProductCard key={p.id} product={p} index={i} />
-                ))}
+                {interleaveAds(products, inGridBanners, inGridN).map((it) =>
+                  it.type === "product" ? (
+                    <ProductCard key={it.key} product={it.product} index={it.i} />
+                  ) : (
+                    <InGridBannerTile key={it.key} poster={it.banner} />
+                  )
+                )}
               </div>
             )}
           </div>

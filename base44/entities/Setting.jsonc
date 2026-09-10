@@ -177,6 +177,11 @@
       "default": false,
       "description": "When off (default), recovery emails are treated as transactional and sent regardless of marketing opt-in (the customer initiated the cart). When on, customers who opted out of marketing are skipped."
     },
+    "in_grid_insert_every_n_products": {
+      "type": "number",
+      "default": 4,
+      "description": "Insert an in-grid promotional banner tile after every Nth product in scrollable product grids (Catalog and homepage merchandising sections). 0 or unset defaults to 4."
+    },
     "terms_policy": {
       "type": "string",
       "description": "Terms of Service HTML content (English)."

@@ -8,6 +8,8 @@ import SectionShell from "@/components/storefront/SectionShell";
 import SectionHeader from "@/components/storefront/SectionHeader";
 import { onSaleProducts, newArrivals, bestSellers } from "@/lib/merchandising";
 import { buildSoldMap, treatmentsFor } from "@/lib/sectionTreatment";
+import InGridBannerTile from "@/components/storefront/InGridBannerTile";
+import { useInGridBanners, useInGridInterval, interleaveAds } from "@/lib/inGridBanner";
 
 // Below-the-fold merchandising block. Renders admin-configured HomeSections
 // (or auto fallback rows) with a distinct visual identity per section_type:
@@ -25,6 +27,9 @@ const ICONS = { auto_on_sale: Flame, auto_new_arrivals: Sparkles };
 
 export default function MerchSections({ products, sections, hsp, orders, lang, t }) {
   const soldMap = buildSoldMap(orders);
+  const inGridBanners = useInGridBanners("home");
+  const inGridN = useInGridInterval();
+  const inGridBanner = inGridBanners[0] || null;
 
   const sectionProducts = (section) => {
     let list = [];
@@ -59,8 +64,8 @@ export default function MerchSections({ products, sections, hsp, orders, lang, t
           products={deals}
           icon={Flame}
           treatments={treatmentsFor(deals, "auto_on_sale", soldMap)}
-          promoEvery={5}
-          promo={<PromoTile />}
+          promoEvery={inGridBanner ? inGridN : 5}
+          promo={inGridBanner ? <InGridBannerTile poster={inGridBanner} /> : <PromoTile />}
         />
         <ProductRow
           title={t("home.newArrivals")}
@@ -70,6 +75,8 @@ export default function MerchSections({ products, sections, hsp, orders, lang, t
           products={fresh}
           icon={Sparkles}
           treatments={treatmentsFor(fresh, "auto_new_arrivals", soldMap)}
+          promoEvery={inGridBanner ? inGridN : 0}
+          promo={inGridBanner ? <InGridBannerTile poster={inGridBanner} /> : null}
         />
       </>
     );
@@ -78,13 +85,13 @@ export default function MerchSections({ products, sections, hsp, orders, lang, t
   return (
     <>
       {sections.map((sec) => (
-        <SectionBlock key={sec.id} section={sec} products={sectionProducts(sec)} soldMap={soldMap} lang={lang} />
+        <SectionBlock key={sec.id} section={sec} products={sectionProducts(sec)} soldMap={soldMap} lang={lang} inGridBanners={inGridBanners} inGridN={inGridN} inGridBanner={inGridBanner} />
       ))}
     </>
   );
 }
 
-function SectionBlock({ section, products, soldMap, lang }) {
+function SectionBlock({ section, products, soldMap, lang, inGridBanners, inGridN, inGridBanner }) {
   if (!products || products.length === 0) return null;
   const title = lang === "ar" ? section.title_ar || section.title_en : section.title_en;
   const icon = ICONS[section.section_type];
@@ -103,13 +110,18 @@ function SectionBlock({ section, products, soldMap, lang }) {
   const to = isSale ? "/shop?view=deals" : isNew ? "/shop?view=new" : undefined;
 
   if (section.layout_style === "grid") {
+    const items = interleaveAds(products, inGridBanners, inGridN);
     return (
       <SectionShell>
         <SectionHeader title={title} subtitle={subtitle} icon={icon} to={to} />
         <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {products.map((p, i) => (
-            <ProductCard key={p.id} product={p} index={i} {...treatments[i]} />
-          ))}
+          {items.map((it) =>
+            it.type === "product" ? (
+              <ProductCard key={it.key} product={it.product} index={it.i} {...treatments[it.i]} />
+            ) : (
+              <InGridBannerTile key={it.key} poster={it.banner} />
+            )
+          )}
         </div>
       </SectionShell>
     );
@@ -123,8 +135,8 @@ function SectionBlock({ section, products, soldMap, lang }) {
       to={to}
       products={products}
       treatments={treatments}
-      promoEvery={isSale ? 5 : 0}
-      promo={isSale ? <PromoTile /> : null}
+      promoEvery={inGridBanner ? inGridN : isSale ? 5 : 0}
+      promo={inGridBanner ? <InGridBannerTile poster={inGridBanner} /> : isSale ? <PromoTile /> : null}
     />
   );
 }

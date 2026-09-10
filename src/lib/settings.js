@@ -24,6 +24,7 @@ export const DEFAULT_SETTING = {
   privacy_policy: "",
   return_policy: "",
   shipping_policy: "",
+  in_grid_insert_every_n_products: 4,
 };
 
 const KEY = "store";
