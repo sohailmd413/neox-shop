@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Send, Paperclip, X, Sparkles } from "lucide-react";
+import { Loader2, Send, Paperclip, X, Sparkles, Search, Package, Link2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 import { displayName } from "@/lib/users";
@@ -9,6 +9,9 @@ import Dropdown from "@/components/admin/ui/Dropdown";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { uploadSupportImage } from "@/lib/supportUpload";
 import { cn } from "@/lib/utils";
+import OrderLookupPanel, {
+  detectOrderRef, orderRef, STATUS_LABEL, formatOrderDetails,
+} from "@/components/admin/support/OrderLookupPanel";
 
 const STATUS_OPTS = [
   { label: "Open", value: "open" },
@@ -22,10 +25,13 @@ const PRIORITY_OPTS = [
   { label: "High", value: "high" },
 ];
 
-// Right-side chat thread drawer for a single support ticket. Staff can read the
-// full conversation, reply (with canned/quick replies + smart suggestions and
-// variable substitution), and change status/priority/assignment. Polls for new
-// customer messages every 7s and marks them read_by_staff on view.
+const fmtTime = (d) => {
+  try { return new Date(d).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); } catch { return ""; }
+};
+
+// Right-side chat thread drawer for a single support ticket. Staff read the full
+// conversation, reply (canned/quick replies + smart suggestions + variable
+// substitution), look up & link orders inline, and manage status/priority/assignee.
 export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, onUpdated }) {
   const { toast } = useToast();
   const [messages, setMessages] = useState([]);
@@ -40,6 +46,7 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
   const [canned, setCanned] = useState([]);
   const [orderContext, setOrderContext] = useState(null);
   const [lastInsertedCannedId, setLastInsertedCannedId] = useState(null);
+  const [orderLookupOpen, setOrderLookupOpen] = useState(false);
   const scrollRef = useRef(null);
   const fileRef = useRef(null);
 
@@ -64,18 +71,31 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
     }
   };
 
-  // Load canned responses (active, most-used first) + best-effort order context.
+  // Canned responses (active, most-used first).
   useEffect(() => {
     base44.entities.CannedResponse.filter({ is_active: true }, "-usage_count", 200)
       .then(setCanned).catch(() => setCanned([]));
-    if (ticket?.customer_id) {
-      base44.entities.Order.filter({ user_id: ticket.customer_id }, "-created_date", 1)
-        .then((ords) => setOrderContext(ords?.[0] || null))
-        .catch(() => setOrderContext(null));
-    } else {
-      setOrderContext(null);
-    }
-  }, [ticket?.id, ticket?.customer_id]);
+  }, []);
+
+  // Order context: prefer a linked order (ticket.order_id), else the customer's latest order.
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      let o = null;
+      if (ticket?.order_id) {
+        try { o = await base44.entities.Order.get(ticket.order_id); } catch { o = null; }
+      }
+      if (!o && ticket?.customer_id) {
+        try {
+          const ords = await base44.entities.Order.filter({ user_id: ticket.customer_id }, "-created_date", 1);
+          o = ords?.[0] || null;
+        } catch { o = null; }
+      }
+      if (!cancelled) setOrderContext(o);
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [ticket?.id, ticket?.order_id, ticket?.customer_id]);
 
   useEffect(() => {
     setLoading(true);
@@ -95,6 +115,7 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
     [messages]
   );
   const isArabicContext = /[\u0600-\u06FF]/.test(lastCustomerMsg);
+  const detectedOrderRef = useMemo(() => detectOrderRef(lastCustomerMsg), [lastCustomerMsg]);
 
   const suggestions = useMemo(() => {
     if (!lastCustomerMsg || canned.length === 0) return [];
@@ -116,20 +137,35 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
   const substitute = (raw) => {
     if (!raw) return "";
     const name = ticket?.customer_name || ticket?.customer_email || "there";
-    const orderId = orderContext ? (orderContext.invoice_number || "#" + String(orderContext.id).slice(-6).toUpperCase()) : null;
-    const orderStatus = orderContext ? orderContext.status : null;
+    const orderId = orderContext ? orderRef(orderContext) : null;
+    const orderStatus = orderContext ? (STATUS_LABEL[orderContext.status] || orderContext.status) : null;
     return raw
       .replace(/\{customer_name\}/g, name)
       .replace(/\{order_id\}/g, orderId || "{order_id}")
       .replace(/\{order_status\}/g, orderStatus || "{order_status}");
   };
 
+  const insertText = (body) => {
+    setText((prev) => (prev.trim() ? `${prev.trim()}\n\n${body}` : body));
+  };
+
   const insertCanned = (c) => {
     if (!c) return;
     const raw = isArabicContext ? (c.message_text_ar || c.message_text_en) : (c.message_text_en || c.message_text_ar);
-    const body = substitute(raw);
-    setText((prev) => (prev.trim() ? `${prev.trim()}\n\n${body}` : body));
+    insertText(substitute(raw));
     setLastInsertedCannedId(c.id);
+  };
+
+  const insertOrderDetails = (o) => insertText(formatOrderDetails(o, isArabicContext));
+
+  // Link a looked-up order to the ticket so future messages keep its context.
+  const useOrder = async (o) => {
+    setOrderContext(o);
+    setOrderLookupOpen(false);
+    try {
+      await base44.entities.SupportTicket.update(ticket.id, { order_id: o.id });
+      onUpdated();
+    } catch { /* best-effort */ }
   };
 
   const cannedOptions = canned.map((c) => ({
@@ -169,7 +205,6 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
         last_message_preview: msg.slice(0, 160) || (attachments.length ? "[image]" : ""),
         status: status === "open" ? "pending" : status,
       });
-      // Increment usage_count for the canned response actually sent (best-effort).
       if (lastInsertedCannedId) {
         try {
           await base44.entities.CannedResponse.updateMany({ id: lastInsertedCannedId }, { $inc: { usage_count: 1 } });
@@ -246,30 +281,44 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
         </div>
 
         {/* Thread */}
-        <div ref={scrollRef} className="flex-1 space-y-2.5 overflow-y-auto bg-muted/30 p-4">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto bg-muted/30 px-4 py-4">
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
           ) : messages.length === 0 ? (
             <p className="py-8 text-center text-sm text-muted-foreground">No messages yet.</p>
           ) : (
-            messages.map((m) => {
+            messages.map((m, i) => {
               const mine = m.sender_type === "staff";
+              const groupStart = i === 0 || messages[i - 1].sender_type !== m.sender_type;
               return (
-                <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
-                  <div className={cn("max-w-[80%] rounded-2xl px-3 py-2 text-sm", mine ? "bg-brand-blue text-white" : "bg-background border border-border")}>
-                    {m.message_text && <p className="whitespace-pre-wrap break-words">{m.message_text}</p>}
-                    {m.attachments?.length > 0 && (
-                      <div className={cn("mt-1.5 flex flex-wrap gap-1.5", m.message_text && "pt-1")}>
-                        {m.attachments.map((u, i) => (
-                          <a key={i} href={u} target="_blank" rel="noopener noreferrer">
-                            <img src={u} alt="" className="h-20 w-20 rounded-lg object-cover" />
-                          </a>
-                        ))}
+                <div
+                  key={m.id}
+                  className={cn("flex", mine ? "justify-end" : "justify-start", groupStart ? "mt-4 first:mt-0" : "mt-1")}
+                >
+                  <div className="max-w-[80%]">
+                    {groupStart && (
+                      <div className={cn("mb-1 flex items-center gap-1.5 text-[11px]", mine ? "justify-end" : "justify-start")}>
+                        <span className="font-medium text-muted-foreground">{m.sender_name || (mine ? "Support" : "Customer")}</span>
+                        <span className="text-muted-foreground/70">{fmtTime(m.created_date)}</span>
                       </div>
                     )}
-                    <p className={cn("mt-1 text-[10px]", mine ? "text-white/70" : "text-muted-foreground")}>
-                      {m.sender_name || (mine ? "Support" : "Customer")} · {new Date(m.created_date).toLocaleString()}
-                    </p>
+                    <div
+                      className={cn(
+                        "rounded-2xl px-4 py-3 text-sm shadow-sm",
+                        mine ? "bg-brand-blue text-white" : "bg-background text-foreground border border-border"
+                      )}
+                    >
+                      {m.message_text && <p className="whitespace-pre-wrap break-words">{m.message_text}</p>}
+                      {m.attachments?.length > 0 && (
+                        <div className={cn("flex flex-wrap gap-1.5", m.message_text && "mt-2")}>
+                          {m.attachments.map((u, idx) => (
+                            <a key={idx} href={u} target="_blank" rel="noopener noreferrer">
+                              <img src={u} alt="" className="h-20 w-20 rounded-lg object-cover" />
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -277,40 +326,27 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
           )}
         </div>
 
-        {/* Smart suggestions + quick replies + composer */}
-        <div className="border-t border-border p-3">
-          {suggestions.length > 0 && (
-            <div className="mb-2 flex flex-wrap items-center gap-1.5">
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-                <Sparkles className="h-3 w-3 text-amber-500" /> Suggested:
-              </span>
-              {suggestions.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => insertCanned(c)}
-                  className="rounded-full border border-border bg-background px-2.5 py-1 text-xs transition-colors hover:border-foreground/30 hover:bg-muted"
-                >
-                  {c.title}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {attachments.length > 0 && (
-            <div className="mb-2 flex flex-wrap gap-1.5">
-              {attachments.map((u, i) => (
-                <div key={i} className="relative h-14 w-14 overflow-hidden rounded-lg border border-border">
-                  <img src={u} alt="" className="h-full w-full object-cover" />
-                  <button type="button" onClick={() => setAttachments((p) => p.filter((_, x) => x !== i))} className="absolute right-0 top-0 rounded-bl-lg bg-foreground/80 px-1 text-background">
-                    <X className="h-3 w-3" />
+        {/* Footer: suggestions/quick-replies band → order context → composer */}
+        <div className="border-t border-border bg-background">
+          {/* Suggested + quick replies (tinted band for separation) */}
+          <div className="space-y-2 border-b border-border bg-muted/30 px-4 py-3">
+            {suggestions.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
+                  <Sparkles className="h-3 w-3 text-amber-500" /> Suggested:
+                </span>
+                {suggestions.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => insertCanned(c)}
+                    className="rounded-full border border-border bg-background px-2.5 py-1 text-xs transition-colors hover:border-foreground/30 hover:bg-muted"
+                  >
+                    {c.title}
                   </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="mb-2">
+                ))}
+              </div>
+            )}
             <Dropdown
               type="search"
               options={cannedOptions}
@@ -323,23 +359,85 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
             />
           </div>
 
-          <form onSubmit={reply} className="flex items-end gap-2">
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { addImage(e.target.files?.[0]); e.target.value = ""; }} />
-            <Button type="button" variant="outline" size="icon" onClick={() => fileRef.current?.click()} disabled={uploading} className="h-9 w-9 shrink-0">
-              {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
-            </Button>
-            <Textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); reply(e); } }}
-              placeholder="Type a reply…"
-              className="min-h-[40px] max-h-28 flex-1 resize-none rounded-xl"
-              rows={1}
-            />
-            <Button type="submit" size="icon" disabled={sending || (!text.trim() && attachments.length === 0)} className="h-9 w-9 shrink-0">
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 rtl:rotate-180" />}
-            </Button>
-          </form>
+          {/* Order context + lookup */}
+          <div className="space-y-2 border-b border-border px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              {orderContext ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-ring/10 px-2.5 py-1 text-xs">
+                  <Package className="h-3.5 w-3.5 text-ring" />
+                  <span className="font-medium">{orderRef(orderContext)}</span>
+                  <span className="text-muted-foreground">· {STATUS_LABEL[orderContext.status] || orderContext.status}</span>
+                  <button type="button" onClick={() => insertOrderDetails(orderContext)} className="font-medium text-ring hover:underline">
+                    Insert details
+                  </button>
+                </span>
+              ) : detectedOrderRef ? (
+                <button
+                  type="button"
+                  onClick={() => setOrderLookupOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-xs text-amber-700 transition-colors hover:bg-amber-100"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span className="font-medium">{detectedOrderRef}</span>
+                  <span className="text-amber-600/80">mentioned · Look up</span>
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => setOrderLookupOpen((v) => !v)}
+                className={cn(
+                  "inline-flex items-center gap-1 text-xs transition-colors hover:text-foreground",
+                  orderContext ? "text-muted-foreground" : "text-ring"
+                )}
+              >
+                <Search className="h-3.5 w-3.5" /> Look up order
+              </button>
+            </div>
+
+            {orderLookupOpen && (
+              <OrderLookupPanel
+                ticket={ticket}
+                onUseOrder={useOrder}
+                onInsert={insertOrderDetails}
+                isArabic={isArabicContext}
+                autoQuery={detectedOrderRef || ""}
+              />
+            )}
+          </div>
+
+          {/* Attachments + composer */}
+          <div className="space-y-2 px-4 py-3">
+            {attachments.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {attachments.map((u, i) => (
+                  <div key={i} className="relative h-14 w-14 overflow-hidden rounded-lg border border-border">
+                    <img src={u} alt="" className="h-full w-full object-cover" />
+                    <button type="button" onClick={() => setAttachments((p) => p.filter((_, x) => x !== i))} className="absolute right-0 top-0 rounded-bl-lg bg-foreground/80 px-1 text-background">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <form onSubmit={reply} className="flex items-end gap-2">
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { addImage(e.target.files?.[0]); e.target.value = ""; }} />
+              <Button type="button" variant="outline" size="icon" onClick={() => fileRef.current?.click()} disabled={uploading} className="h-11 w-11 shrink-0">
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
+              </Button>
+              <Textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); reply(e); } }}
+                placeholder="Type a reply…"
+                className="min-h-[44px] max-h-32 flex-1 resize-none rounded-xl"
+                rows={1}
+              />
+              <Button type="submit" size="icon" disabled={sending || (!text.trim() && attachments.length === 0)} className="h-11 w-11 shrink-0">
+                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 rtl:rotate-180" />}
+              </Button>
+            </form>
+          </div>
         </div>
       </SheetContent>
     </Sheet>

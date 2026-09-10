@@ -46,6 +46,10 @@
       "type": "string",
       "description": "User id of the assigned staff member. Null when unassigned."
     },
+    "order_id": {
+      "type": "string",
+      "description": "Order linked to this ticket via the in-chat order lookup. Once set, the drawer keeps that order context visible for future messages without re-searching."
+    },
     "last_message_at": {
       "type": "string",
       "format": "date-time",
