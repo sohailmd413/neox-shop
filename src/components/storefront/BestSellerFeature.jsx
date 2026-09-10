@@ -19,7 +19,7 @@ function RankedListItem({ product, rank, soldCount, lang }) {
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-navy text-sm font-bold text-white">
         #{rank}
       </span>
-      <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted/40">
+      <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted/40">
         <ProductImage src={product.images?.[0]} alt={product.name} fittingType="fill" className="h-full w-full object-cover" />
       </div>
       <div className="min-w-0 flex-1">
@@ -49,7 +49,7 @@ export default function BestSellerFeature({ products, soldMap = {}, lang, title,
       <SectionHeader title={title} subtitle={subtitle} to={to} viewAllLabel={viewAllLabel} icon={Trophy} />
       <div className="grid gap-4 lg:grid-cols-2">
         <ProductCard product={featured} index={0} rank={1} tag="best" soldCount={soldMap[featured.id] || 0} />
-        <div className="grid gap-3.5 sm:grid-cols-2">
+        <div className="grid gap-3">
           {rest.map((p, i) => (
             <RankedListItem key={p.id} product={p} rank={i + 2} soldCount={soldMap[p.id] || 0} lang={lang} />
           ))}
