@@ -116,6 +116,19 @@
     backdrop-filter: blur(16px) saturate(160%);
     -webkit-backdrop-filter: blur(16px) saturate(160%);
   }
+
+  /* Hide the scrollbar track/thumb on horizontal carousels and nav rows while
+     keeping touch/trackpad/arrow scrolling fully functional. Applied via the
+     `no-scrollbar` utility class on storefront horizontal scroll containers
+     (category nav row, product carousels, account tabs, image thumbnails).
+     Admin data tables intentionally keep their scrollbars as a mouse aid. */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
   .mf-hero-mesh {
     background-image:
       radial-gradient(60% 55% at 18% 18%, hsl(var(--foreground) / 0.05), transparent 70%),

@@ -58,7 +58,7 @@ export default function CategoryScrollRow({ children }) {
     <div className="group/row relative min-w-0 flex-1">
       <div
         ref={ref}
-        className="flex h-full items-center gap-4 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="no-scrollbar flex h-full items-center gap-4 overflow-x-auto overflow-y-hidden"
       >
         {children}
       </div>

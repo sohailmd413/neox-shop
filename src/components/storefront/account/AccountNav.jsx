@@ -14,7 +14,7 @@ const ITEMS = [
 export default function AccountNav({ tab, setTab }) {
   return (
     <nav className="lg:sticky lg:top-24">
-      <ul className="flex gap-1 overflow-x-auto pb-2 lg:flex-col lg:pb-0">
+      <ul className="no-scrollbar flex gap-1 overflow-x-auto pb-2 lg:flex-col lg:pb-0">
         {ITEMS.map((it) => {
           const Icon = it.icon;
           const active = tab === it.key;

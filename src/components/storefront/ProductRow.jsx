@@ -88,7 +88,7 @@ export default function ProductRow({
 
         <div
           ref={scroller}
-          className="flex flex-nowrap gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="no-scrollbar flex flex-nowrap gap-4 overflow-x-auto pb-2"
         >
           {items.map((it) => (
             <div
