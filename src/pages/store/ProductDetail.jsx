@@ -9,12 +9,13 @@ import { formatPrice, lf } from "@/lib/format";
 import ProductImage from "@/components/storefront/ProductImage";
 import ProductRow from "@/components/storefront/ProductRow";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { springPress, springPop } from "@/lib/motion";
 import SaleCountdown from "@/components/admin/SaleCountdown";
 import BackBar from "@/components/storefront/BackBar";
+import ReviewSection from "@/components/storefront/reviews/ReviewSection";
+import QuestionSection from "@/components/storefront/qa/QuestionSection";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -30,39 +31,8 @@ export default function ProductDetail() {
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [variantId, setVariantId] = useState(null);
-  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
-  const [submitting, setSubmitting] = useState(false);
-  const [canReview, setCanReview] = useState(false);
-  const [userName, setUserName] = useState("");
-  const [reviewEligibleChecked, setReviewEligibleChecked] = useState(false);
   const [categories, setCategories] = useState([]);
   const reviewsRef = useRef(null);
-  const { toast } = useToast();
-
-  const submitReview = async (e) => {
-    e.preventDefault();
-    if (!reviewForm.comment.trim()) {
-      toast({ title: t("product.reviewEmpty"), variant: "destructive" });
-      return;
-    }
-    setSubmitting(true);
-    try {
-      await base44.entities.Review.create({
-        product_id: id,
-        rating: reviewForm.rating,
-        comment: reviewForm.comment.trim(),
-        approved: false,
-        verified_purchase: true,
-        author: userName || "Verified buyer",
-      });
-      toast({ title: t("product.reviewSubmitted") });
-      setReviewForm({ rating: 5, comment: "" });
-    } catch {
-      toast({ title: t("product.reviewError"), variant: "destructive" });
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   useEffect(() => {
     let cancelled = false;
@@ -97,19 +67,7 @@ export default function ProductDetail() {
           if (!cancelled) { setVariants(v || []); setSpecs(sp || []); }
         } catch {}
 
-        try {
-          let user = null;
-          try { user = await base44.auth.me(); } catch {}
-          if (user) {
-            if (user.full_name) setUserName(user.full_name);
-            const orders = await base44.entities.Order.filter({}, "-created_date", 50);
-            const delivered = (orders || []).some(
-              (o) => o.status === "delivered" && (o.items || []).some((it) => it.product_id === id)
-            );
-            if (!cancelled) setCanReview(delivered);
-          }
-        } catch {}
-        if (!cancelled) setReviewEligibleChecked(true);
+
       } catch {
         if (!cancelled) setProduct(null);
       } finally {
@@ -183,12 +141,6 @@ export default function ProductDetail() {
     lang === "ar" ? "ar-SA" : "en-US",
     { weekday: "short", day: "numeric", month: "short" }
   );
-
-  // 5★ → 1★ breakdown
-  const breakdown = [5, 4, 3, 2, 1].map((star) => {
-    const count = reviews.filter((r) => r.rating === star).length;
-    return { star, count, pct: reviews.length ? (count / reviews.length) * 100 : 0 };
-  });
 
   return (
     <div className="pt-16 md:pt-24">
@@ -430,88 +382,10 @@ export default function ProductDetail() {
           </section>
         )}
 
-        {/* Reviews */}
-        <section ref={reviewsRef} className="mt-12 scroll-mt-24 border-t border-border pt-8">
-          <div className="flex flex-wrap items-end justify-between gap-2">
-            <h2 className="text-lg font-bold tracking-tight text-foreground">{t("product.customerReviews")}</h2>
-            <span className="text-sm text-muted-foreground">{reviews.length} {t("product.reviewCount")}</span>
-          </div>
-
-          {reviews.length > 0 && (
-            <div className="mt-5 grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
-              {/* Rating breakdown */}
-              <div className="space-y-1.5">
-                <p className="mb-1 text-xs font-medium text-muted-foreground">{t("product.ratingBreakdown")}</p>
-                {breakdown.map((b) => (
-                  <div key={b.star} className="flex items-center gap-2 text-xs">
-                    <span className="w-6 text-muted-foreground">{b.star}★</span>
-                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                      <div className="h-full rounded-full bg-amber-400" style={{ width: `${b.pct}%` }} />
-                    </div>
-                    <span className="w-8 text-right text-muted-foreground">{b.count}</span>
-                  </div>
-                ))}
-              </div>
-              {/* Review list */}
-              <div className="grid gap-4 sm:grid-cols-2">
-                {reviews.map((r) => (
-                  <div key={r.id} className="rounded-xl border border-border p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="flex">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star key={i} className={cn("h-3.5 w-3.5", i < r.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30")} />
-                          ))}
-                        </div>
-                        <span className="text-xs font-medium text-foreground">{r.author || t("product.verifiedBuyer")}</span>
-                      </div>
-                      {r.created_date && (
-                        <span className="text-xs text-muted-foreground">{new Date(r.created_date).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US", { day: "numeric", month: "short", year: "numeric" })}</span>
-                      )}
-                    </div>
-                    {r.title && <p className="mt-2 text-sm font-medium text-foreground">{r.title}</p>}
-                    <p className="mt-1.5 text-sm text-muted-foreground">{r.comment}</p>
-                    {r.verified_purchase && (
-                      <span className="mt-2 inline-block rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">{t("product.verifiedBuyer")}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {reviews.length === 0 && <p className="mt-4 text-sm text-muted-foreground">{t("product.noReviews")}</p>}
-
-          {/* Write a review — only after delivery */}
-          {reviewEligibleChecked && canReview ? (
-            <form onSubmit={submitReview} className="mt-8 rounded-xl border border-border p-5">
-              <h3 className="text-base font-medium">{t("product.writeReview")}</h3>
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">{t("product.yourRating")}</span>
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <button key={n} type="button" onClick={() => setReviewForm((f) => ({ ...f, rating: n }))} aria-label={`${n} stars`}>
-                      <Star className={cn("h-5 w-5", n <= reviewForm.rating ? "fill-foreground text-foreground" : "text-muted-foreground/30")} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <textarea
-                value={reviewForm.comment}
-                onChange={(e) => setReviewForm((f) => ({ ...f, comment: e.target.value }))}
-                placeholder={t("product.reviewPlaceholder")}
-                rows={3}
-                className="mt-3 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/40"
-              />
-              <Button type="submit" disabled={submitting} className="mt-3 rounded-lg">
-                {submitting ? t("product.submitting") : t("product.submitReview")}
-              </Button>
-            </form>
-          ) : reviewEligibleChecked ? (
-            <div className="mt-8 rounded-xl border border-dashed border-border p-5 text-center">
-              <p className="text-sm text-muted-foreground">{t("product.reviewEligible")}</p>
-            </div>
-          ) : null}
-        </section>
+        <div ref={reviewsRef} className="mt-12 scroll-mt-24">
+          <ReviewSection productId={product.id} lang={lang} t={t} reviews={reviews} />
+        </div>
+        <QuestionSection productId={product.id} lang={lang} t={t} />
 
         {/* Related products */}
         {related.length > 0 && (

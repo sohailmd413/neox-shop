@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Clock, CheckCheck, Ban, EyeOff, Trash2, Star, RotateCcw, AlertTriangle,
-  Flag, MessageSquare, Download, Check, X, Search, ImageIcon, BadgeCheck,
-} from "lucide-react";
+  Flag, MessageSquare, Download, Check, X, Search, ImageIcon, BadgeCheck, HelpCircle,
+  } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 import Dropdown from "@/components/admin/ui/Dropdown";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import ReviewAnalytics from "@/components/admin/ReviewAnalytics";
 import ReviewReplyDialog from "@/components/admin/ReviewReplyDialog";
 import ReviewDetailDrawer from "@/components/admin/ReviewDetailDrawer";
+import QuestionsModeration from "@/components/admin/QuestionsModeration";
 import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
 import { showUndoToast } from "@/components/admin/ui/UndoToast";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/shared/StateViews";
@@ -22,6 +23,7 @@ const TABS = [
   { id: "rejected", label: "Rejected", icon: Ban },
   { id: "recent", label: "Recent", icon: Star },
   { id: "deleted", label: "Deleted", icon: Trash2 },
+  { id: "questions", label: "Q&A", icon: HelpCircle },
 ];
 
 export default function AdminReviews() {
@@ -39,18 +41,21 @@ export default function AdminReviews() {
   const [replyTarget, setReplyTarget] = useState(null);
   const [detail, setDetail] = useState(null);
   const [confirm, setConfirm] = useState(null);
+  const [questions, setQuestions] = useState([]);
   const { toast } = useToast();
 
   const load = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [list, prods] = await Promise.all([
+      const [list, prods, qs] = await Promise.all([
         base44.entities.Review.list("-created_date", 300),
         base44.entities.Product.list("-created_date", 500),
+        base44.entities.ProductQuestion.list("-created_date", 200).catch(() => []),
       ]);
       setReviews(list || []);
       setProducts(prods || []);
+      setQuestions(qs || []);
     } catch {
       setError(true);
     }
@@ -222,7 +227,7 @@ export default function AdminReviews() {
         {TABS.map((t) => {
           const Icon = t.icon;
           const active = tab === t.id;
-          const count = t.id === "recent" ? reviews.filter((r) => !r.deleted).length : counts[t.id];
+          const count = t.id === "questions" ? questions.filter((q) => q.status !== "answered").length : (t.id === "recent" ? reviews.filter((r) => !r.deleted).length : counts[t.id]);
           return (
             <Button key={t.id} type="button" variant={active ? "secondary" : "ghost"} size="sm"
               onClick={() => { setTab(t.id); setSelected([]); }} className="gap-1.5">
@@ -233,6 +238,10 @@ export default function AdminReviews() {
         })}
       </div>
 
+      {tab === "questions" ? (
+        <QuestionsModeration />
+      ) : (
+        <>
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[200px] flex-1">
@@ -373,6 +382,7 @@ export default function AdminReviews() {
           </table>
         </div>
       )}
+      </>)}
 
       {replyTarget && (
         <ReviewReplyDialog
