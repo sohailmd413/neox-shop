@@ -1,0 +1,80 @@
+{
+  "name": "ProductQuestion",
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string",
+      "description": "Product this question is about."
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "User id of the customer who asked (denormalized for admin display)."
+    },
+    "asker_name": {
+      "type": "string",
+      "description": "Display name of the asker, shown to admins in the moderation queue."
+    },
+    "question_text": {
+      "type": "string",
+      "description": "The customer's question."
+    },
+    "answer_text": {
+      "type": "string",
+      "description": "Staff answer. Empty/null until answered."
+    },
+    "answered_by": {
+      "type": "string",
+      "description": "Name of the staff member who answered, or 'Store'."
+    },
+    "answered_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the question was answered. Used to sort answered questions newest-first."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "answered"
+      ],
+      "default": "pending",
+      "description": "pending=awaiting an answer, hidden from the storefront; answered=visible publicly beneath the reviews section."
+    }
+  },
+  "required": [
+    "product_id",
+    "question_text"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.status": "answered"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
