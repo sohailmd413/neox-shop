@@ -2,7 +2,7 @@ import React from "react";
 import { Search } from "lucide-react";
 import Dropdown from "@/components/admin/ui/Dropdown";
 
-const STATUSES = ["all", "pending", "paid", "packed", "shipped", "delivered", "cancelled", "refunded"];
+const STATUSES = ["all", "pending", "paid", "packed", "shipped", "out_for_delivery", "delivered", "cancelled", "refunded"];
 const METHODS = ["all", "card", "cod", "wallet", "upi", "net_banking"];
 const RANGES = [
     { label: "All time", value: "all" },

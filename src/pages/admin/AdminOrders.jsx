@@ -11,12 +11,13 @@ import OrderDetailDrawer from "@/components/admin/OrderDetailDrawer";
 import { downloadInvoicePDF, downloadMultipleInvoices } from "@/lib/invoice";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/shared/StateViews";
 
-const STATUSES = ["pending", "paid", "packed", "shipped", "delivered", "cancelled", "refunded"];
+const STATUSES = ["pending", "paid", "packed", "shipped", "out_for_delivery", "delivered", "cancelled", "refunded"];
 const STATUS_STYLES = {
   pending: "bg-amber-100 text-amber-700",
   paid: "bg-blue-100 text-blue-700",
   packed: "bg-indigo-100 text-indigo-700",
   shipped: "bg-purple-100 text-purple-700",
+  out_for_delivery: "bg-cyan-100 text-cyan-700",
   delivered: "bg-emerald-100 text-emerald-700",
   cancelled: "bg-red-100 text-red-700",
   refunded: "bg-gray-200 text-gray-700",

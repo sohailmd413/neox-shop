@@ -18,6 +18,7 @@ import ProductDetail from '@/pages/store/ProductDetail';
 import Checkout from '@/pages/store/Checkout';
 import Wishlist from '@/pages/store/Wishlist';
 import Orders from '@/pages/store/Orders';
+import OrderDetail from '@/pages/store/OrderDetail';
 import AdminLayout from '@/components/admin/AdminLayout';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import AdminProducts from '@/pages/admin/AdminProducts';
@@ -98,6 +99,7 @@ const AuthenticatedApp = () => {
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/orders" element={<Orders />} />
+            <Route path="/orders/:id" element={<OrderDetail />} />
             <Route path="/account" element={<Account />} />
             <Route path="/policies/:type" element={<PolicyPage />} />
           </Route>

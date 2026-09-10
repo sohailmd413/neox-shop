@@ -1,25 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Package, Check, Truck, Home, Clock } from "lucide-react";
+import { Package, ChevronRight } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, lf } from "@/lib/format";
 import { Image } from "@/components/ui/image";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState } from "@/components/shared/StateViews";
 import { motionPresets } from "@/lib/motion";
+import { useLanguage } from "@/lib/i18n";
 import BackBar from "@/components/storefront/BackBar";
 import PageHeader from "@/components/storefront/PageHeader";
-
-const STATUS_STEPS = [
-  { key: "pending", label: "Placed", icon: Clock },
-  { key: "paid", label: "Paid", icon: Check },
-  { key: "packed", label: "Packed", icon: Package },
-  { key: "shipped", label: "Shipped", icon: Truck },
-  { key: "delivered", label: "Delivered", icon: Home },
-];
+import OrderMiniProgress from "@/components/storefront/orders/OrderMiniProgress";
 
 export default function Orders() {
+  const { t, lang } = useLanguage();
   const [orders, setOrders] = useState(null);
   const [error, setError] = useState(null);
 
@@ -27,11 +22,7 @@ export default function Orders() {
     setError(null);
     try {
       const user = await base44.auth.me();
-      const list = await base44.entities.Order.filter(
-        { created_by_id: user.id },
-        "-created_date",
-        50
-      );
+      const list = await base44.entities.Order.filter({ created_by_id: user.id }, "-created_date", 50);
       setOrders(list || []);
     } catch {
       setOrders([]);
@@ -43,14 +34,12 @@ export default function Orders() {
     load();
   }, []);
 
-  const stepIndex = (status) => STATUS_STEPS.findIndex((s) => s.key === status);
-
   return (
     <div className="pt-16 md:pt-24">
       <div className="mx-auto max-w-7xl px-5 pt-5 sm:px-8">
-        <BackBar fallbackTo="/" fallbackLabel="Home" />
+        <BackBar fallbackTo="/" fallbackLabel={t("orders.home")} />
       </div>
-      <PageHeader title="My orders" subtitle="Track and review your purchases." />
+      <PageHeader title={t("orders.title")} subtitle={t("orders.subtitle")} />
 
       <div className="mx-auto max-w-4xl px-5 py-10 sm:px-8">
         {orders === null ? (
@@ -64,105 +53,74 @@ export default function Orders() {
         ) : orders.length === 0 ? (
           <EmptyState
             icon={Package}
-            title="No orders yet"
-            description="When you place an order it will appear here with tracking updates."
+            title={t("orders.noOrders")}
+            description={t("orders.noOrdersDesc")}
             action={
               <Button asChild variant="outline" className="mt-2">
-                <Link to="/shop">Start shopping</Link>
+                <Link to="/shop">{t("orders.startShopping")}</Link>
               </Button>
             }
             className="py-24"
           />
         ) : (
           <div className="space-y-6">
-            {orders.map((order, i) => {
-              const current = stepIndex(order.status);
-              const cancelled = order.status === "cancelled" || order.status === "refunded";
-              return (
-                <motion.div
-                  key={order.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ ...motionPresets.card, delay: i * 0.05 }}
-                  className="rounded-2xl border border-border p-6"
+            {orders.map((order, i) => (
+              <motion.div
+                key={order.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ ...motionPresets.card, delay: i * 0.05 }}
+              >
+                <Link
+                  to={`/orders/${order.id}`}
+                  className="block rounded-2xl border border-border p-6 transition-colors hover:bg-muted/20"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs text-muted-foreground">
-                        Order #{order.id?.slice(-8).toUpperCase()}
-                      </p>
+                      <p className="text-xs text-muted-foreground">#{order.id?.slice(-8).toUpperCase()}</p>
                       <p className="text-sm text-muted-foreground">
                         {new Date(order.created_date).toLocaleDateString(undefined, {
-                          year: "numeric", month: "long", day: "numeric",
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
                         })}
                       </p>
                     </div>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${
-                        cancelled
-                          ? "bg-muted text-muted-foreground"
-                          : "bg-foreground text-background"
-                      }`}
-                    >
-                      {order.status}
-                    </span>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground rtl:rotate-180" />
                   </div>
 
                   <div className="mt-4 flex flex-wrap gap-4">
-                    {order.items?.map((item, idx) => (
+                    {(order.items || []).map((item, idx) => (
                       <div key={idx} className="flex items-center gap-3">
                         <div className="h-14 w-12 overflow-hidden rounded-lg bg-muted/40">
                           {item.image && (
-                            <Image src={item.image} alt={item.name} fittingType="fill" className="h-full w-full object-cover" />
+                            <Image
+                              src={item.image}
+                              alt={item.name}
+                              fittingType="fill"
+                              className="h-full w-full object-cover"
+                            />
                           )}
                         </div>
                         <div>
-                          <p className="line-clamp-1 text-sm font-medium">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">Qty {item.quantity} · {formatPrice(item.price)}</p>
+                          <p className="line-clamp-1 text-sm font-medium">{lf(item, "name", lang) || item.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Qty {item.quantity} · {formatPrice(item.price)}
+                          </p>
                         </div>
                       </div>
                     ))}
                   </div>
 
                   <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
-                    <span className="text-sm text-muted-foreground">Total</span>
+                    <span className="text-sm text-muted-foreground">{t("order.grandTotal")}</span>
                     <span className="font-semibold">{formatPrice(order.total)}</span>
                   </div>
 
-                  {!cancelled && (
-                    <div className="mt-5">
-                      <div className="flex items-center">
-                        {STATUS_STEPS.map((step, idx) => {
-                          const Icon = step.icon;
-                          const done = idx <= current;
-                          return (
-                            <div key={step.key} className="flex flex-1 items-center last:flex-none">
-                              <div className="flex flex-col items-center">
-                                <div
-                                  className={`flex h-8 w-8 items-center justify-center rounded-full border ${
-                                    done
-                                      ? "border-foreground bg-foreground text-background"
-                                      : "border-border bg-background text-muted-foreground"
-                                  }`}
-                                >
-                                  <Icon className="h-3.5 w-3.5" />
-                                </div>
-                                <span className="mt-1.5 text-[10px] text-muted-foreground">{step.label}</span>
-                              </div>
-                              {idx < STATUS_STEPS.length - 1 && (
-                                <div
-                                  className={`h-0.5 flex-1 ${idx < current ? "bg-foreground" : "bg-border"}`}
-                                />
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
-              );
-            })}
+                  <OrderMiniProgress order={order} />
+                </Link>
+              </motion.div>
+            ))}
           </div>
         )}
       </div>

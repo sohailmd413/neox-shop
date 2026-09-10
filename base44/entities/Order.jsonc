@@ -12,6 +12,7 @@
         "paid",
         "packed",
         "shipped",
+        "out_for_delivery",
         "delivered",
         "cancelled",
         "refunded"
@@ -216,7 +217,7 @@
           }
         }
       },
-      "description": "Status change history log."
+      "description": "Status change history log. Each entry records the new status, who changed it, and when \u2014 the source of truth for the customer-facing order tracker timestamps."
     }
   },
   "required": [

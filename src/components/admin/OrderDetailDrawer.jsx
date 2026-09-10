@@ -8,7 +8,7 @@ import Dropdown from "@/components/admin/ui/Dropdown";
 import { useToast } from "@/components/ui/use-toast";
 import { downloadInvoicePDF } from "@/lib/invoice";
 
-const STATUSES = ["pending", "paid", "packed", "shipped", "delivered", "cancelled", "refunded"];
+const STATUSES = ["pending", "paid", "packed", "shipped", "out_for_delivery", "delivered", "cancelled", "refunded"];
 const METHODS = [
   { id: "card", label: "Card" },
   { id: "cod", label: "Cash on delivery" },
@@ -287,7 +287,7 @@ function Field({ label, children }) {
 }
 
 function payStatus(status) {
-  if (status === "paid" || ["packed", "shipped", "delivered"].includes(status)) return "Paid";
+  if (status === "paid" || ["packed", "shipped", "out_for_delivery", "delivered"].includes(status)) return "Paid";
   if (status === "refunded") return "Refunded";
   if (status === "cancelled") return "Cancelled";
   return "Pending";
