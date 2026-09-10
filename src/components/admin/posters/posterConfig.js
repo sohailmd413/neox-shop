@@ -64,6 +64,12 @@ export const AUDIENCES = [
   { id: "logged_in", label: "Logged-in users" },
 ];
 
+export const SPONSOR_TYPES = [
+  { id: "in_house", label: "In-house" },
+  { id: "brand_partner", label: "Brand partner" },
+  { id: "seasonal", label: "Seasonal" },
+];
+
 export const WEIGHTS = [
   { id: "normal", label: "Normal" },
   { id: "bold", label: "Bold" },
@@ -75,6 +81,9 @@ const zoneMap = byId(ZONES);
 
 export const pageLabel = (p) => pageMap[p]?.label || p || "—";
 export const zoneLabel = (z) => zoneMap[z]?.label || z || "—";
+
+const sponsorMap = byId(SPONSOR_TYPES);
+export const sponsorLabel = (s) => sponsorMap[s]?.label || s || "—";
 
 export const optionsOf = (arr) => arr.map((x) => ({ label: x.label, value: x.id }));
 

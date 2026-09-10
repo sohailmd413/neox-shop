@@ -6,6 +6,28 @@
       "type": "string",
       "description": "Internal reference name for the banner."
     },
+    "brand_name": {
+      "type": "string",
+      "description": "Brand or collection this banner promotes, e.g. 'NeoX Essentials', 'FlexFit'. Leave blank for seasonal banners with no specific brand tie. Shown as a small watermark on the banner when set."
+    },
+    "brand_logo_url": {
+      "type": "string",
+      "description": "Optional small brand logo shown as a bottom-corner watermark on the banner."
+    },
+    "sponsor_type": {
+      "type": "string",
+      "enum": [
+        "in_house",
+        "brand_partner",
+        "seasonal"
+      ],
+      "default": "in_house",
+      "description": "in_house=your own store's promotion; brand_partner=a specific vendor/brand campaign; seasonal=a general sale or seasonal event with no specific brand tie. Used to categorize and filter banners by purpose."
+    },
+    "campaign_name": {
+      "type": "string",
+      "description": "Internal-only campaign label for admin organization/tracking, e.g. 'Autumn Sale 2026'. Not shown publicly on the storefront."
+    },
     "image_url": {
       "type": "string",
       "description": "Desktop banner image (recommended 1920x600px)."

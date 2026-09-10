@@ -13,7 +13,7 @@ import SlotReorder from "@/components/admin/posters/SlotReorder";
 import PosterPreviewAll from "@/components/admin/posters/PosterPreviewAll";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/shared/StateViews";
 import {
-  PAGES, DEVICES, optionsOf, statusOf, placementLabel, ctr, fmtDate, pageLabel,
+  PAGES, DEVICES, SPONSOR_TYPES, optionsOf, statusOf, placementLabel, ctr, fmtDate, pageLabel, sponsorLabel,
 } from "@/components/admin/posters/posterConfig";
 
 const STATUS_STYLE = {
@@ -41,6 +41,8 @@ export default function AdminPosters() {
   const [sel, setSel] = useState(new Set());
   const [confirm, setConfirm] = useState(null);
   const [fDevice, setFDevice] = useState("");
+  const [fSponsor, setFSponsor] = useState("");
+  const [fCampaign, setFCampaign] = useState("");
   const [arrange, setArrange] = useState(false);
   const [preview, setPreview] = useState(false);
   const { toast } = useToast();
@@ -62,16 +64,23 @@ export default function AdminPosters() {
     load();
   }, []);
 
+  const campaignOpts = useMemo(() => {
+    const set = new Set(posters.map((p) => p.campaign_name).filter(Boolean));
+    return [...set].map((c) => ({ label: c, value: c }));
+  }, [posters]);
+
   const filtered = useMemo(
     () =>
       posters.filter((p) => {
-        if (search && !`${p.title} ${p.tagline || ""}`.toLowerCase().includes(search.toLowerCase())) return false;
+        if (search && !`${p.title} ${p.tagline || ""} ${p.brand_name || ""}`.toLowerCase().includes(search.toLowerCase())) return false;
         if (fPage && p.page !== fPage) return false;
         if (fStatus && statusOf(p) !== fStatus) return false;
         if (fDevice && p.device !== fDevice) return false;
+        if (fSponsor && p.sponsor_type !== fSponsor) return false;
+        if (fCampaign && p.campaign_name !== fCampaign) return false;
         return true;
       }),
-    [posters, search, fPage, fStatus, fDevice]
+    [posters, search, fPage, fStatus, fDevice, fSponsor, fCampaign]
   );
 
   const allSel = filtered.length > 0 && filtered.every((p) => sel.has(p.id));
@@ -247,6 +256,12 @@ export default function AdminPosters() {
         <div className="w-[160px]">
           <Dropdown type="select" value={fDevice} onChange={setFDevice} options={optionsOf(DEVICES)} placeholder="All devices" clearable />
         </div>
+        <div className="w-[170px]">
+          <Dropdown type="select" value={fSponsor} onChange={setFSponsor} options={optionsOf(SPONSOR_TYPES)} placeholder="All sponsor types" clearable />
+        </div>
+        <div className="w-[200px]">
+          <Dropdown type="select" value={fCampaign} onChange={setFCampaign} options={campaignOpts} placeholder="All campaigns" clearable />
+        </div>
       </div>
 
       {sel.size > 0 && (
@@ -311,6 +326,13 @@ export default function AdminPosters() {
                     <td className="px-3 py-3 align-middle">
                       <p className="max-w-[220px] truncate font-medium">{p.title}</p>
                       <p className="max-w-[220px] truncate text-xs text-muted-foreground">{p.tagline || "—"}</p>
+                      {(p.brand_name || p.sponsor_type || p.campaign_name) && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {p.brand_name && <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-foreground">{p.brand_name}</span>}
+                          {p.sponsor_type && <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{sponsorLabel(p.sponsor_type)}</span>}
+                          {p.campaign_name && <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{p.campaign_name}</span>}
+                        </div>
+                      )}
                     </td>
                     <td className="px-3 py-3 align-middle">
                       <p className="whitespace-nowrap text-xs font-medium">{pageLabel(p.page)}</p>

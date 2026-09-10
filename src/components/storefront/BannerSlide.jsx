@@ -50,6 +50,12 @@ export default function BannerSlide({ poster: p, lang, overlay = true }) {
           )}
         </div>
       </div>
+      {(p.brand_logo_url || p.brand_name) && (
+        <div className="absolute bottom-4 left-6 flex items-center gap-2 rounded-full bg-black/40 px-3 py-1.5 backdrop-blur-sm">
+          {p.brand_logo_url && <img src={p.brand_logo_url} alt={p.brand_name || ""} className="h-6 w-6 rounded-full object-cover" />}
+          {p.brand_name && <span className="text-xs font-semibold text-white">{p.brand_name}</span>}
+        </div>
+      )}
     </div>
   );
 }

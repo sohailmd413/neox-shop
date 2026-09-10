@@ -95,6 +95,12 @@ export default function PosterPreview({ poster, device = "desktop" }) {
           )}
         </div>
       </div>
+      {(p.brand_logo_url || p.brand_name) && (
+        <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-full bg-black/45 px-2 py-1 backdrop-blur-sm">
+          {p.brand_logo_url && <img src={p.brand_logo_url} alt="" className="h-4 w-4 rounded-full object-cover" />}
+          {p.brand_name && <span className="text-[10px] font-semibold text-white">{p.brand_name}</span>}
+        </div>
+      )}
     </div>
   );
 }

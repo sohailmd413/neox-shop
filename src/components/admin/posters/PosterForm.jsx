@@ -12,12 +12,13 @@ import PosterZonePicker from "./PosterZonePicker";
 import { useToast } from "@/components/ui/use-toast";
 import {
   ANIMATIONS, ANIM_DIRS, SPEEDS, POSITIONS, ALIGNS, DEVICES, AUDIENCES, WEIGHTS,
-  PAGES, ZONES, optionsOf,
+  PAGES, ZONES, SPONSOR_TYPES, optionsOf,
 } from "./posterConfig";
 import { X, Loader2, Monitor, Smartphone } from "lucide-react";
 
 const DEFAULT = {
   title: "", alt_text: "", image_url: "", image_mobile_url: "", link_url: "",
+  brand_name: "", brand_logo_url: "", sponsor_type: "in_house", campaign_name: "",
   tagline: "", tagline_ar: "",
   animation: "none", animation_direction: "left", animation_speed: "medium",
   text_position: "center", text_align: "center", font_size: 0, font_color: "#ffffff", font_weight: "bold", strip_bg: false,
@@ -93,6 +94,7 @@ export default function PosterForm({ poster, onClose, onSaved }) {
 
   const Tabs1 = [
     { id: "media", label: "Media" },
+    { id: "brand", label: "Brand" },
     { id: "tagline", label: "Tagline" },
     { id: "cta", label: "Call-to-Action" },
     { id: "placement", label: "Placement" },
@@ -133,6 +135,22 @@ export default function PosterForm({ poster, onClose, onSaved }) {
                 </Field>
                 <Field label="Alt text">
                   <Input value={draft.alt_text} onChange={(e) => set("alt_text", e.target.value)} placeholder="Describe the banner" />
+                </Field>
+              </TabsContent>
+
+              <TabsContent value="brand" className="mt-4 space-y-4">
+                <p className="text-sm text-muted-foreground">Identify the brand or collection this banner promotes. The name shows as a small watermark on the banner; campaign name is admin-only.</p>
+                <Field label="Brand / collection name" hint="e.g. NeoX Essentials, FlexFit. Leave blank for seasonal banners.">
+                  <Input value={draft.brand_name || ""} onChange={(e) => set("brand_name", e.target.value)} placeholder="NeoX Essentials" />
+                </Field>
+                <Field label="Brand logo (optional)" hint="Small logo shown as a bottom-corner watermark on the banner.">
+                  <ImageUpload value={draft.brand_logo_url} onChange={(v) => set("brand_logo_url", v)} />
+                </Field>
+                <Field label="Sponsor type">
+                  <Dropdown type="select" value={draft.sponsor_type} onChange={(v) => set("sponsor_type", v)} options={optionsOf(SPONSOR_TYPES)} placeholder="In-house" />
+                </Field>
+                <Field label="Campaign name" hint="Internal label for your own tracking — not shown publicly.">
+                  <Input value={draft.campaign_name || ""} onChange={(e) => set("campaign_name", e.target.value)} placeholder="Autumn Sale 2026" />
                 </Field>
               </TabsContent>
 

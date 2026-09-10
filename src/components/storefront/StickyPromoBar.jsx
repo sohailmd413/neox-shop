@@ -31,7 +31,8 @@ export default function StickyPromoBar() {
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="flex-1 truncate text-center text-xs font-medium sm:text-sm"
+          onClick={() => { if (cur.cta_link) window.location.href = cur.cta_link; }}
+          className={`flex-1 truncate text-center text-xs font-medium sm:text-sm ${cur.cta_link ? "cursor-pointer hover:underline" : ""}`}
         >
           {text}
         </motion.span>
