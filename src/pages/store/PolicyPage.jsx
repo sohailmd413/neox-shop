@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { getStoreSetting } from "@/lib/settings";
 import { useLanguage } from "@/lib/i18n";
 import BackBar from "@/components/storefront/BackBar";
+import Seo from "@/components/shared/Seo";
 
 // Policy pages use the language the storefront is in: the page title and the
 // rich-text body both pull the `_ar` variant when Arabic is selected, falling
@@ -29,8 +30,12 @@ export default function PolicyPage() {
     ? (setting?.[arField] || setting?.[enField] || "")
     : (setting?.[enField] || "");
 
+  const origin = window.location.origin;
+  const seoDescription = lang === "ar" ? `${title} — ${setting?.store_name_ar || "NeoX شوب"}` : `${title} — NeoX Shop`;
+
   return (
     <div className="pt-16 md:pt-24" dir={lang === "ar" ? "rtl" : "ltr"}>
+      <Seo title={`${title} | NeoX Shop`} description={seoDescription} url={`${origin}/policies/${type}`} canonical={`${origin}/policies/${type}`} />
       <div className="mx-auto max-w-3xl px-5 py-12 sm:px-8">
         <BackBar fallbackTo="/" fallbackLabel={t("back.home")} />
         <h1 className="mt-6 font-headline text-3xl tracking-tight sm:text-4xl">{title}</h1>

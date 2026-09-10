@@ -43,7 +43,7 @@ function ProductCardBase({ product, index = 0, rank = null, tag = null, soldCoun
       viewport={{ once: true, margin: "-40px" }}
       transition={{ ...motionPresets.card, delay: Math.min(index * 0.03, 0.24) }}
     >
-      <Link to={`/product/${product.id}`} className="group block">
+      <Link to={`/product/${product.slug || product.id}`} className="group block">
         <div
           ref={imgRef}
           className="relative aspect-[4/5] overflow-hidden rounded-lg bg-muted/30"

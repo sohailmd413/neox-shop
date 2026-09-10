@@ -7,6 +7,8 @@ import PosterBanner from "@/components/storefront/PosterBanner";
 import SectionShell from "@/components/storefront/SectionShell";
 import HomeSkeleton from "@/components/storefront/HomeSkeleton";
 import { useLanguage } from "@/lib/i18n";
+import { useStoreSetting } from "@/lib/useStoreSetting";
+import Seo from "@/components/shared/Seo";
 import BecauseYouViewed from "@/components/storefront/BecauseYouViewed";
 import RecentlyViewedRow from "@/components/storefront/RecentlyViewedRow";
 import { mergeGuestHistory } from "@/lib/recentlyViewed";
@@ -20,6 +22,7 @@ const MerchSections = lazy(() => import("@/components/storefront/MerchSections")
 export default function Home() {
   const [data, setData] = useState(null);
   const { lang, t } = useLanguage();
+  const store = useStoreSetting();
 
   useEffect(() => {
     (async () => {
@@ -55,8 +58,24 @@ export default function Home() {
   const { products = [], categories = [], sections = [], hsp = [], orders = [] } = data || {};
   const tops = categories.filter((c) => !c.parent_id);
 
+  const storeName = (lang === "ar" ? (store.store_name_ar || store.store_name) : store.store_name) || "NeoX Shop";
+  const logo = store.logo_url || "https://media.base44.com/images/public/6a940640f387996e35e2c2db/d6589a94e_generated_image.png";
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://neox-shop.base44.app";
+  const homeDescription = lang === "ar"
+    ? `${storeName} — متجر إلكتروني حديث لأحدث الإلكترونيات والعروض والتوصيل السريع في المملكة العربية السعودية.`
+    : `${storeName} — a modern tech marketplace for the latest electronics, deals, and fast delivery across Saudi Arabia.`;
+  const orgJsonld = { "@context": "https://schema.org/", "@type": "Organization", name: storeName, url: origin, logo };
+  const siteJsonld = {
+    "@context": "https://schema.org/",
+    "@type": "WebSite",
+    name: storeName,
+    url: origin,
+    potentialAction: { "@type": "SearchAction", target: `${origin}/shop?q={search_term_string}`, "query-input": "required name=search_term_string" },
+  };
+
   return (
     <div className="pt-16 md:pt-24">
+      <Seo title={`${storeName} — ${lang === "ar" ? "متجر إلكتروني حديث" : "Modern Tech Marketplace"}`} description={homeDescription} url={`${origin}/`} image={logo} jsonld={[orgJsonld, siteJsonld]} />
       {/* Full-bleed hero (edge-to-edge) */}
       <HomeHero />
 

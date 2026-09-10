@@ -52,6 +52,7 @@ import AdminSupport from '@/pages/admin/AdminSupport';
 import AdminFAQ from '@/pages/admin/AdminFAQ';
 import AdminCannedResponses from '@/pages/admin/AdminCannedResponses';
 import RecoverCart from '@/pages/store/RecoverCart';
+import SitemapRedirect from '@/components/SitemapRedirect';
 // Add page imports here
 
 // Boot the singleton store Setting once so the currency formatter and
@@ -96,6 +97,8 @@ const AuthenticatedApp = () => {
           <Route path="/admin/login" element={<AdminLogin />} />
           {/* Standalone print page (no layout) */}
           <Route path="/print/barcodes" element={<PrintBarcodes />} />
+          {/* SEO: /sitemap.xml redirects to the dynamic backend function */}
+          <Route path="/sitemap.xml" element={<SitemapRedirect />} />
           {/* Storefront */}
           <Route element={<StorefrontLayout />}>
             <Route path="/" element={<Home />} />

@@ -18,6 +18,8 @@ import ReviewSection from "@/components/storefront/reviews/ReviewSection";
 import QuestionSection from "@/components/storefront/qa/QuestionSection";
 import RecentlyViewedRow from "@/components/storefront/RecentlyViewedRow";
 import { getRelatedProducts } from "@/lib/relatedProducts";
+import Seo from "@/components/shared/Seo";
+import { productUrl } from "@/lib/productUrl";
 import { recordView, mergeGuestHistory } from "@/lib/recentlyViewed";
 
 export default function ProductDetail() {
@@ -42,8 +44,14 @@ export default function ProductDetail() {
     (async () => {
       setLoading(true);
       try {
-        const p = await base44.entities.Product.get(id);
+        let p;
+        try { p = await base44.entities.Product.get(id); }
+        catch {
+          const bySlug = await base44.entities.Product.filter({ slug: id }, "-updated_date", 1);
+          p = bySlug?.[0] || null;
+        }
         if (cancelled) return;
+        if (!p) { setProduct(null); return; }
         setProduct(p);
         setActiveImage(0);
         setVariantId(null);
@@ -63,7 +71,7 @@ export default function ProductDetail() {
           recordView(p.id);
         } catch {}
         try {
-          const rv = await base44.entities.Review.filter({ product_id: id, approved: true }, "-created_date", 50);
+          const rv = await base44.entities.Review.filter({ product_id: p.id, approved: true }, "-created_date", 50);
           if (!cancelled) setReviews(rv);
         } catch {}
         try {
@@ -149,8 +157,52 @@ export default function ProductDetail() {
     { weekday: "short", day: "numeric", month: "short" }
   );
 
+  const origin = window.location.origin;
+  const canonicalUrl = `${origin}${productUrl(product)}`;
+  const shortDesc = lf(product, "short_description", lang) || product.short_description || (displayDesc ? displayDesc.replace(/<[^>]+>/g, "").slice(0, 160) : "");
+  const productJsonld = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    name: displayName,
+    description: shortDesc || undefined,
+    image: images[0] ? [images[0]] : undefined,
+    sku: product.sku || undefined,
+    brand: product.brand ? { "@type": "Brand", name: product.brand } : undefined,
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "SAR",
+      price: effPrice,
+      availability: outOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+      url: canonicalUrl,
+    },
+    aggregateRating: (Number(product.rating) > 0 || reviews.length > 0) ? {
+      "@type": "AggregateRating",
+      ratingValue: Number(product.rating) || 0,
+      reviewCount: product.num_reviews || reviews.length,
+    } : undefined,
+  };
+  const breadcrumbJsonld = {
+    "@context": "https://schema.org/",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: t("product.home"), item: `${origin}/` },
+      { "@type": "ListItem", position: 2, name: t("product.shop"), item: `${origin}/shop` },
+      ...(showCategoryCrumb ? [{ "@type": "ListItem", position: 3, name: categoryName, item: `${origin}/shop?category=${encodeURIComponent(product.category)}` }] : []),
+      { "@type": "ListItem", position: showCategoryCrumb ? 4 : 3, name: displayName, item: canonicalUrl },
+    ],
+  };
+
   return (
     <div className="pt-16 md:pt-24">
+      <Seo
+        title={`${displayName} | NeoX Shop`}
+        description={shortDesc}
+        url={canonicalUrl}
+        image={images[0] || undefined}
+        type="product"
+        canonical={canonicalUrl}
+        jsonld={[productJsonld, breadcrumbJsonld]}
+      />
       {/* Context-aware back to where the customer came from (Home / Best
           Sellers / category…), falling back to the product's own category. */}
       <div className="mx-auto max-w-7xl px-5 pt-5 sm:px-8">

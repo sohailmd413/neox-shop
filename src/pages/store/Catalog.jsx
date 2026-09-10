@@ -16,6 +16,7 @@ import SearchBar from "@/components/storefront/SearchBar";
 import { onSaleProducts, newArrivals, bestSellers, maxDiscountPct } from "@/lib/merchandising";
 import BackBar from "@/components/storefront/BackBar";
 import PageHeader from "@/components/storefront/PageHeader";
+import Seo from "@/components/shared/Seo";
 import { saveScroll, readScroll } from "@/lib/backNav";
 
 const SORT_KEYS = ["featured", "newest", "discount", "price-asc", "price-desc", "rating", "best"];
@@ -219,8 +220,17 @@ export default function Catalog() {
     title = `${t("catalog.resultsFor")} "${q}"`;
   }
 
+  const origin = window.location.origin;
+  const cleanPath = category ? `/shop?category=${encodeURIComponent(category)}` : "/shop";
+  const canonicalUrl = origin + cleanPath;
+  const catObj = category ? categories.find((c) => c.name === category) : null;
+  const seoDescription = lang === "ar"
+    ? `تسوّق ${category ? (lf(catObj, "name", lang) || category) : "كل المنتجات"} في NeoX Shop بأفضل الأسعار والتوصيل السريع.`
+    : `Shop ${category ? (lf(catObj, "name", lang) || category) : "all products"} at NeoX Shop with great prices and fast delivery.`;
+
   return (
     <div className="pt-16 md:pt-24">
+      <Seo title={`${title} | NeoX Shop`} description={seoDescription} url={canonicalUrl} canonical={canonicalUrl} />
       {/* Context-aware back to where the customer came from, only on curated /
         filtered / search views (the plain all-products catalog is a top-level
         destination, so a back button there would be redundant with the nav). */}

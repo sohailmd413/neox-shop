@@ -8,7 +8,7 @@ import { CartFlyoutProvider } from "@/components/storefront/cart/CartFlyoutConte
 import PageTransition from "@/components/shared/PageTransition";
 import BackNavTracker from "@/components/storefront/BackNavTracker";
 import StickyPromoBar from "@/components/storefront/StickyPromoBar";
-import SupportWidget from "@/components/storefront/support/SupportWidget";
+const SupportWidget = React.lazy(() => import("@/components/storefront/support/SupportWidget"));
 import { useLanguage } from "@/lib/i18n";
 import { useStoreSetting } from "@/lib/useStoreSetting";
 
@@ -125,7 +125,7 @@ export default function StorefrontLayout() {
         </div>
       </footer>
       <CartDrawer />
-      <SupportWidget />
+      <React.Suspense fallback={null}><SupportWidget /></React.Suspense>
       </CartFlyoutProvider>
     </div>
   );
