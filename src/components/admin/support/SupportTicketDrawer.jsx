@@ -3,7 +3,7 @@ import { Loader2, Send, Paperclip, X, Sparkles, Search, Package, Link2 } from "l
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 import { displayName } from "@/lib/users";
-import { Textarea } from "@/components/ui/textarea";
+import AutoGrowTextarea from "@/components/admin/support/AutoGrowTextarea";
 import { Button } from "@/components/ui/button";
 import Dropdown from "@/components/admin/ui/Dropdown";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -46,6 +46,9 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
   const [canned, setCanned] = useState([]);
   const [orderContext, setOrderContext] = useState(null);
   const [lastInsertedCannedId, setLastInsertedCannedId] = useState(null);
+  const [isManualDraft, setIsManualDraft] = useState(false);
+  const [lastInsertedBody, setLastInsertedBody] = useState("");
+  const [pendingInsert, setPendingInsert] = useState(null);
   const [orderLookupOpen, setOrderLookupOpen] = useState(false);
   const scrollRef = useRef(null);
   const fileRef = useRef(null);
@@ -145,18 +148,37 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
       .replace(/\{order_status\}/g, orderStatus || "{order_status}");
   };
 
-  const insertText = (body) => {
-    setText((prev) => (prev.trim() ? `${prev.trim()}\n\n${body}` : body));
+  const doInsert = (body, cannedId) => {
+    setText(body);
+    setLastInsertedBody(body);
+    setIsManualDraft(false);
+    setLastInsertedCannedId(cannedId);
+  };
+
+  // Replace (not append) the reply box. If the staff manually typed/edited text,
+  // prompt before overwriting; untouched auto-inserted text is replaced directly.
+  const requestInsert = (body, cannedId) => {
+    if (!body) return;
+    if (isManualDraft && text.trim() !== "") {
+      setPendingInsert({ body, cannedId });
+    } else {
+      doInsert(body, cannedId);
+    }
+  };
+
+  const confirmPendingInsert = () => {
+    if (!pendingInsert) return;
+    doInsert(pendingInsert.body, pendingInsert.cannedId);
+    setPendingInsert(null);
   };
 
   const insertCanned = (c) => {
     if (!c) return;
     const raw = isArabicContext ? (c.message_text_ar || c.message_text_en) : (c.message_text_en || c.message_text_ar);
-    insertText(substitute(raw));
-    setLastInsertedCannedId(c.id);
+    requestInsert(substitute(raw), c.id);
   };
 
-  const insertOrderDetails = (o) => insertText(formatOrderDetails(o, isArabicContext));
+  const insertOrderDetails = (o) => requestInsert(formatOrderDetails(o, isArabicContext), null);
 
   // Link a looked-up order to the ticket so future messages keep its context.
   const useOrder = async (o) => {
@@ -213,6 +235,9 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
       setText("");
       setAttachments([]);
       setLastInsertedCannedId(null);
+      setIsManualDraft(false);
+      setLastInsertedBody("");
+      setPendingInsert(null);
       await loadMessages(false);
       onUpdated();
       if (ticket.customer_id) {
@@ -420,18 +445,24 @@ export default function SupportTicketDrawer({ ticket, staffUsers, me, onClose, o
               </div>
             )}
 
+            {pendingInsert && (
+              <div className="mb-2 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                <span>Replace your current draft?</span>
+                <button type="button" onClick={confirmPendingInsert} className="font-medium text-amber-900 underline">Confirm</button>
+                <button type="button" onClick={() => setPendingInsert(null)} className="text-amber-700 hover:underline">Cancel</button>
+              </div>
+            )}
             <form onSubmit={reply} className="flex items-end gap-2">
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { addImage(e.target.files?.[0]); e.target.value = ""; }} />
               <Button type="button" variant="outline" size="icon" onClick={() => fileRef.current?.click()} disabled={uploading} className="h-11 w-11 shrink-0">
                 {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
               </Button>
-              <Textarea
+              <AutoGrowTextarea
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                onChange={(v) => { setText(v); if (v !== lastInsertedBody) setIsManualDraft(true); }}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); reply(e); } }}
                 placeholder="Type a reply…"
-                className="min-h-[44px] max-h-32 flex-1 resize-none rounded-xl"
-                rows={1}
+                className="flex-1"
               />
               <Button type="submit" size="icon" disabled={sending || (!text.trim() && attachments.length === 0)} className="h-11 w-11 shrink-0">
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 rtl:rotate-180" />}
