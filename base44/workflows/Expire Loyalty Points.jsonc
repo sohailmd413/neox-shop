@@ -1,0 +1,45 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "expire_loyalty_points",
+      "version": "1",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "expire": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "expireLoyaltyPoints",
+            "args": {}
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Expire loyalty points",
+            "description": "Expire unredeemed earned points past the configured expiry window"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Every day at midnight, expires loyalty points whose earned date is older than the configured expiry window, creating expired transactions and reducing customer balances accordingly.",
+  "name": "Expire Loyalty Points",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 0 * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Riyadh",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  }
+}

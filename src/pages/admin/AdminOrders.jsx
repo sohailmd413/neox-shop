@@ -67,6 +67,7 @@ export default function AdminOrders() {
     try {
       await base44.entities.Order.update(id, { status, timeline });
       patch(id, { status });
+      base44.functions.invoke("syncOrderLoyalty", { orderId: id, status }).catch(() => {});
       toast({ title: "Order updated" });
     } catch {
       toast({ title: "Could not update", variant: "destructive" });
@@ -82,6 +83,7 @@ export default function AdminOrders() {
         return base44.entities.Order.update(id, { status, timeline });
       }));
       setOrders((prev) => prev.map((o) => (selected.includes(o.id) ? { ...o, status } : o)));
+      selected.forEach((oid) => base44.functions.invoke("syncOrderLoyalty", { orderId: oid, status }).catch(() => {}));
       toast({ title: `${selected.length} order(s) updated` });
       setSelected([]);
     } catch {

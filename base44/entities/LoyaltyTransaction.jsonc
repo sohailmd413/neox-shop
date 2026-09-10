@@ -1,0 +1,76 @@
+{
+  "name": "LoyaltyTransaction",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "type": "string",
+      "description": "The app user id this transaction belongs to. Used to scope reads in getMyLoyalty."
+    },
+    "order_id": {
+      "type": "string",
+      "description": "Order this transaction relates to, when applicable. Null for redemptions/adjustments not tied to an order."
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "earned",
+        "redeemed",
+        "expired",
+        "admin_adjustment"
+      ],
+      "description": "earned=points gained from a delivered order; redeemed=points spent for a checkout discount; expired=points past their expiry window; admin_adjustment=manual admin change or a system clawback/refund reversal."
+    },
+    "reason_code": {
+      "type": "string",
+      "enum": [
+        "earn",
+        "redeem",
+        "expire",
+        "clawback_refund",
+        "redeem_refund",
+        "admin_manual"
+      ],
+      "description": "Fine-grained reason disambiguating system actions within a type. Used for idempotency checks (e.g. only one clawback_refund per order)."
+    },
+    "points": {
+      "type": "integer",
+      "description": "Signed point delta. Positive for earned / redeem_refund / positive admin adjustments; negative for redeemed / expired / clawback_refund / negative admin adjustments."
+    },
+    "remaining_points": {
+      "type": "integer",
+      "default": 0,
+      "description": "For type=earned: points from this earning still unredeemed/unexpired (FIFO ledger). Redeem, expire and clawback reduce this on the source earned transaction. Always 0 for other types."
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description shown in the customer and admin history, e.g. 'Earned 12 points from order #ABCD1234'."
+    }
+  },
+  "required": [
+    "customer_id",
+    "type",
+    "points"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

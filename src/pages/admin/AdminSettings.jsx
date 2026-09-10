@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Store, CreditCard, Truck, Percent, FileText } from "lucide-react";
+import { Store, CreditCard, Truck, Percent, FileText, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { ensureStoreSetting, patchStoreSetting } from "@/lib/settings";
@@ -9,6 +9,7 @@ import PaymentsSettings from "@/components/admin/settings/PaymentsSettings";
 import ShippingSettings from "@/components/admin/settings/ShippingSettings";
 import TaxSettings from "@/components/admin/settings/TaxSettings";
 import PoliciesSettings from "@/components/admin/settings/PoliciesSettings";
+import LoyaltySettings from "@/components/admin/settings/LoyaltySettings";
 
 const TABS = [
   { id: "general", label: "General", icon: Store },
@@ -16,6 +17,7 @@ const TABS = [
   { id: "shipping", label: "Shipping", icon: Truck },
   { id: "tax", label: "Tax", icon: Percent },
   { id: "policies", label: "Policies", icon: FileText },
+  { id: "loyalty", label: "Loyalty", icon: Sparkles },
 ];
 
 export default function AdminSettings() {
@@ -74,6 +76,7 @@ export default function AdminSettings() {
         {active === "shipping" && <ShippingSettings setting={setting} onSave={save} />}
         {active === "tax" && <TaxSettings setting={setting} onSave={save} />}
         {active === "policies" && <PoliciesSettings setting={setting} onSave={save} />}
+        {active === "loyalty" && <LoyaltySettings setting={setting} onSave={save} />}
       </div>
     </div>
   );

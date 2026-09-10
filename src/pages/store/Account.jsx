@@ -12,11 +12,14 @@ import OrdersSection from "@/components/storefront/account/OrdersSection";
 import WishlistSection from "@/components/storefront/account/WishlistSection";
 import NotificationsSection from "@/components/storefront/account/NotificationsSection";
 import SecuritySection from "@/components/storefront/account/SecuritySection";
+import LoyaltySection from "@/components/storefront/account/LoyaltySection";
+import { getLoyaltyConfig } from "@/lib/loyalty";
 import BackBar from "@/components/storefront/BackBar";
 
 export default function Account() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loyaltyEnabled, setLoyaltyEnabled] = useState(false);
   const [params, setParams] = useSearchParams();
   const tab = params.get("tab") || "profile";
   const setTab = (t) => setParams({ tab: t }, { replace: true });
@@ -32,6 +35,7 @@ export default function Account() {
       catch { setUser(null); }
       finally { setLoading(false); }
     })();
+    getLoyaltyConfig().then((c) => setLoyaltyEnabled(!!c.enabled)).catch(() => {});
   }, []);
 
   if (loading) return <div className="pt-24 pb-20 text-center text-sm text-muted-foreground">Loading…</div>;
@@ -76,7 +80,7 @@ export default function Account() {
 
       <div className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
         <div className="grid min-w-0 gap-8 lg:grid-cols-[240px_1fr]">
-          <AccountNav tab={tab} setTab={setTab} />
+          <AccountNav tab={tab} setTab={setTab} loyaltyEnabled={loyaltyEnabled} />
           <div className="min-w-0">
             <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }}>
               {tab === "profile" && <ProfileSection user={user} reload={reload} />}
@@ -85,6 +89,7 @@ export default function Account() {
               {tab === "wishlist" && <WishlistSection />}
               {tab === "notifications" && <NotificationsSection user={user} reload={reload} />}
               {tab === "security" && <SecuritySection user={user} />}
+              {tab === "loyalty" && loyaltyEnabled && <LoyaltySection />}
             </motion.div>
           </div>
         </div>

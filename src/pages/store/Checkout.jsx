@@ -14,6 +14,8 @@ import { useStoreSetting } from "@/lib/useStoreSetting";
 import { computeTax, computeShipping, PAYMENT_LABELS } from "@/lib/settings";
 import { useLanguage } from "@/lib/i18n";
 import BackBar from "@/components/storefront/BackBar";
+import LoyaltyRedeem from "@/components/storefront/checkout/LoyaltyRedeem";
+import { getLoyaltyConfig, pointsValue, maxApplicablePoints } from "@/lib/loyalty";
 
 const PAYMENT_ICONS = {
   card: "💳",
@@ -36,6 +38,8 @@ export default function Checkout() {
   const [blocked, setBlocked] = useState(false);
   const enabledPayments = store.payment_methods_enabled || [];
   const [paymentMethod, setPaymentMethod] = useState(enabledPayments[0] || "card");
+  const [loyalty, setLoyalty] = useState(null);
+  const [applied, setApplied] = useState(0);
 
   // Keep the selection valid if the enabled methods change (e.g. an admin
   // disables a method while a checkout is open).
@@ -48,6 +52,17 @@ export default function Checkout() {
   useEffect(() => {
     base44.functions.invoke("getCustomerAccess", {})
       .then((r) => setBlocked(!!r?.data?.blocked))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    getLoyaltyConfig()
+      .then((cfg) => {
+        if (!cfg.enabled) { setLoyalty({ cfg, balance: 0 }); return; }
+        base44.functions.invoke("getMyLoyalty", {})
+          .then((res) => setLoyalty({ cfg, balance: res?.data?.balance || 0 }))
+          .catch(() => setLoyalty({ cfg, balance: 0 }));
+      })
       .catch(() => {});
   }, []);
 
@@ -114,11 +129,17 @@ export default function Checkout() {
     })();
   }, []);
 
-  const discount = coupon
+  const couponDiscount = coupon
     ? coupon.discount_type === "percent"
       ? subtotal * (coupon.discount_value / 100)
       : Math.min(coupon.discount_value, subtotal)
     : 0;
+  const loyaltyCfg = loyalty?.cfg;
+  const payableForLoyalty = Math.max(0, subtotal - couponDiscount);
+  const loyaltyMax = loyaltyCfg ? maxApplicablePoints(loyalty?.balance || 0, payableForLoyalty, loyaltyCfg) : 0;
+  const loyaltyPointsUsed = Math.min(applied, loyaltyMax);
+  const loyaltyDiscount = loyaltyCfg ? pointsValue(loyaltyPointsUsed, loyaltyCfg) : 0;
+  const discount = couponDiscount + loyaltyDiscount;
   const taxable = Math.max(0, subtotal - discount);
   // Tax + shipping come from the store Setting (tax_rules / shipping_zones),
   // matched against the customer's country — no hardcoded rates.
@@ -219,6 +240,8 @@ export default function Checkout() {
         tax,
         shipping_fee: shipping,
         discount,
+        loyalty_points_redeemed: loyaltyPointsUsed,
+        loyalty_discount: loyaltyDiscount,
         total,
         coupon_code: coupon?.code || "",
         customer_email: form.email,
@@ -257,6 +280,10 @@ export default function Checkout() {
         }
       } catch {}
 
+      if (loyaltyPointsUsed > 0) {
+        try { await base44.functions.invoke("redeemLoyaltyPoints", { orderId: order.id }); }
+        catch { /* best-effort; order already placed */ }
+      }
       setPlaced(order);
       clearCart();
     } catch (err) {
@@ -469,9 +496,20 @@ export default function Checkout() {
                 )}
               </div>
 
+              {loyaltyCfg?.enabled && (
+                <LoyaltyRedeem
+                  cfg={loyaltyCfg}
+                  balance={loyalty?.balance || 0}
+                  payable={payableForLoyalty}
+                  applied={loyaltyPointsUsed}
+                  setApplied={setApplied}
+                />
+              )}
+
               <div className="mt-4 space-y-2 text-sm">
                 <Row label={t("cart.subtotal")} value={<AnimatedNumber value={subtotal} format={formatPrice} />} />
-                {discount > 0 && <Row label={t("cart.discount")} value={`−${formatPrice(discount)}`} />}
+                {couponDiscount > 0 && <Row label={t("cart.discount")} value={`−${formatPrice(couponDiscount)}`} />}
+                {loyaltyDiscount > 0 && <Row label={t("loyalty.discount")} value={`−${formatPrice(loyaltyDiscount)}`} />}
                 <Row label={t("cart.shipping")} value={shipping === 0 ? t("checkout.free") : <AnimatedNumber value={shipping} format={formatPrice} />} />
                 <Row label={t("cart.tax")} value={<AnimatedNumber value={tax} format={formatPrice} />} />
               </div>

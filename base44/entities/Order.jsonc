@@ -66,6 +66,16 @@
       "type": "number",
       "default": 0
     },
+    "loyalty_points_redeemed": {
+      "type": "integer",
+      "default": 0,
+      "description": "Points redeemed for this order's loyalty discount. Recorded at checkout so the points can be refunded if the order is cancelled before delivery."
+    },
+    "loyalty_discount": {
+      "type": "number",
+      "default": 0,
+      "description": "SAR discount applied from redeemed loyalty points. Included in the order's total discount alongside any coupon."
+    },
     "total": {
       "type": "number",
       "default": 0

@@ -121,6 +121,27 @@
       },
       "default": []
     },
+    "loyalty_program_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Master toggle for the loyalty program. When off, the account Loyalty tab and checkout redemption UI are hidden, and no points are earned or redeemed."
+    },
+    "loyalty_points_per_currency_unit": {
+      "type": "number",
+      "description": "Currency amount a customer must spend to earn 1 point. E.g. 10 = 1 point per SAR 10 spent. Points are earned on the order merchandise subtotal after discounts, excluding tax and shipping."
+    },
+    "loyalty_redeem_points": {
+      "type": "number",
+      "description": "Points required for one redemption unit. Paired with loyalty_redeem_amount. E.g. 100 points = the amount below."
+    },
+    "loyalty_redeem_amount": {
+      "type": "number",
+      "description": "SAR discount value of one redemption unit. E.g. 5 = 100 points are worth SAR 5 off."
+    },
+    "loyalty_expiry_days": {
+      "type": "number",
+      "description": "If set, earned points expire this many days after they were earned. Leave blank/null to disable expiry. A daily workflow creates expired transactions for aged, unredeemed points."
+    },
     "terms_policy": {
       "type": "string",
       "description": "Terms of Service HTML content (English)."

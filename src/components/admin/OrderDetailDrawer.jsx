@@ -57,6 +57,9 @@ export default function OrderDetailDrawer({ order, onClose, onChanged, adminName
         tracking_number: draft.tracking_number,
         timeline,
       });
+      if (order.status !== draft.status) {
+        base44.functions.invoke("syncOrderLoyalty", { orderId: order.id, status: draft.status }).catch(() => {});
+      }
       toast({ title: "Order updated" });
       onChanged();
     } catch {
