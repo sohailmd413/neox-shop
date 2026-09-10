@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon, ClipboardCheck, FileX, Languages, LayoutList, Compass, Search, ShoppingCart as CartIcon } from "lucide-react";
+import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon, ClipboardCheck, FileX, Languages, LayoutList, Compass, Search, ShoppingCart as CartIcon, MessageSquare, HelpCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { canAccess } from "@/lib/adminPermissions";
 import { loadPendingCounts, loadRejectedCounts } from "@/lib/approval";
+import { loadSupportUnread } from "@/lib/supportBadge";
 import NotificationsBell from "@/components/admin/NotificationsBell";
 import AccountMenu from "@/components/admin/AccountMenu";
 
@@ -27,6 +28,8 @@ const SECTION_META = {
   settings: { label: "Settings", path: "/admin/settings", icon: SettingsIcon },
   users: { label: "Members", path: "/admin/users", icon: UsersIcon },
   roles: { label: "Roles", path: "/admin/roles", icon: ShieldCheck },
+  support: { label: "Support", path: "/admin/support", icon: MessageSquare },
+  faq: { label: "FAQ", path: "/admin/faq", icon: HelpCircle },
 };
 
 // Logical groups. Dashboard stays standalone; every other item belongs to a
@@ -36,6 +39,7 @@ const GROUPS = [
   { id: "moderation", label: "Moderation", sections: ["approvals", "rejected", "translations"] },
   { id: "sales", label: "Sales", sections: ["orders", "customers", "coupons", "abandoned_carts"] },
   { id: "content", label: "Content", sections: ["reviews", "posters"] },
+  { id: "support", label: "Support", sections: ["support", "faq"] },
   { id: "insights", label: "Insights", sections: ["reports"] },
   { id: "configuration", label: "Configuration", sections: ["settings"] },
 ];
@@ -54,6 +58,7 @@ export default function AdminLayout() {
   const [checking, setChecking] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
   const [rejectedCount, setRejectedCount] = useState(0);
+  const [supportUnread, setSupportUnread] = useState(0);
   const [query, setQuery] = useState("");
   const location = useLocation();
 
@@ -98,6 +103,13 @@ export default function AdminLayout() {
     const offP = base44.entities.Product.subscribe(() => refreshCounts());
     const offC = base44.entities.Category.subscribe(() => refreshCounts());
     return () => { offP?.(); offC?.(); };
+  }, []);
+
+  useEffect(() => {
+    const refresh = () => loadSupportUnread().then(setSupportUnread);
+    refresh();
+    const off = base44.entities.SupportMessage.subscribe(() => refresh());
+    return () => off?.();
   }, []);
 
   useEffect(() => {
@@ -230,7 +242,7 @@ export default function AdminLayout() {
             </div>
           ) : (
             <>
-              {accessibleGroups.map((g) => renderGroup(g, g.id === "moderation" && (pendingCount + rejectedCount) > 0 ? pendingCount + rejectedCount : null))}
+              {accessibleGroups.map((g) => renderGroup(g, g.id === "moderation" && (pendingCount + rejectedCount) > 0 ? pendingCount + rejectedCount : g.id === "support" && supportUnread > 0 ? supportUnread : null))}
               {staffItems.length > 0 && renderGroup({ id: STAFF_GROUP.id, label: STAFF_GROUP.label, items: staffItems })}
             </>
           )}
