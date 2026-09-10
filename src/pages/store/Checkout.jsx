@@ -353,7 +353,7 @@ export default function Checkout() {
                     <Textarea label={t("checkout.address")} value={form.line1} onChange={set("line1")} required rows={3} />
                   </div>
                   <div className="sm:col-span-2">
-                    <Input label={t("address.line2")} value={form.line2} onChange={set("line2")} />
+                    <Textarea label={t("address.line2")} value={form.line2} onChange={set("line2")} rows={2} />
                   </div>
                   <Input label={t("checkout.city")} value={form.city} onChange={set("city")} required />
                   <Input label={t("checkout.state")} value={form.state} onChange={set("state")} />
@@ -514,7 +514,7 @@ function Textarea({ label, ...props }) {
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
       <textarea
         {...props}
-        className="mt-1.5 w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm leading-relaxed outline-none transition-colors focus:border-foreground/40"
+        className="mt-1.5 w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm leading-relaxed outline-none transition-colors focus:border-foreground/40 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]"
       />
     </label>
   );
