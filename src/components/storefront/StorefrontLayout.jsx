@@ -8,9 +8,18 @@ import { CartFlyoutProvider } from "@/components/storefront/cart/CartFlyoutConte
 import PageTransition from "@/components/shared/PageTransition";
 import BackNavTracker from "@/components/storefront/BackNavTracker";
 import StickyPromoBar from "@/components/storefront/StickyPromoBar";
+import CompareBar from "@/components/storefront/compare/CompareBar";
+import CompareCategoryConfirm from "@/components/storefront/compare/CompareCategoryConfirm";
+import CompareModal from "@/components/storefront/compare/CompareModal";
 const SupportWidget = React.lazy(() => import("@/components/storefront/support/SupportWidget"));
 import { useLanguage } from "@/lib/i18n";
 import { useStoreSetting } from "@/lib/useStoreSetting";
+import { useCompare } from "@/lib/CompareContext";
+
+function CompareModalHost() {
+  const { compareOpen, setCompareOpen } = useCompare();
+  return <CompareModal open={compareOpen} onClose={() => setCompareOpen(false)} />;
+}
 
 export default function StorefrontLayout() {
   const { t, lang } = useLanguage();
@@ -126,6 +135,9 @@ export default function StorefrontLayout() {
       </footer>
       <CartDrawer />
       <React.Suspense fallback={null}><SupportWidget /></React.Suspense>
+      <CompareBar />
+      <CompareCategoryConfirm />
+      <CompareModalHost />
       </CartFlyoutProvider>
     </div>
   );

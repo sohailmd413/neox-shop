@@ -10,6 +10,7 @@ import ScrollToTop from './components/ScrollToTop';
 import { loadStoreSettingOnce } from '@/lib/useStoreSetting';
 import { CartProvider } from '@/lib/CartContext';
 import { WishlistProvider } from '@/lib/WishlistContext';
+import { CompareProvider } from '@/lib/CompareContext';
 import { LanguageProvider } from '@/lib/i18n';
 import StorefrontLayout from '@/components/storefront/StorefrontLayout';
 import Home from '@/pages/store/Home';
@@ -91,7 +92,8 @@ const AuthenticatedApp = () => {
   return (
     <LanguageProvider>
     <CartProvider>
-      <WishlistProvider>
+    <WishlistProvider>
+      <CompareProvider>
         <Routes>
           {/* Auth */}
           <Route path="/login" element={<Login />} />
@@ -150,6 +152,7 @@ const AuthenticatedApp = () => {
           </Route>
           <Route path="*" element={<PageNotFound />} />
         </Routes>
+      </CompareProvider>
       </WishlistProvider>
     </CartProvider>
     </LanguageProvider>

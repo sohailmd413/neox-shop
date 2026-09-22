@@ -1,13 +1,14 @@
 import React, { memo } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { ShoppingBag, Star, Heart, Check, Sparkles, Flame } from "lucide-react";
+import { ShoppingBag, Star, Heart, Check, Sparkles, Flame, Scale } from "lucide-react";
 import { formatPrice, lf } from "@/lib/format";
 import ProductImage from "@/components/storefront/ProductImage";
 import { useLanguage } from "@/lib/i18n";
 import { motionPresets, springPress, springPop } from "@/lib/motion";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { useAddToCart } from "@/hooks/useAddToCart";
+import { useCompare } from "@/lib/CompareContext";
 import SaleCountdown from "@/components/admin/SaleCountdown";
 
 // Borderless, editorial product card (Zara/Apple-style): the image sits
@@ -20,6 +21,8 @@ function ProductCardBase({ product, index = 0, rank = null, tag = null, soldCoun
   const reduce = useReducedMotion();
   const { wished, toggle: toggleWish } = useWishlistToggle(product.id, product.price);
   const { add: handleAdd, imgRef, justAdded, outOfStock } = useAddToCart(product);
+  const { isAdded, toggle: toggleCompare } = useCompare();
+  const inCompare = isAdded(product.id);
 
   const onSale = product.compare_at_price && product.compare_at_price > product.price;
   const salePct = onSale ? Math.round((1 - product.price / product.compare_at_price) * 100) : 0;
@@ -190,6 +193,12 @@ function ProductCardBase({ product, index = 0, rank = null, tag = null, soldCoun
               {soldCount} {lang === "ar" ? "بيعت هذا الأسبوع" : "sold this week"}
             </p>
           )}
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleCompare(product); }}
+            className={`mt-1 inline-flex items-center gap-1 text-[11px] font-medium ${inCompare ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <Scale className={`h-3.5 w-3.5 ${inCompare ? "text-deal" : ""}`} /> {inCompare ? t("compare.added") : t("compare.addToCompare")}
+          </button>
         </div>
       </Link>
     </motion.div>
