@@ -17,6 +17,7 @@ import BackBar from "@/components/storefront/BackBar";
 import ReviewSection from "@/components/storefront/reviews/ReviewSection";
 import QuestionSection from "@/components/storefront/qa/QuestionSection";
 import RecentlyViewedRow from "@/components/storefront/RecentlyViewedRow";
+import BackInStockButton from "@/components/storefront/BackInStockButton";
 import { getRelatedProducts } from "@/lib/relatedProducts";
 import Seo from "@/components/shared/Seo";
 import { productUrl } from "@/lib/productUrl";
@@ -347,40 +348,44 @@ export default function ProductDetail() {
 
             {/* Quantity + Add to cart + Buy now + wishlist */}
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="flex items-center justify-between rounded-lg border border-border sm:justify-start">
-                <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="flex h-11 w-11 items-center justify-center text-muted-foreground hover:text-foreground" aria-label={t("product.decreaseQty")}>
-                  <Minus className="h-4 w-4" />
-                </button>
-                <span className="w-10 text-center text-sm font-medium">{quantity}</span>
-                <button onClick={() => setQuantity((q) => clampQty(q + 1))} disabled={outOfStock || quantity >= maxQty} className="flex h-11 w-11 items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-40" aria-label={t("product.increaseQty")}>
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
+              {!outOfStock && (
+                <div className="flex items-center justify-between rounded-lg border border-border sm:justify-start">
+                  <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="flex h-11 w-11 items-center justify-center text-muted-foreground hover:text-foreground" aria-label={t("product.decreaseQty")}>
+                    <Minus className="h-4 w-4" />
+                  </button>
+                  <span className="w-10 text-center text-sm font-medium">{quantity}</span>
+                  <button onClick={() => setQuantity((q) => clampQty(q + 1))} disabled={quantity >= maxQty} className="flex h-11 w-11 items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-40" aria-label={t("product.increaseQty")}>
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
+              {outOfStock ? (
+                <BackInStockButton product={product} className="rounded-lg" />
+              ) : (
+                <motion.button
+                  onClick={handleAdd}
+                  whileTap={{ scale: 0.97 }}
+                  transition={springPress}
+                  className={cn(buttonVariants({ size: "lg" }), "flex-1 rounded-lg bg-deal text-deal-foreground hover:bg-deal/90")}
+                >
+                  <ShoppingBag className="mr-2 h-4 w-4" /> {t("product.addToCart")} · {formatPrice(effPrice * clampQty(quantity))}
+                </motion.button>
+              )}
+
+              {!outOfStock && (
+                <motion.button
+                  onClick={buyNow}
+                  whileTap={{ scale: 0.97 }}
+                  transition={springPress}
+                  className={cn(buttonVariants({ variant: "outline", size: "lg" }), "rounded-lg")}
+                >
+                  {t("product.buyNow")}
+                </motion.button>
+              )}
 
               <motion.button
-                onClick={handleAdd}
-                disabled={outOfStock}
-                whileTap={{ scale: 0.97 }}
-                transition={springPress}
-                className={cn(buttonVariants({ size: "lg" }), "flex-1 rounded-lg bg-deal text-deal-foreground hover:bg-deal/90")}
-              >
-                {outOfStock ? t("product.soldOut") : (
-                  <><ShoppingBag className="mr-2 h-4 w-4" /> {t("product.addToCart")} · {formatPrice(effPrice * clampQty(quantity))}</>
-                )}
-              </motion.button>
-
-              <motion.button
-                onClick={buyNow}
-                disabled={outOfStock}
-                whileTap={{ scale: 0.97 }}
-                transition={springPress}
-                className={cn(buttonVariants({ variant: "outline", size: "lg" }), "rounded-lg")}
-              >
-                {outOfStock ? t("product.soldOut") : t("product.buyNow")}
-              </motion.button>
-
-              <motion.button
-                onClick={() => toggleItem(product.id)}
+                onClick={() => toggleItem(product.id, effPrice)}
                 whileTap={{ scale: 0.9 }}
                 transition={springPress}
                 className={cn("flex h-11 w-11 items-center justify-center rounded-lg border border-border", wished ? "text-red-500" : "text-muted-foreground hover:text-foreground")}

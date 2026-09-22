@@ -54,6 +54,7 @@ import AdminCannedResponses from '@/pages/admin/AdminCannedResponses';
 import RecoverCart from '@/pages/store/RecoverCart';
 import SitemapRedirect from '@/components/SitemapRedirect';
 import ReferralRedirect from '@/pages/store/ReferralRedirect';
+import CancelStockAlert from '@/pages/store/CancelStockAlert';
 import AdminReferrals from '@/pages/admin/AdminReferrals';
 import AdminReturns from '@/pages/admin/AdminReturns';
 // Add page imports here
@@ -103,6 +104,7 @@ const AuthenticatedApp = () => {
           {/* SEO: /sitemap.xml redirects to the dynamic backend function */}
           <Route path="/sitemap.xml" element={<SitemapRedirect />} />
           <Route path="/r/:code" element={<ReferralRedirect />} />
+          <Route path="/cancel-stock-alert" element={<CancelStockAlert />} />
           {/* Storefront */}
           <Route element={<StorefrontLayout />}>
             <Route path="/" element={<Home />} />

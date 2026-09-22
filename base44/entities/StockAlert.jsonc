@@ -1,0 +1,52 @@
+{
+  "name": "StockAlert",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "type": "string",
+      "description": "App user id of a logged-in customer. Null for guests."
+    },
+    "email": {
+      "type": "string",
+      "description": "Email to notify. For logged-in customers their account email; for guests the email they entered. Lower-cased for dedup."
+    },
+    "product_id": {
+      "type": "string"
+    },
+    "notified": {
+      "type": "boolean",
+      "default": false,
+      "description": "True once the back-in-stock email was sent for this signup cycle. Reset to false when the same customer re-signs-up after a fresh out-of-stock period."
+    },
+    "notified_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "email",
+    "product_id"
+  ],
+  "rls": {
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

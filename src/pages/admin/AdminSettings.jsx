@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Store, CreditCard, Truck, Percent, FileText, Sparkles, ShoppingCart, Gift, RotateCcw } from "lucide-react";
+import { Store, CreditCard, Truck, Percent, FileText, Sparkles, ShoppingCart, Gift, RotateCcw, Bell } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { ensureStoreSetting, patchStoreSetting } from "@/lib/settings";
@@ -13,6 +13,7 @@ import LoyaltySettings from "@/components/admin/settings/LoyaltySettings";
 import AbandonedCartSettings from "@/components/admin/settings/AbandonedCartSettings";
 import ReferralSettings from "@/components/admin/settings/ReferralSettings";
 import ReturnsSettings from "@/components/admin/settings/ReturnsSettings";
+import AlertsSettings from "@/components/admin/settings/AlertsSettings";
 
 const TABS = [
   { id: "general", label: "General", icon: Store },
@@ -24,6 +25,7 @@ const TABS = [
   { id: "abandoned_carts", label: "Abandoned carts", icon: ShoppingCart },
   { id: "referrals", label: "Referrals", icon: Gift },
   { id: "returns", label: "Returns", icon: RotateCcw },
+  { id: "alerts", label: "Alerts", icon: Bell },
 ];
 
 export default function AdminSettings() {
@@ -86,6 +88,7 @@ export default function AdminSettings() {
         {active === "abandoned_carts" && <AbandonedCartSettings setting={setting} onSave={save} />}
         {active === "referrals" && <ReferralSettings setting={setting} onSave={save} />}
         {active === "returns" && <ReturnsSettings setting={setting} onSave={save} />}
+        {active === "alerts" && <AlertsSettings setting={setting} onSave={save} />}
       </div>
     </div>
   );

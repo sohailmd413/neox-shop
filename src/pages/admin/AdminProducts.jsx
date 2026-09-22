@@ -54,6 +54,7 @@ export default function AdminProducts() {
   const [adminName, setAdminName] = useState("Admin");
   const [user, setUser] = useState(null);
   const [confirm, setConfirm] = useState(null);
+  const [stockAlertCounts, setStockAlertCounts] = useState({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -114,6 +115,18 @@ export default function AdminProducts() {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Pending back-in-stock alert counts per product — signals which out-of-stock
+  // items customers are waiting on, to prioritize restocking.
+  useEffect(() => {
+    base44.entities.StockAlert.filter({ notified: false }, "-created_date", 1000)
+      .then((list) => {
+        const m = {};
+        (list || []).forEach((a) => { m[a.product_id] = (m[a.product_id] || 0) + 1; });
+        setStockAlertCounts(m);
+      })
+      .catch(() => {});
+  }, [products]);
 
   // Open the editor for a specific product when navigated here with
   // location.state.editProductId (e.g. "Edit & resubmit" from the Rejected page).
@@ -535,6 +548,9 @@ export default function AdminProducts() {
                     </td>
                     <td className="px-4 py-3">
                       <span className={p.stock <= 5 ? "font-medium text-amber-600" : ""}>{p.stock}</span>
+                      {(p.stock ?? 0) <= 0 && stockAlertCounts[p.id] > 0 && (
+                        <span className="mt-0.5 block text-[10px] font-medium text-amber-600">{stockAlertCounts[p.id]} waiting</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <motion.span key={p.status} initial={{ scale: 0.85 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} className={`inline-block rounded-full px-2 py-0.5 text-xs ${STATUS_BADGE[p.status]}`}>{STATUS_LABEL[p.status]}</motion.span>

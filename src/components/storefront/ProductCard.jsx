@@ -18,7 +18,7 @@ import SaleCountdown from "@/components/admin/SaleCountdown";
 function ProductCardBase({ product, index = 0, rank = null, tag = null, soldCount = 0, variant = "default" }) {
   const { lang, t } = useLanguage();
   const reduce = useReducedMotion();
-  const { wished, toggle: toggleWish } = useWishlistToggle(product.id);
+  const { wished, toggle: toggleWish } = useWishlistToggle(product.id, product.price);
   const { add: handleAdd, imgRef, justAdded, outOfStock } = useAddToCart(product);
 
   const onSale = product.compare_at_price && product.compare_at_price > product.price;

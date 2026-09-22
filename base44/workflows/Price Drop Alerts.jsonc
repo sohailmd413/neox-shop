@@ -1,0 +1,43 @@
+{
+  "name": "Price Drop Alerts",
+  "description": "Every 6 hours, detect wishlist items whose price dropped by >= the configured threshold and email the customer a price-drop alert.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 */6 * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Riyadh",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "price_drop_alerts",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "scan": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "processPriceDrops"
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Scan wishlist price drops"
+          }
+        }
+      }
+    ]
+  }
+}

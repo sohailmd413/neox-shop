@@ -1,0 +1,58 @@
+{
+  "name": "PriceAlert",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "type": "string",
+      "description": "App user id of the customer who wishlisted the product."
+    },
+    "product_id": {
+      "type": "string"
+    },
+    "price_at_added": {
+      "type": "number",
+      "description": "The product's price at the moment it was wishlisted \u2014 the baseline for detecting a meaningful drop."
+    },
+    "last_notified_price": {
+      "type": "number",
+      "description": "The price the customer was last alerted about. Used as the baseline for the next notification so they aren't re-notified for the same price."
+    },
+    "last_notified_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "customer_id",
+    "product_id"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.customer_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

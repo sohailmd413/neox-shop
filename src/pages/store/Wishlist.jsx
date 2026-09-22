@@ -12,13 +12,16 @@ import { EmptyState, ErrorState, CardGridSkeleton } from "@/components/shared/St
 import { motionPresets } from "@/lib/motion";
 import BackBar from "@/components/storefront/BackBar";
 import PageHeader from "@/components/storefront/PageHeader";
+import { useLanguage } from "@/lib/i18n";
 
 export default function Wishlist() {
-  const { ids, removeItem } = useWishlist();
+  const { ids, removeItem, getPriceAtAdded } = useWishlist();
   const { addItem } = useCart();
+  const { t } = useLanguage();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [alertPrices, setAlertPrices] = useState({});
 
   const load = async () => {
     setError(null);
@@ -31,6 +34,15 @@ export default function Wishlist() {
     try {
       const all = await base44.entities.Product.list("-created_date", 200);
       setProducts(all.filter((p) => ids.includes(p.id)));
+      try {
+        const authed = await base44.auth.isAuthenticated();
+        if (authed) {
+          const res = await base44.functions.invoke("getMyPriceAlerts", {});
+          const map = {};
+          (res?.data?.alerts || []).forEach((a) => { if (a.price_at_added != null) map[a.product_id] = a.price_at_added; });
+          setAlertPrices(map);
+        }
+      } catch {}
     } catch {
       setProducts([]);
       setError(true);
@@ -90,7 +102,17 @@ export default function Wishlist() {
                     <Link to={`/product/${p.id}`} className="line-clamp-2 text-sm font-medium hover:underline">
                       {p.name}
                     </Link>
-                    <p className="mt-1 text-sm font-semibold">{formatPrice(p.price)}</p>
+                    {(() => {
+                      const pa = alertPrices[p.id] != null ? alertPrices[p.id] : getPriceAtAdded(p.id);
+                      const dropped = pa != null && p.price < pa;
+                      return (
+                        <div className="mt-1 flex flex-wrap items-baseline gap-1.5">
+                          {dropped && <span className="inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">{t("alerts.priceDropped")}</span>}
+                          <span className={`text-sm font-semibold ${dropped ? "text-emerald-600" : ""}`}>{formatPrice(p.price)}</span>
+                          {dropped && <span className="text-xs text-muted-foreground line-through">{formatPrice(pa)}</span>}
+                        </div>
+                      );
+                    })()}
                     <div className="mt-auto flex items-center gap-2 pt-3">
                       <Button
                         size="sm"

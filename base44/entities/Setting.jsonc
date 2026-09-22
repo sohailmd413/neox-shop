@@ -191,6 +191,11 @@
       "type": "string",
       "description": "Instructions/address shown to the customer when a return is approved (where to ship the item back)."
     },
+    "price_drop_threshold_percent": {
+      "type": "number",
+      "default": 5,
+      "description": "Minimum percentage a wishlisted product's price must drop (vs the last-notified or add-time price) to trigger a price-drop alert. Prevents trivial-drop notification spam."
+    },
     "abandoned_cart_recovery_enabled": {
       "type": "boolean",
       "default": false
