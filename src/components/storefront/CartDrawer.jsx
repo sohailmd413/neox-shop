@@ -8,6 +8,7 @@ import ProductImage from "@/components/storefront/ProductImage";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n";
 import AnimatedNumber from "@/components/storefront/AnimatedNumber";
+import FreeShippingBar from "@/components/storefront/FreeShippingBar";
 
 export default function CartDrawer() {
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, subtotal, count } = useCart();
@@ -57,6 +58,7 @@ export default function CartDrawer() {
               </div>
             ) : (
               <>
+                <div className="px-6 pt-4"><FreeShippingBar /></div>
                 <div className="flex-1 overflow-y-auto px-6 py-4">
                   <ul className="space-y-5">
                     {items.map((item) => (

@@ -201,6 +201,11 @@
       "default": 5,
       "description": "When a product's real inventory is at or below this number, its stock badge shows 'Only N left in stock' instead of the plain 'In stock' indicator. Driven solely by live stock_quantity \u2014 there is no manual urgency flag, since fabricated scarcity is a deceptive practice."
     },
+    "trust_orders_month_min": {
+      "type": "number",
+      "default": 50,
+      "description": "Minimum 'orders delivered this month' count required to show that stat on the homepage trust strip. Below this number the stat is hidden so a small count never looks discouraging."
+    },
     "reorder_threshold_default": {
       "type": "number",
       "default": 5,

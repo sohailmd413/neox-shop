@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/format";
 import { motionPresets, springPop } from "@/lib/motion";
 import { maybePromptPush } from "@/lib/push";
+import LoyaltyEarnedBadge from "@/components/storefront/LoyaltyEarnedBadge";
 
 // Celebratory order-confirmed screen: a confetti burst + a spring-pop checkmark
 // play once, then the confirmation details settle in. Reduced-motion users get
@@ -59,6 +60,7 @@ export default function OrderSuccess({ order, email }) {
             <span className="font-semibold">{formatPrice(order?.total ?? 0)}</span>
           </div>
         </div>
+        <LoyaltyEarnedBadge order={order} />
         <Button asChild className="mt-6 w-full rounded-full">
           <Link to="/shop">Continue shopping</Link>
         </Button>

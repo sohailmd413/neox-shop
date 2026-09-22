@@ -15,6 +15,8 @@ import { springPress, springPop } from "@/lib/motion";
 import SaleCountdown from "@/components/admin/SaleCountdown";
 import BackBar from "@/components/storefront/BackBar";
 import ReviewSection from "@/components/storefront/reviews/ReviewSection";
+import ReviewPhotosGallery from "@/components/storefront/reviews/ReviewPhotosGallery";
+import WishlistBurst from "@/components/storefront/WishlistBurst";
 import QuestionSection from "@/components/storefront/qa/QuestionSection";
 import RecentlyViewedRow from "@/components/storefront/RecentlyViewedRow";
 import BackInStockButton from "@/components/storefront/BackInStockButton";
@@ -397,9 +399,10 @@ export default function ProductDetail() {
                 onClick={() => toggleItem(product.id, effPrice)}
                 whileTap={{ scale: 0.9 }}
                 transition={springPress}
-                className={cn("flex h-11 w-11 items-center justify-center rounded-lg border border-border", wished ? "text-red-500" : "text-muted-foreground hover:text-foreground")}
+                className={cn("relative flex h-11 w-11 items-center justify-center rounded-lg border border-border", wished ? "text-red-500" : "text-muted-foreground hover:text-foreground")}
                 aria-label="Toggle wishlist"
               >
+                <WishlistBurst trigger={wished} />
                 <motion.span key={wished ? "on" : "off"} initial={{ scale: 0.7, opacity: 0.6 }} animate={{ scale: 1, opacity: 1 }} transition={springPop} className="inline-flex">
                   <Heart className={cn("h-5 w-5", wished && "fill-red-500 text-red-500")} />
                 </motion.span>
@@ -455,6 +458,7 @@ export default function ProductDetail() {
           </section>
         )}
 
+        <ReviewPhotosGallery reviews={reviews} lang={lang} />
         <div ref={reviewsRef} className="mt-12 scroll-mt-24">
           <ReviewSection productId={product.id} lang={lang} t={t} reviews={reviews} />
         </div>

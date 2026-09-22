@@ -2,6 +2,8 @@ import React, { Suspense, lazy, useEffect, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import HomeHero from "@/components/storefront/HomeHero";
 import TopRibbon from "@/components/storefront/TopRibbon";
+import TrustStatsStrip from "@/components/storefront/TrustStatsStrip";
+import PersonalizedGreeting from "@/components/storefront/PersonalizedGreeting";
 import CategoryShowcase from "@/components/storefront/CategoryShowcase";
 import TrustSection from "@/components/storefront/TrustSection";
 import PosterBanner from "@/components/storefront/PosterBanner";
@@ -79,8 +81,12 @@ export default function Home() {
       <Seo title={`${storeName} — ${lang === "ar" ? "متجر إلكتروني حديث" : "Modern Tech Marketplace"}`} description={homeDescription} url={`${origin}/`} image={logo} jsonld={[orgJsonld, siteJsonld]} />
       {/* Top promotional ribbon (above hero) — sale/brand images + EN/AR tagline, auto-rotating */}
       <TopRibbon />
+      {/* Personalized greeting for logged-in customers with viewing history */}
+      <PersonalizedGreeting />
       {/* Full-bleed hero (edge-to-edge) */}
       <HomeHero />
+      {/* Aggregate trust stats (cached ~1h) */}
+      <TrustStatsStrip />
 
       {/* Category showcase — white */}
       <CategoryShowcase categories={tops} lang={lang} t={t} />

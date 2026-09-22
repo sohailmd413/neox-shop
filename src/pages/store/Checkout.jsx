@@ -15,6 +15,7 @@ import { computeTax, computeShipping, PAYMENT_LABELS } from "@/lib/settings";
 import { useLanguage } from "@/lib/i18n";
 import BackBar from "@/components/storefront/BackBar";
 import LoyaltyRedeem from "@/components/storefront/checkout/LoyaltyRedeem";
+import FreeShippingBar from "@/components/storefront/FreeShippingBar";
 import { getLoyaltyConfig, pointsValue, maxApplicablePoints } from "@/lib/loyalty";
 import { syncCart, markCartRecovered } from "@/lib/abandonedCart";
 
@@ -465,6 +466,7 @@ export default function Checkout() {
               <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 {t("checkout.orderSummary")}
               </h2>
+              <div className="mt-4"><FreeShippingBar /></div>
               <ul className="mt-4 space-y-4">
                 {items.map((item) => (
                   <li key={item.productId} className="flex gap-3">

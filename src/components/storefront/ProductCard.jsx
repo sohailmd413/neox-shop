@@ -11,6 +11,7 @@ import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { useAddToCart } from "@/hooks/useAddToCart";
 import { useCompare } from "@/lib/CompareContext";
 import SaleCountdown from "@/components/admin/SaleCountdown";
+import WishlistBurst from "@/components/storefront/WishlistBurst";
 
 // Borderless, editorial product card (Zara/Apple-style): the image sits
 // directly on the page background with no card container — just image →
@@ -101,6 +102,7 @@ function ProductCardBase({ product, index = 0, rank = null, tag = null, soldCoun
             className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur transition-colors hover:bg-background"
             aria-label="Toggle wishlist"
           >
+            <WishlistBurst trigger={wished} />
             <motion.span
               key={wished ? "on" : "off"}
               initial={reduce ? false : { scale: 0.7, opacity: 0.6 }}
