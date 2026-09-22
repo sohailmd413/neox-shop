@@ -15,7 +15,7 @@ import ApprovalHistory from "@/components/admin/ApprovalHistory";
 import { submitForApproval } from "@/lib/approval";
 
 const EMPTY = {
-  name: "", name_ar: "", sku: "", slug: "", barcode: "", barcode_type: "CODE128",
+  name: "", name_ar: "", sku: "", vendor_sku: "", slug: "", barcode: "", barcode_type: "CODE128",
   description: "", description_ar: "", short_description: "", short_description_ar: "",
   price: "", compare_at_price: "", stock: "", stock_status: "in_stock", reorder_threshold: "",
   category: "", brand: "", vendor_id: "", tags: [],
@@ -41,7 +41,7 @@ const TABS = [
 const baseInput = "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/40";
 const errInput = " !border-red-500 focus:border-red-500 ring-1 ring-red-200";
 
-export default function AdminProductDialog({ product, categories, onClose, onSaved, onDraftUpsert }) {
+export default function AdminProductDialog({ product, categories, onClose, onSaved, onDraftUpsert, vendorMode = false }) {
   const [tab, setTab] = useState("general");
   const [form, setForm] = useState(() => {
     if (!product) return { ...EMPTY, tags: [] };
@@ -109,6 +109,7 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
     name: form.name.trim(),
     name_ar: form.name_ar?.trim() || "",
     sku: form.sku?.trim() || genSku(),
+    vendor_sku: form.vendor_sku?.trim() || "",
     barcode: form.barcode?.trim() || null,
     barcode_type: form.barcode_type || "CODE128",
     slug: form.slug?.trim() || "",
@@ -166,6 +167,7 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
 
   // Auto-save (debounced) — only once the admin has entered some data
   useEffect(() => {
+    if (vendorMode) return; // vendors save explicitly — no per-keystroke autosave
     if (!dirty) return;
     if (!persistedIdRef.current && !product && !hasAnyData(form)) return;
     setSaveState("saving");
@@ -182,11 +184,16 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
 
   const saveAsDraft = async () => {
     try {
-      await persist("draft");
+      if (vendorMode) {
+        const res = await base44.functions.invoke("saveVendorProduct", { ...buildPayload("draft"), id: persistedIdRef.current || undefined, submit: false });
+        if (!res?.data?.ok) throw new Error(res?.data?.error || "Could not save");
+      } else {
+        await persist("draft");
+      }
       toast({ title: "Saved as draft" });
       onSaved();
-    } catch {
-      toast({ title: "Could not save draft", variant: "destructive" });
+    } catch (e) {
+      toast({ title: e?.message || "Could not save draft", variant: "destructive" });
     }
   };
 
@@ -199,7 +206,11 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
     setTab(v.firstTab);
     if (hasAnyData(form) || persistedIdRef.current) {
       try {
-        await persist("draft", { autosave: true });
+        if (vendorMode) {
+          await base44.functions.invoke("saveVendorProduct", { ...buildPayload("draft"), id: persistedIdRef.current || undefined, submit: false });
+        } else {
+          await persist("draft", { autosave: true });
+        }
       } catch {
         /* best effort */
       }
@@ -217,6 +228,21 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
   const doPublish = async () => {
     setPublishing(true);
     try {
+      if (vendorMode) {
+        const wasActive = product?.status === "active";
+        const isPending = product?.status === "pending_approval";
+        const submit = !product || product.status === "draft" || product.status === "rejected";
+        const res = await base44.functions.invoke("saveVendorProduct", {
+          ...buildPayload(product?.status || "draft"),
+          id: persistedIdRef.current || undefined,
+          submit,
+        });
+        if (!res?.data?.ok) throw new Error(res?.data?.error || "Could not save");
+        setPublishConfirm(false);
+        toast({ title: wasActive ? (res.data.reapproved ? "Submitted for re-approval" : "Saved — no key fields changed, stays live") : isPending ? "Saved" : "Submitted for approval" });
+        onSaved();
+        return;
+      }
       // Editing an already-live product keeps it live (admins editing a live
       // listing are not re-running approval). New / draft products go through
       // the approval queue — there is no direct draft → active path.
@@ -232,15 +258,15 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
       setPublishConfirm(false);
       toast({ title: "Submitted for approval" });
       onSaved();
-    } catch {
-      toast({ title: "Could not submit", variant: "destructive" });
+    } catch (e) {
+      toast({ title: e?.message || "Could not submit", variant: "destructive" });
       setPublishing(false);
       setPublishConfirm(false);
     }
   };
 
   const handleClose = async () => {
-    if (dirty && !persistedIdRef.current && !product && hasAnyData(form)) {
+    if (!vendorMode && dirty && !persistedIdRef.current && !product && hasAnyData(form)) {
       try {
         const rec = await persist("draft");
         onDraftUpsert?.(rec);
@@ -323,9 +349,12 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
                   <input dir="rtl" value={form.name_ar || ""} onChange={set("name_ar")} className={fldCls("name_ar")} placeholder="الاسم بالعربية" />
                 </Field>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <Field label="SKU" hint="Auto-generated if left empty">
                   <input value={form.sku} onChange={set("sku")} className={baseInput} placeholder="e.g. TSH-RED-M" />
+                </Field>
+                <Field label="Vendor SKU" hint="Your own internal reference (optional)">
+                  <input value={form.vendor_sku || ""} onChange={set("vendor_sku")} className={baseInput} placeholder="e.g. SUP-12345" />
                 </Field>
                 <Field label="URL slug">
                   <input value={form.slug} onChange={set("slug")} className={baseInput} placeholder="auto if empty" />
@@ -337,9 +366,11 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
                 </Field>
                 <Field label="Brand"><input value={form.brand} onChange={set("brand")} className={baseInput} /></Field>
               </div>
-              <Field label="Vendor / supplier" hint="Where this product is sourced from. Manage vendors under Operations → Vendors.">
-                <Dropdown type="search" options={[{ label: "None", value: "" }, ...vendors.map((v) => ({ label: v.name, value: v.id }))]} value={form.vendor_id || ""} onChange={setVal("vendor_id")} placeholder="Select vendor" />
-              </Field>
+              {!vendorMode && (
+                <Field label="Vendor / supplier" hint="Where this product is sourced from. Manage vendors under Operations → Vendors.">
+                  <Dropdown type="search" options={[{ label: "None", value: "" }, ...vendors.map((v) => ({ label: v.name, value: v.id }))]} value={form.vendor_id || ""} onChange={setVal("vendor_id")} placeholder="Select vendor" />
+                </Field>
+              )}
               <Field label="Short description"><input value={form.short_description} onChange={set("short_description")} className={baseInput} placeholder="One-line summary" /></Field>
               <Field label="Description (English)" required error={errors.description?.msg} fieldKey="description" hint={`${(form.description || "").trim().length}/50 characters`}>
                 <textarea value={form.description} onChange={set("description")} rows={3} className={fldCls("description")} />
@@ -466,9 +497,13 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
         <div className="flex shrink-0 items-center justify-between gap-2 border-t border-border bg-background px-6 py-4">
           <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
           <div className="flex items-center gap-2">
-            <Button type="button" variant="outline" onClick={saveAsDraft}>Save as draft</Button>
+            {(!vendorMode || !product || product.status === "draft" || product.status === "rejected") && (
+              <Button type="button" variant="outline" onClick={saveAsDraft}>Save as draft</Button>
+            )}
             <Button type="button" onClick={publish} disabled={publishing}>
-              {product && product.status === "active" && Object.keys(errors).length === 0 ? "Save & keep live" : "Submit for approval"}
+              {vendorMode
+                ? (product?.status === "active" ? "Save changes" : "Submit for approval")
+                : (product && product.status === "active" && Object.keys(errors).length === 0 ? "Save & keep live" : "Submit for approval")}
             </Button>
           </div>
         </div>
@@ -477,9 +512,15 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
         open={publishConfirm}
         onClose={() => setPublishConfirm(false)}
         variant="create"
-        title={product && product.status === "active" ? "Save & keep this product live?" : "Submit this product for approval?"}
-        description={product && product.status === "active" ? "It will stay visible to customers on the storefront." : "It will be sent for admin sign-off and will NOT go live until approved. You can archive it later from the products list."}
-        confirmLabel={product && product.status === "active" ? "Save" : "Submit for approval"}
+        title={vendorMode
+          ? (product?.status === "active" ? "Save changes to this live product?" : "Submit this product for approval?")
+          : (product && product.status === "active" ? "Save & keep this product live?" : "Submit this product for approval?")}
+        description={vendorMode
+          ? (product?.status === "active" ? "If you changed the price, name, description, images, or category, it will be sent for admin re-approval. Stock and vendor SKU changes keep it live." : "It will be sent for admin sign-off and will NOT go live until approved.")
+          : (product && product.status === "active" ? "It will stay visible to customers on the storefront." : "It will be sent for admin sign-off and will NOT go live until approved. You can archive it later from the products list.")}
+        confirmLabel={vendorMode
+          ? (product?.status === "active" ? "Save changes" : "Submit for approval")
+          : (product && product.status === "active" ? "Save" : "Submit for approval")}
         onConfirm={doPublish}
       />
     </Sheet>

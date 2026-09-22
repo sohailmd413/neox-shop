@@ -25,7 +25,7 @@ const CATALOG_FIELDS = [
   'images', 'stock', 'stock_status', 'reorder_threshold', 'weight', 'dimensions',
   'shipping_class', 'tax_class', 'tags', 'meta_title', 'meta_description',
   'return_days', 'warranty', 'size_chart_id', 'fit_notes', 'fit_notes_ar',
-  'sale_ends_at',
+  'sale_ends_at', 'completion_percentage',
 ];
 
 function genBarcode() {
@@ -95,6 +95,8 @@ export default async function(req) {
       } else if (submit) {
         if (product.status === 'active') return Response.json({ error: 'This product is already live.' }, { status: 400 });
         if (product.status === 'pending_approval') return Response.json({ error: 'This product is already awaiting approval.' }, { status: 400 });
+        const imgs = patch.images !== undefined ? patch.images : product.images;
+        if (!imgs || !imgs.length) return Response.json({ error: 'At least one product image is required to submit for approval' }, { status: 400 });
         patch.status = 'pending_approval';
         patch.submitted_by = userName;
         patch.submitted_by_id = user.id;
@@ -112,12 +114,11 @@ export default async function(req) {
     // Create
     if (!b.name || !String(b.name).trim()) return Response.json({ error: 'Product name is required' }, { status: 400 });
     if (Number(b.price) <= 0) return Response.json({ error: 'A price greater than zero is required' }, { status: 400 });
-    if (!b.images || !b.images.length) return Response.json({ error: 'At least one product image is required' }, { status: 400 });
+    if (submit && (!b.images || !b.images.length)) return Response.json({ error: 'At least one product image is required to submit for approval' }, { status: 400 });
     const patch = clean(b);
     patch.vendor_id = vendor.id;
     patch.vendor_user_id = user.id;
     patch.status = submit ? 'pending_approval' : 'draft';
-    patch.completion_percentage = 0;
     patch.last_edited_at = new Date().toISOString();
     if (!patch.barcode && (patch.barcode_type || 'CODE128') === 'CODE128') {
       patch.barcode = genBarcode();

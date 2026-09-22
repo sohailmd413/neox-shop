@@ -45,7 +45,7 @@ export default function AdminProducts() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({ query: "", category: "all", brand: "all", status: "all", stock: "all", featured: "all" });
+  const [filters, setFilters] = useState({ query: "", category: "all", brand: "all", status: "all", stock: "all", featured: "all", archiveRequests: false });
   const [editing, setEditing] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
@@ -69,6 +69,7 @@ export default function AdminProducts() {
     pending: products.filter((p) => p.status === "pending_approval").length,
     out_of_stock: products.filter((p) => p.status === "active" && (p.stock ?? 0) <= 0).length,
     archived: products.filter((p) => p.status === "archived").length,
+    archive_requests: products.filter((p) => p.archive_requested && p.status !== "archived").length,
   };
 
   const VIEWS = [
@@ -79,16 +80,19 @@ export default function AdminProducts() {
     { id: "inactive", label: "Inactive", count: counts.inactive },
     { id: "out_of_stock", label: "Out of stock", count: counts.out_of_stock },
     { id: "archived", label: "Archived", count: counts.archived },
+    { id: "archive_requests", label: "Archive requests", count: counts.archive_requests },
   ];
 
   const setView = (v) =>
     setFilters((f) => ({
       ...f,
-      status: v === "out_of_stock" || v === "all" ? "all" : v === "pending" ? "pending_approval" : v,
+      archiveRequests: v === "archive_requests",
+      status: v === "out_of_stock" || v === "all" || v === "archive_requests" ? "all" : v === "pending" ? "pending_approval" : v,
       stock: v === "out_of_stock" ? "out" : "all",
     }));
 
   const viewKey = (() => {
+    if (filters.archiveRequests) return "archive_requests";
     if (filters.status === "pending_approval") return "pending";
     if (filters.status === "archived") return "archived";
     if (filters.status === "inactive") return "inactive";
@@ -139,7 +143,9 @@ export default function AdminProducts() {
   }, [location.state?.editProductId, products]);
 
   const filtered = products.filter((p) => {
-    if (filters.status !== "archived" && (p.status === "archived" || p.status === "rejected")) return false;
+    if (filters.archiveRequests) {
+      if (!p.archive_requested || p.status === "archived") return false;
+    } else if (filters.status !== "archived" && (p.status === "archived" || p.status === "rejected")) return false;
     const q = filters.query.trim().toLowerCase();
     if (q && ![p.name, p.sku, p.brand, p.slug, p.barcode].filter(Boolean).join(" ").toLowerCase().includes(q)) return false;
     if (filters.category !== "all" && p.category !== filters.category) return false;
@@ -183,7 +189,7 @@ export default function AdminProducts() {
       confirmLabel: "Archive",
       onConfirm: async () => {
         const prev = p.status;
-        await base44.entities.Product.update(p.id, { status: "archived", archived_at: new Date().toISOString(), archived_by: adminName });
+        await base44.entities.Product.update(p.id, { status: "archived", archived_at: new Date().toISOString(), archived_by: adminName, archive_requested: false, archive_requested_at: null, archive_requested_by: null });
         load();
         showUndoToast({ message: `"${p.name || "Product"}" archived`, onUndo: async () => {
           await base44.entities.Product.update(p.id, { status: prev, archived_at: null, archived_by: null });
@@ -212,6 +218,15 @@ export default function AdminProducts() {
     });
 
   const restore = (p) => setStatusAndToast(p.id, { status: "active", archived_at: null, archived_by: null }, "Product restored");
+
+  const dismissArchiveRequest = (p) =>
+    setConfirm({
+      variant: "inactive",
+      title: `Dismiss the archive request for "${p.name || "Untitled product"}"?`,
+      description: "The product will stay live on the storefront and the vendor's request will be cleared.",
+      confirmLabel: "Keep live",
+      onConfirm: () => setStatusAndToast(p.id, { archive_requested: false, archive_requested_at: null, archive_requested_by: null }, "Archive request dismissed — product stays live"),
+    });
 
   const handleDelete = (p) =>
     setConfirm({
@@ -576,6 +591,9 @@ export default function AdminProducts() {
                           </>
                         ) : (
                           <>
+                            {p.archive_requested && p.status !== "archived" && (
+                              <button onClick={() => dismissArchiveRequest(p)} className="rounded-lg p-2 text-amber-600 hover:bg-amber-50" aria-label="Dismiss archive request" title="Dismiss request (keep live)"><RotateCcw className="h-4 w-4" /></button>
+                            )}
                             {p.status === "active" && (
                               <button onClick={() => setInactive(p)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Set inactive" title="Set inactive"><EyeOff className="h-4 w-4" /></button>
                             )}

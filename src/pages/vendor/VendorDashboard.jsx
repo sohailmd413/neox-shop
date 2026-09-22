@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useOutletContext, Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Package, Clock, CheckCircle2, FileEdit, ArrowRight, AlertCircle } from "lucide-react";
+import { Package, Clock, CheckCircle2, FileEdit, ArrowRight, AlertCircle, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Vendor dashboard overview — product counts by status + quick actions. Only
@@ -10,12 +10,17 @@ import { Button } from "@/components/ui/button";
 export default function VendorDashboard() {
   const { vendor } = useOutletContext();
   const [products, setProducts] = useState(null);
+  const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
     (async () => {
       try {
-        const list = await base44.entities.Product.filter({ vendor_id: vendor.id }, "-updated_date", 500);
+        const [list, notifs] = await Promise.all([
+          base44.entities.Product.filter({ vendor_id: vendor.id }, "-updated_date", 500),
+          base44.entities.Notification.filter({}, "-created_date", 6).catch(() => []),
+        ]);
         setProducts(list || []);
+        setNotifications(notifs || []);
       } catch {
         setProducts([]);
       }
@@ -58,6 +63,20 @@ export default function VendorDashboard() {
         <Button asChild><Link to="/vendor/products">Manage products <ArrowRight className="ml-1 h-4 w-4" /></Link></Button>
         <Button asChild variant="outline"><Link to="/vendor/profile">Edit profile</Link></Button>
       </div>
+
+      {notifications.length > 0 && (
+        <div className="rounded-2xl border border-border bg-background p-5">
+          <div className="flex items-center gap-2 text-sm font-medium"><Bell className="h-4 w-4 text-muted-foreground" /> Recent updates</div>
+          <ul className="mt-3 space-y-2">
+            {notifications.map((n) => (
+              <li key={n.id} className="flex items-start gap-2 text-sm">
+                <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${n.type === "rejected" ? "bg-destructive" : n.type === "approved" ? "bg-emerald-500" : "bg-foreground"}`} />
+                <span className={n.read ? "text-muted-foreground" : "text-foreground"}>{n.message}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
