@@ -121,6 +121,9 @@ function VendorStatusScreen({ vendor }) {
       </div>
       <h1 className="text-xl font-semibold">{cfg.title}</h1>
       <p className="max-w-md text-sm text-muted-foreground">{cfg.text}</p>
+      {vendor.status === "rejected" && vendor.rejection_reason && (
+        <p className="max-w-md rounded-lg bg-destructive/10 px-4 py-2.5 text-sm text-destructive">{vendor.rejection_reason}</p>
+      )}
       <div className="mt-2 flex gap-4 text-sm">
         <Link to="/" className="inline-flex items-center gap-1.5 underline"><ArrowLeft className="h-4 w-4" /> Back to store</Link>
         <button onClick={() => base44.auth.logout("/vendor/login")} className="text-muted-foreground underline">Sign out</button>
