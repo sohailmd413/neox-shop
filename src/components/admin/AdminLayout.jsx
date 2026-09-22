@@ -278,12 +278,12 @@ export default function AdminLayout() {
 
       <div className="flex-1">
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/95 px-5 py-2.5 shadow-sm backdrop-blur md:px-8">
-          <nav className="flex gap-1 overflow-x-auto md:hidden">
+          <nav className="no-scrollbar flex min-w-0 flex-1 gap-1 overflow-x-auto md:hidden">
             {[...(canSee("dashboard") ? [SECTION_META.dashboard] : []), ...accessibleGroups.flatMap((g) => g.items), ...staffItems].map((s) => (
               <NavLink key={s.path} to={s.path} end={s.end} className={mobileLinkClass}>{s.label}</NavLink>
             ))}
           </nav>
-          <div className="ml-auto flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <NotificationsBell />
             <AccountMenu user={user} />
           </div>
