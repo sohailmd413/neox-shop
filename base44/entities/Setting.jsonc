@@ -20,7 +20,7 @@
     },
     "footer_logo_url": {
       "type": "string",
-      "description": "Optional footer logo shown on the dark navy footer. Falls back to logo_url when not set. Use a white/transparent PNG/SVG suitable for dark backgrounds."
+      "description": "Optional footer logo shown on the dark navy footer. Falls back to logo_url when not set."
     },
     "contact_email": {
       "type": "string"
@@ -124,28 +124,28 @@
     "loyalty_program_enabled": {
       "type": "boolean",
       "default": false,
-      "description": "Master toggle for the loyalty program. When off, the account Loyalty tab and checkout redemption UI are hidden, and no points are earned or redeemed."
+      "description": "Master toggle for the loyalty program."
     },
     "loyalty_points_per_currency_unit": {
       "type": "number",
-      "description": "Currency amount a customer must spend to earn 1 point. E.g. 10 = 1 point per SAR 10 spent. Points are earned on the order merchandise subtotal after discounts, excluding tax and shipping."
+      "description": "Currency amount a customer must spend to earn 1 point."
     },
     "loyalty_redeem_points": {
       "type": "number",
-      "description": "Points required for one redemption unit. Paired with loyalty_redeem_amount. E.g. 100 points = the amount below."
+      "description": "Points required for one redemption unit."
     },
     "loyalty_redeem_amount": {
       "type": "number",
-      "description": "SAR discount value of one redemption unit. E.g. 5 = 100 points are worth SAR 5 off."
+      "description": "SAR discount value of one redemption unit."
     },
     "loyalty_expiry_days": {
       "type": "number",
-      "description": "If set, earned points expire this many days after they were earned. Leave blank/null to disable expiry. A daily workflow creates expired transactions for aged, unredeemed points."
+      "description": "If set, earned points expire this many days after they were earned."
     },
     "referral_program_enabled": {
       "type": "boolean",
       "default": false,
-      "description": "Master toggle for the refer-a-friend program. When off, the account Referrals tab shows an inactive message and no referrals are created or rewarded."
+      "description": "Master toggle for the refer-a-friend program."
     },
     "referrer_reward_type": {
       "type": "string",
@@ -153,12 +153,10 @@
         "loyalty_points",
         "coupon"
       ],
-      "default": "loyalty_points",
-      "description": "How the referrer is rewarded when their friend's first order qualifies. loyalty_points credits points to their balance; coupon generates a single-use fixed-amount coupon scoped to them."
+      "default": "loyalty_points"
     },
     "referrer_reward_value": {
-      "type": "number",
-      "description": "Magnitude of the referrer reward: number of points (if loyalty_points) or SAR amount (if coupon)."
+      "type": "number"
     },
     "referred_reward_type": {
       "type": "string",
@@ -166,93 +164,88 @@
         "loyalty_points",
         "coupon"
       ],
-      "default": "coupon",
-      "description": "How the referred friend is rewarded at signup. coupon is the default since a fresh account has no points balance yet \u2014 it gives them a first-order discount."
+      "default": "coupon"
     },
     "referred_reward_value": {
-      "type": "number",
-      "description": "Magnitude of the referred friend's reward: number of points (if loyalty_points) or SAR amount (if coupon)."
+      "type": "number"
     },
     "min_qualifying_order_value": {
       "type": "number",
-      "default": 0,
-      "description": "The referred friend's first delivered order must total at least this much (after discounts, before tax/shipping) to qualify the referral for the referrer reward."
+      "default": 0
     },
     "referral_code_expiry_days": {
       "type": "number",
-      "description": "If set, a registered referral that has not produced a qualifying delivered order within this many days of registration is marked expired (no referrer reward). Blank/null disables expiry."
+      "description": "If set, a registered referral with no qualifying order within this many days is marked expired."
+    },
+    "return_window_days": {
+      "type": "number",
+      "default": 30,
+      "description": "Number of days after delivery during which a customer can request a return for that order."
+    },
+    "refund_on_approval": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, the refund is issued at approval (before the item is physically back). When false (default), the admin must mark the item as received before the refund can be processed."
+    },
+    "return_shipping_instructions": {
+      "type": "string",
+      "description": "Instructions/address shown to the customer when a return is approved (where to ship the item back)."
     },
     "abandoned_cart_recovery_enabled": {
       "type": "boolean",
-      "default": false,
-      "description": "Master toggle for abandoned-cart recovery. When off, no carts are flagged and no recovery emails are sent."
+      "default": false
     },
     "abandoned_cart_delay_hours": {
       "type": "number",
-      "default": 1,
-      "description": "Hours a cart must sit idle (no edits) with at least one item before it is flagged abandoned and the first reminder becomes due."
+      "default": 1
     },
     "abandoned_cart_second_reminder_enabled": {
       "type": "boolean",
-      "default": false,
-      "description": "Send a second recovery nudge after abandoned_cart_second_reminder_hours."
+      "default": false
     },
     "abandoned_cart_second_reminder_hours": {
       "type": "number",
-      "default": 24,
-      "description": "Hours after the first reminder before the second reminder is sent."
+      "default": 24
     },
     "abandoned_cart_discount_enabled": {
       "type": "boolean",
-      "default": false,
-      "description": "Include a single-use discount coupon in the second reminder as a recovery incentive."
+      "default": false
     },
     "abandoned_cart_discount_percent": {
       "type": "number",
-      "default": 10,
-      "description": "Percent off offered by the second-reminder recovery coupon."
+      "default": 10
     },
     "abandoned_cart_respect_opt_out": {
       "type": "boolean",
-      "default": false,
-      "description": "When off (default), recovery emails are treated as transactional and sent regardless of marketing opt-in (the customer initiated the cart). When on, customers who opted out of marketing are skipped."
+      "default": false
     },
     "in_grid_insert_every_n_products": {
       "type": "number",
-      "default": 4,
-      "description": "Insert an in-grid promotional banner tile after every Nth product in scrollable product grids (Catalog and homepage merchandising sections). 0 or unset defaults to 4."
+      "default": 4
     },
     "terms_policy": {
-      "type": "string",
-      "description": "Terms of Service HTML content (English)."
+      "type": "string"
     },
     "terms_policy_ar": {
-      "type": "string",
-      "description": "Terms of Service HTML content (Arabic). Required so the Arabic policy page shows real content."
+      "type": "string"
     },
     "privacy_policy": {
-      "type": "string",
-      "description": "Privacy Policy HTML content (English)."
+      "type": "string"
     },
     "privacy_policy_ar": {
-      "type": "string",
-      "description": "Privacy Policy HTML content (Arabic)."
+      "type": "string"
     },
     "return_policy": {
-      "type": "string",
-      "description": "Return Policy HTML content (English)."
+      "type": "string"
     },
     "return_policy_ar": {
-      "type": "string",
-      "description": "Return Policy HTML content (Arabic)."
+      "type": "string"
     },
     "shipping_policy": {
-      "type": "string",
-      "description": "Shipping Policy HTML content (English)."
+      "type": "string"
     },
     "shipping_policy_ar": {
-      "type": "string",
-      "description": "Shipping Policy HTML content (Arabic)."
+      "type": "string"
     }
   },
   "required": [

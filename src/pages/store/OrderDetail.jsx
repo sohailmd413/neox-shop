@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Package, FileText, MapPin } from "lucide-react";
+import { Package, FileText, MapPin, RotateCcw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { formatPrice, lf } from "@/lib/format";
 import { Image } from "@/components/ui/image";
@@ -11,6 +11,8 @@ import BackBar from "@/components/storefront/BackBar";
 import PageHeader from "@/components/storefront/PageHeader";
 import OrderTimeline from "@/components/storefront/orders/OrderTimeline";
 import { downloadInvoicePDF } from "@/lib/invoice";
+import ReturnRequestForm from "@/components/storefront/returns/ReturnRequestForm";
+import { getReturnsConfig } from "@/lib/returns";
 
 const METHOD_LABEL = {
   card: "Card",
@@ -25,6 +27,8 @@ export default function OrderDetail() {
   const { t, lang } = useLanguage();
   const [order, setOrder] = useState(null); // null = loading, false = not found
   const [invoiceBusy, setInvoiceBusy] = useState(false);
+  const [canReturn, setCanReturn] = useState(false);
+  const [showReturn, setShowReturn] = useState(false);
 
   const load = async () => {
     setOrder(null);
@@ -39,6 +43,20 @@ export default function OrderDetail() {
   useEffect(() => {
     load();
   }, [id]);
+
+  // A return is available only for delivered orders within the configured window.
+  useEffect(() => {
+    if (!order || order === false) { setCanReturn(false); return; }
+    if (order.status !== "delivered") { setCanReturn(false); return; }
+    getReturnsConfig()
+      .then((cfg) => {
+        const deliveredAt = (order.timeline || []).find((e) => e.status === "delivered");
+        const at = deliveredAt ? new Date(deliveredAt.at) : new Date(order.updated_date || order.created_date);
+        const days = (Date.now() - at.getTime()) / (24 * 60 * 60 * 1000);
+        setCanReturn(days <= cfg.returnWindowDays);
+      })
+      .catch(() => setCanReturn(false));
+  }, [order]);
 
   const downloadInvoice = async () => {
     if (!order?.invoice_number) return;
@@ -142,6 +160,21 @@ export default function OrderDetail() {
             </div>
           </div>
         </section>
+
+        {canReturn && (
+          <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border p-4">
+            <div>
+              <p className="text-sm font-medium">{t("returns.requestReturn")}</p>
+              <p className="text-xs text-muted-foreground">{t("returns.title")}</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setShowReturn(true)}>
+              <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> {t("returns.requestReturn")}
+            </Button>
+          </section>
+        )}
+        {showReturn && order && order !== false && (
+          <ReturnRequestForm order={order} onClose={() => setShowReturn(false)} onSubmitted={() => { setShowReturn(false); load(); }} />
+        )}
 
         {/* Shipping + payment + invoice */}
         <section className="grid gap-4 sm:grid-cols-2">

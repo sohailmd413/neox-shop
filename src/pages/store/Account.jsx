@@ -14,6 +14,7 @@ import NotificationsSection from "@/components/storefront/account/NotificationsS
 import SecuritySection from "@/components/storefront/account/SecuritySection";
 import LoyaltySection from "@/components/storefront/account/LoyaltySection";
 import ReferralSection from "@/components/storefront/account/ReferralSection";
+import ReturnsSection from "@/components/storefront/account/ReturnsSection";
 import { getLoyaltyConfig } from "@/lib/loyalty";
 import BackBar from "@/components/storefront/BackBar";
 
@@ -92,6 +93,7 @@ export default function Account() {
               {tab === "security" && <SecuritySection user={user} />}
               {tab === "loyalty" && loyaltyEnabled && <LoyaltySection />}
               {tab === "referrals" && <ReferralSection />}
+              {tab === "returns" && <ReturnsSection />}
             </motion.div>
           </div>
         </div>

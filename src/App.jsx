@@ -55,6 +55,7 @@ import RecoverCart from '@/pages/store/RecoverCart';
 import SitemapRedirect from '@/components/SitemapRedirect';
 import ReferralRedirect from '@/pages/store/ReferralRedirect';
 import AdminReferrals from '@/pages/admin/AdminReferrals';
+import AdminReturns from '@/pages/admin/AdminReturns';
 // Add page imports here
 
 // Boot the singleton store Setting once so the currency formatter and
@@ -141,6 +142,7 @@ const AuthenticatedApp = () => {
             <Route path="users" element={<AdminUsers />} />
             <Route path="profile" element={<AdminProfile />} />
             <Route path="referrals" element={<AdminReferrals />} />
+            <Route path="returns" element={<AdminReturns />} />
           </Route>
           <Route path="*" element={<PageNotFound />} />
         </Routes>

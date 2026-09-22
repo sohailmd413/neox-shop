@@ -1,11 +1,12 @@
 import React from "react";
-import { User, MapPin, Package, Heart, Bell, Shield, Sparkles, Gift } from "lucide-react";
+import { User, MapPin, Package, Heart, Bell, Shield, Sparkles, Gift, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
   { key: "profile", label: "Profile", icon: User },
   { key: "addresses", label: "Addresses", icon: MapPin },
   { key: "orders", label: "Orders", icon: Package },
+  { key: "returns", label: "Returns", icon: RotateCcw },
   { key: "loyalty", label: "Rewards", icon: Sparkles, loyalty: true },
   { key: "referrals", label: "Referrals", icon: Gift },
   { key: "wishlist", label: "Wishlist", icon: Heart },

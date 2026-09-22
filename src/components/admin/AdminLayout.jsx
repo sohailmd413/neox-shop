@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon, ClipboardCheck, FileX, Languages, LayoutList, Compass, Search, ShoppingCart as CartIcon, MessageSquare, HelpCircle, Bookmark, Gift } from "lucide-react";
+import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon, ClipboardCheck, FileX, Languages, LayoutList, Compass, Search, ShoppingCart as CartIcon, MessageSquare, HelpCircle, Bookmark, Gift, RotateCcw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { canAccess } from "@/lib/adminPermissions";
 import { loadPendingCounts, loadRejectedCounts } from "@/lib/approval";
 import { loadSupportUnread } from "@/lib/supportBadge";
+import { loadReturnsPending } from "@/lib/returns";
 import NotificationsBell from "@/components/admin/NotificationsBell";
 import AccountMenu from "@/components/admin/AccountMenu";
 
@@ -32,6 +33,7 @@ const SECTION_META = {
   faq: { label: "FAQ", path: "/admin/faq", icon: HelpCircle },
   canned_responses: { label: "Canned Responses", path: "/admin/canned-responses", icon: Bookmark },
   referrals: { label: "Referrals", path: "/admin/referrals", icon: Gift },
+  returns: { label: "Returns", path: "/admin/returns", icon: RotateCcw },
 };
 
 // Logical groups. Dashboard stays standalone; every other item belongs to a
@@ -39,7 +41,7 @@ const SECTION_META = {
 const GROUPS = [
   { id: "catalog", label: "Catalog", sections: ["products", "categories", "home_sections", "navigation"] },
   { id: "moderation", label: "Moderation", sections: ["approvals", "rejected", "translations"] },
-  { id: "sales", label: "Sales", sections: ["orders", "customers", "coupons", "abandoned_carts", "referrals"] },
+  { id: "sales", label: "Sales", sections: ["orders", "customers", "coupons", "abandoned_carts", "referrals", "returns"] },
   { id: "content", label: "Content", sections: ["reviews", "posters"] },
   { id: "support", label: "Support", sections: ["support", "faq", "canned_responses"] },
   { id: "insights", label: "Insights", sections: ["reports"] },
@@ -61,6 +63,7 @@ export default function AdminLayout() {
   const [pendingCount, setPendingCount] = useState(0);
   const [rejectedCount, setRejectedCount] = useState(0);
   const [supportUnread, setSupportUnread] = useState(0);
+  const [returnsPending, setReturnsPending] = useState(0);
   const [query, setQuery] = useState("");
   const location = useLocation();
 
@@ -111,6 +114,13 @@ export default function AdminLayout() {
     const refresh = () => loadSupportUnread().then(setSupportUnread);
     refresh();
     const off = base44.entities.SupportMessage.subscribe(() => refresh());
+    return () => off?.();
+  }, []);
+
+  useEffect(() => {
+    const refresh = () => loadReturnsPending().then(setReturnsPending);
+    refresh();
+    const off = base44.entities.ReturnRequest.subscribe(() => refresh());
     return () => off?.();
   }, []);
 
@@ -244,7 +254,7 @@ export default function AdminLayout() {
             </div>
           ) : (
             <>
-              {accessibleGroups.map((g) => renderGroup(g, g.id === "moderation" && (pendingCount + rejectedCount) > 0 ? pendingCount + rejectedCount : g.id === "support" && supportUnread > 0 ? supportUnread : null))}
+              {accessibleGroups.map((g) => renderGroup(g, g.id === "moderation" && (pendingCount + rejectedCount) > 0 ? pendingCount + rejectedCount : g.id === "support" && supportUnread > 0 ? supportUnread : g.id === "sales" && returnsPending > 0 ? returnsPending : null))}
               {staffItems.length > 0 && renderGroup({ id: STAFF_GROUP.id, label: STAFF_GROUP.label, items: staffItems })}
             </>
           )}

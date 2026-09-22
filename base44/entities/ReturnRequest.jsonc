@@ -1,0 +1,131 @@
+{
+  "name": "ReturnRequest",
+  "type": "object",
+  "properties": {
+    "order_id": {
+      "type": "string",
+      "description": "The Order this return is against."
+    },
+    "customer_id": {
+      "type": "string",
+      "description": "App user id of the customer who requested the return."
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "The specific items being returned with quantities \u2014 supports partial-order returns, not just whole-order."
+    },
+    "reason_category": {
+      "type": "string",
+      "enum": [
+        "defective",
+        "wrong_item",
+        "not_as_described",
+        "changed_mind",
+        "other"
+      ]
+    },
+    "reason_details": {
+      "type": "string",
+      "description": "Free-text details from the customer."
+    },
+    "photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Photo URLs uploaded as evidence (required for defective / not_as_described claims)."
+    },
+    "requested_refund_method": {
+      "type": "string",
+      "enum": [
+        "original_payment",
+        "store_credit",
+        "loyalty_points"
+      ],
+      "default": "original_payment"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "requested",
+        "approved",
+        "rejected",
+        "item_received",
+        "refunded",
+        "closed"
+      ],
+      "default": "requested",
+      "description": "requested=customer submitted; approved=admin approved, awaiting return shipment; rejected=admin declined with a reason; item_received=returned item physically arrived back; refunded=refund issued; closed=terminal."
+    },
+    "admin_notes": {
+      "type": "string",
+      "description": "Internal admin notes."
+    },
+    "rejection_reason": {
+      "type": "string",
+      "description": "Mandatory reason shown to the customer when rejected."
+    },
+    "refund_amount": {
+      "type": "number",
+      "default": 0,
+      "description": "The SAR amount to refund, computed as the returned items' paid price after their proportional share of any applied discount."
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "order_id",
+    "customer_id",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.customer_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
