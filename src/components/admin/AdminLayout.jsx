@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon, ClipboardCheck, FileX, Languages,   LayoutList, Compass, Search, ShoppingCart as CartIcon, MessageSquare, HelpCircle, Bookmark, Gift, RotateCcw, Ruler, Building2, AlertTriangle } from "lucide-react";
+import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon, ClipboardCheck, FileX, Languages,   LayoutList, Compass, Search, ShoppingCart as CartIcon, MessageSquare, HelpCircle, Bookmark, Gift, RotateCcw, Ruler, Building2, AlertTriangle, Mail } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { canAccess } from "@/lib/adminPermissions";
 import { loadPendingCounts, loadRejectedCounts } from "@/lib/approval";
@@ -27,6 +27,7 @@ const SECTION_META = {
   customers: { label: "Customers", path: "/admin/customers", icon: Contact },
   coupons: { label: "Coupons", path: "/admin/coupons", icon: TicketPercent },
   abandoned_carts: { label: "Abandoned carts", path: "/admin/abandoned-carts", icon: CartIcon },
+  campaigns: { label: "Campaigns", path: "/admin/campaigns", icon: Mail },
   reviews: { label: "Reviews", path: "/admin/reviews", icon: Star },
   posters: { label: "Posters", path: "/admin/posters", icon: ImageIcon },
   reports: { label: "Reports", path: "/admin/reports", icon: BarChart3 },
@@ -46,7 +47,7 @@ const GROUPS = [
   { id: "catalog", label: "Catalog", sections: ["products", "categories", "size_charts", "home_sections", "navigation"] },
   { id: "operations", label: "Operations", sections: ["vendors", "low_stock"] },
   { id: "moderation", label: "Moderation", sections: ["approvals", "rejected", "translations"] },
-  { id: "sales", label: "Sales", sections: ["orders", "customers", "coupons", "abandoned_carts", "referrals", "returns"] },
+  { id: "sales", label: "Sales", sections: ["orders", "customers", "coupons", "abandoned_carts", "campaigns", "referrals", "returns"] },
   { id: "content", label: "Content", sections: ["reviews", "posters"] },
   { id: "support", label: "Support", sections: ["support", "faq", "canned_responses"] },
   { id: "insights", label: "Insights", sections: ["reports"] },

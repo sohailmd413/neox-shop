@@ -1,0 +1,145 @@
+{
+  "name": "Campaign",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Internal campaign name."
+    },
+    "subject_en": {
+      "type": "string",
+      "description": "Email subject for English recipients."
+    },
+    "subject_ar": {
+      "type": "string",
+      "description": "Email subject for Arabic recipients."
+    },
+    "content_html_en": {
+      "type": "string",
+      "description": "English HTML body (rich text)."
+    },
+    "content_html_ar": {
+      "type": "string",
+      "description": "Arabic HTML body (rich text). Required before a campaign can be scheduled, so Arabic recipients never get a blank or English-only email."
+    },
+    "target_segment": {
+      "type": "string",
+      "enum": [
+        "all_opted_in",
+        "vip_customers",
+        "inactive_customers",
+        "specific_category_shoppers"
+      ],
+      "default": "all_opted_in",
+      "description": "all_opted_in=every customer with marketing_opt_in; vip_customers=top 10% by spend (opted-in); inactive_customers=ordered before but not in the last 90 days (opted-in); specific_category_shoppers=ordered at least one product in target_category (opted-in)."
+    },
+    "target_category": {
+      "type": "string",
+      "description": "Category name used when target_segment=specific_category_shoppers."
+    },
+    "scheduled_send_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the scheduled job should send this campaign. The job only sends campaigns with status=scheduled whose send time has passed."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "scheduled",
+        "sending",
+        "sent",
+        "cancelled"
+      ],
+      "default": "draft",
+      "description": "draft=not scheduled; scheduled=waiting for the send time; sending=in progress; sent=delivered to the resolved segment; cancelled=aborted."
+    },
+    "sent_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of recipients the campaign was actually delivered to."
+    },
+    "open_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Reserved for open tracking. Not populated \u2014 the connected email service does not provide open/click tracking."
+    },
+    "click_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Reserved for click tracking. Not populated \u2014 the connected email service does not provide open/click tracking."
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the send completed."
+    },
+    "created_by_name": {
+      "type": "string",
+      "description": "Display name of the staff member who created the campaign."
+    }
+  },
+  "required": [
+    "name",
+    "target_segment",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    }
+  }
+}

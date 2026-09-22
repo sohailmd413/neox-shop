@@ -23,6 +23,7 @@ export const ADMIN_SECTIONS = [
   { id: 'referrals', label: 'Referrals' },
   { id: 'returns', label: 'Returns' },
   { id: 'abandoned_carts', label: 'Abandoned carts' },
+  { id: 'campaigns', label: 'Campaigns' },
   { id: 'support', label: 'Support' },
   { id: 'faq', label: 'FAQ' },
   { id: 'canned_responses', label: 'Canned responses' },
@@ -30,10 +31,10 @@ export const ADMIN_SECTIONS = [
 ];
 
 export const ROLE_DEFAULTS = {
-  admin: { dashboard: true, approvals: true, rejected: true, reports: true, products: true, categories: true, size_charts: true, vendors: true, low_stock: true, orders: true, customers: true, reviews: true, posters: true, coupons: true, home_sections: true, navigation: true, settings: true, abandoned_carts: true, support: true, faq: true, canned_responses: true, referrals: true, returns: true },
+  admin: { dashboard: true, approvals: true, rejected: true, reports: true, products: true, categories: true, size_charts: true, vendors: true, low_stock: true, orders: true, customers: true, reviews: true, posters: true, coupons: true, home_sections: true, navigation: true, settings: true, abandoned_carts: true, campaigns: true, support: true, faq: true, canned_responses: true, referrals: true, returns: true },
   product_manager: { products: true, categories: true, size_charts: true, vendors: true, low_stock: true, reports: true, approvals: true, rejected: true },
   delivery_manager: { orders: true, reports: true },
-  marketing_manager: { reviews: true, posters: true, coupons: true, home_sections: true, abandoned_carts: true, support: true, faq: true, canned_responses: true, referrals: true, returns: true },
+  marketing_manager: { reviews: true, posters: true, coupons: true, home_sections: true, abandoned_carts: true, campaigns: true, support: true, faq: true, canned_responses: true, referrals: true, returns: true },
   user: {},
 };
 
