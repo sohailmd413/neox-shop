@@ -168,6 +168,10 @@
       "type": "string",
       "description": "Warranty terms set by admin, e.g. '2-year manufacturer warranty'."
     },
+    "admin_notes": {
+      "type": "string",
+      "description": "Internal admin-only notes about this product (e.g. supplier restock ETA, quality checks). Never shown to customers or vendors."
+    },
     "size_chart_id": {
       "type": "string",
       "description": "Reference to a SizeChart template used for this product's size guide. Blank = no size guide shown."

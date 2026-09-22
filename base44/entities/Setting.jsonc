@@ -206,6 +206,11 @@
       "default": 50,
       "description": "Minimum 'orders delivered this month' count required to show that stat on the homepage trust strip. Below this number the stat is hidden so a small count never looks discouraging."
     },
+    "dead_stock_days": {
+      "type": "number",
+      "default": 60,
+      "description": "A product with zero sales in this many days is flagged 'Slow-moving' in the Products list. Best-effort, computed from recent order history."
+    },
     "reorder_threshold_default": {
       "type": "number",
       "default": 5,

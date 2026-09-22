@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Info, Image, Tag, Truck, Search, Box, Flag, Ruler } from "lucide-react";
+import { Info, Image, Tag, Truck, Search, Box, Flag, Ruler, StickyNote } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import Dropdown from "@/components/admin/ui/Dropdown";
 import ImageUpload from "@/components/admin/ImageUpload";
+import TagsInput from "@/components/admin/TagsInput";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 import { validateProduct, productCompletion, genSku, hasAnyData, REQUIRED_COUNT } from "@/lib/productValidation";
@@ -25,6 +26,7 @@ const EMPTY = {
   featured: false, is_new_arrival: false, is_best_seller: false,
   return_days: "", warranty: "", sale_ends_at: "",
   size_chart_id: "", fit_notes: "", fit_notes_ar: "",
+  admin_notes: "",
 };
 
 const TABS = [
@@ -36,6 +38,7 @@ const TABS = [
   { id: "seo", label: "SEO", icon: Search },
   { id: "flags", label: "Flags", icon: Flag },
   { id: "sizing", label: "Sizing", icon: Ruler },
+  { id: "notes", label: "Notes", icon: StickyNote },
 ];
 
 const baseInput = "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/40";
@@ -54,6 +57,7 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
       weight: product.weight ?? "",
       return_days: product.return_days ?? "",
       tags: product.tags || [],
+      admin_notes: product?.admin_notes || "",
       images: product.images || [],
       sale_ends_at: product.sale_ends_at ? product.sale_ends_at.slice(0, 16) : "",
     };
@@ -64,6 +68,7 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
   const [saveState, setSaveState] = useState("idle"); // idle | saving | saved | error
   const [publishing, setPublishing] = useState(false);
   const [publishConfirm, setPublishConfirm] = useState(false);
+  const [dupErrors, setDupErrors] = useState({});
   const persistedIdRef = useRef(product?.id || null);
   const [currentUser, setCurrentUser] = useState(null);
   const [sizeCharts, setSizeCharts] = useState([]);
@@ -103,7 +108,22 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
     setSaveState("idle");
     setForm((f) => ({ ...f, images: imgs }));
   };
-  const setTags = (e) => setForm((f) => ({ ...f, tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) }));
+  // Proactive duplicate SKU/barcode detection — checks the whole catalog and is
+  // re-run on every save (including autosave) as the authoritative guard, so a
+  // conflicting value can never be persisted.
+  const checkDuplicate = async (field, value) => {
+    const val = (value || "").trim();
+    if (!val) { setDupErrors((d) => ({ ...d, [field]: false })); return false; }
+    try {
+      const hits = await base44.entities.Product.filter({ [field]: val });
+      const conflict = (hits || []).some((x) => x.id !== persistedIdRef.current);
+      setDupErrors((d) => ({ ...d, [field]: conflict }));
+      return conflict;
+    } catch {
+      setDupErrors((d) => ({ ...d, [field]: false }));
+      return false;
+    }
+  };
 
   const buildPayload = (status) => ({
     name: form.name.trim(),
@@ -143,6 +163,7 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
     fit_notes: form.fit_notes || "",
     fit_notes_ar: form.fit_notes_ar || "",
     sale_ends_at: form.sale_ends_at ? new Date(form.sale_ends_at).toISOString() : null,
+    admin_notes: form.admin_notes || "",
     completion_percentage: productCompletion(form),
     last_edited_at: new Date().toISOString(),
   });
@@ -151,6 +172,8 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
     const isExisting = !!persistedIdRef.current;
     const status = statusOverride !== undefined ? statusOverride : product ? form.status : "draft";
     const payload = buildPayload(status);
+    if (await checkDuplicate("sku", payload.sku)) { setTab("general"); throw new Error("Duplicate SKU — already used by another product"); }
+    if (await checkDuplicate("barcode", payload.barcode)) { setTab("inventory"); throw new Error("Duplicate barcode — already used by another product"); }
     if (!isExisting && !payload.barcode && (payload.barcode_type || "CODE128") === "CODE128") {
       payload.barcode = await generateUniqueBarcode("CODE128");
     }
@@ -324,7 +347,7 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
         )}
 
         <div className="sticky top-0 z-10 flex gap-1 overflow-x-auto border-b border-border bg-background px-4 py-2">
-          {TABS.map((t) => {
+          {(vendorMode ? TABS.filter((t) => t.id !== "notes") : TABS).map((t) => {
             const Icon = t.icon;
             const active = tab === t.id;
             const tabMissing = Object.values(errors).some((e) => e.tab === t.id);
@@ -350,8 +373,8 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
                 </Field>
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
-                <Field label="SKU" hint="Auto-generated if left empty">
-                  <input value={form.sku} onChange={set("sku")} className={baseInput} placeholder="e.g. TSH-RED-M" />
+                <Field label="SKU" hint="Auto-generated if left empty" error={dupErrors.sku ? "This SKU is already used by another product" : undefined}>
+                  <input value={form.sku} onChange={set("sku")} onBlur={() => checkDuplicate("sku", form.sku)} className={baseInput + (dupErrors.sku ? errInput : "")} placeholder="e.g. TSH-RED-M" />
                 </Field>
                 <Field label="Vendor SKU" hint="Your own internal reference (optional)">
                   <input value={form.vendor_sku || ""} onChange={set("vendor_sku")} className={baseInput} placeholder="e.g. SUP-12345" />
@@ -425,8 +448,8 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
               </Field>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Barcode" hint="Auto-generated on save if left empty">
-                  <input value={form.barcode || ""} onChange={set("barcode")} className={baseInput} placeholder="MF-XXXX-XXXX" />
+                <Field label="Barcode" hint="Auto-generated on save if left empty" error={dupErrors.barcode ? "This barcode is already used by another product" : undefined}>
+                  <input value={form.barcode || ""} onChange={set("barcode")} onBlur={() => checkDuplicate("barcode", form.barcode)} className={baseInput + (dupErrors.barcode ? errInput : "")} placeholder="MF-XXXX-XXXX" />
                 </Field>
                 <Field label="Barcode type">
                   <Dropdown type="select" options={[{ label: "CODE128 (auto)", value: "CODE128" }, { label: "EAN13 (13 digits, manual)", value: "EAN13" }]} value={form.barcode_type || "CODE128"} onChange={setVal("barcode_type")} placeholder="CODE128" />
@@ -454,7 +477,9 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
             <>
               <Field label="Meta title"><input value={form.meta_title} onChange={set("meta_title")} className={baseInput} /></Field>
               <Field label="Meta description"><textarea value={form.meta_description} onChange={set("meta_description")} rows={2} className={baseInput} /></Field>
-              <Field label="Tags (comma separated)"><input value={form.tags.join(", ")} onChange={setTags} className={baseInput} placeholder="new, summer, bestseller" /></Field>
+              <Field label="Tags" hint="Cross-cutting labels for search & curation (e.g. Eco-friendly, Gift idea)">
+                <TagsInput value={form.tags || []} onChange={setVal("tags")} />
+              </Field>
             </>
           )}
 
@@ -488,6 +513,12 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
                 <input dir="rtl" value={form.fit_notes_ar || ""} onChange={set("fit_notes_ar")} className={baseInput} placeholder="مقاسه صغير — اطلب مقاسًا أكبر" />
               </Field>
             </div>
+          )}
+
+          {!vendorMode && tab === "notes" && (
+            <Field label="Admin notes" hint="Internal notes for your team. Never shown to customers or vendors.">
+              <textarea value={form.admin_notes || ""} onChange={set("admin_notes")} rows={6} className={baseInput} placeholder="e.g. Supplier confirmed restock ETA 3 weeks. Check quality on next shipment." />
+            </Field>
           )}
 
           {product?.approval_history?.length > 0 && <ApprovalHistory history={product.approval_history} />}

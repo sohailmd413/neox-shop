@@ -18,6 +18,7 @@ export default function ProductFilters({ products, filters, setFilters }) {
     { label: "In stock", value: "in" },
     { label: "Low stock", value: "low" },
     { label: "Out of stock", value: "out" },
+    { label: "Slow-moving", value: "slow" },
   ];
   const featuredOpts = [
     { label: "Featured: any", value: "all" },

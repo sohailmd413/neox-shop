@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plus, Pencil, Trash2, Copy, Download, Percent, Archive, ArchiveRestore, EyeOff, RotateCcw, Rocket, Printer, Package } from "lucide-react";
+import { Plus, Pencil, Trash2, Copy, Download, Percent, Archive, ArchiveRestore, EyeOff, RotateCcw, Rocket, Printer, Package, TrendingDown } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,11 @@ import ProductFilters from "@/components/admin/ProductFilters";
 import AdminProductDialog from "@/components/admin/AdminProductDialog";
 import AdminBulkProductDialog from "@/components/admin/AdminBulkProductDialog";
 import AdminSaleDialog from "@/components/admin/AdminSaleDialog";
+import AdminBulkEditDialog from "@/components/admin/AdminBulkEditDialog";
+import { generateUniqueBarcode } from "@/lib/barcode";
+import { useStoreSetting } from "@/lib/useStoreSetting";
 import SaleCountdown from "@/components/admin/SaleCountdown";
-import { validateProduct, productCompletion } from "@/lib/productValidation";
+import { validateProduct, productCompletion, genSku } from "@/lib/productValidation";
 import { submitForApproval } from "@/lib/approval";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/shared/StateViews";
 
@@ -55,6 +58,9 @@ export default function AdminProducts() {
   const [user, setUser] = useState(null);
   const [confirm, setConfirm] = useState(null);
   const [stockAlertCounts, setStockAlertCounts] = useState({});
+  const store = useStoreSetting();
+  const [soldIds, setSoldIds] = useState(new Set());
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -132,6 +138,24 @@ export default function AdminProducts() {
       .catch(() => {});
   }, [products]);
 
+  // Build the set of product ids that sold within the dead-stock window
+  // (best-effort from the most recent orders) so the list can flag slow-moving
+  // items with zero sales in that period. Only re-fetched when the setting changes.
+  useEffect(() => {
+    const days = Number(store.dead_stock_days) || 60;
+    const cutoff = Date.now() - days * 86400000;
+    base44.entities.Order.list("-created_date", 500)
+      .then((list) => {
+        const ids = new Set();
+        (list || []).forEach((o) => {
+          if (new Date(o.created_date || 0).getTime() < cutoff) return;
+          (o.items || []).forEach((it) => { if (it.product_id) ids.add(it.product_id); });
+        });
+        setSoldIds(ids);
+      })
+      .catch(() => {});
+  }, [store.dead_stock_days]);
+
   // Open the editor for a specific product when navigated here with
   // location.state.editProductId (e.g. "Edit & resubmit" from the Rejected page).
   const location = useLocation();
@@ -147,7 +171,7 @@ export default function AdminProducts() {
       if (!p.archive_requested || p.status === "archived") return false;
     } else if (filters.status !== "archived" && (p.status === "archived" || p.status === "rejected")) return false;
     const q = filters.query.trim().toLowerCase();
-    if (q && ![p.name, p.sku, p.brand, p.slug, p.barcode].filter(Boolean).join(" ").toLowerCase().includes(q)) return false;
+    if (q && ![p.name, p.sku, p.brand, p.slug, p.barcode, ...(p.tags || [])].filter(Boolean).join(" ").toLowerCase().includes(q)) return false;
     if (filters.category !== "all" && p.category !== filters.category) return false;
     if (filters.brand !== "all" && p.brand !== filters.brand) return false;
     if (filters.status !== "all" && p.status !== filters.status) return false;
@@ -156,6 +180,7 @@ export default function AdminProducts() {
       if (filters.stock === "in" && s <= 5) return false;
       if (filters.stock === "low" && (s <= 0 || s > 5)) return false;
       if (filters.stock === "out" && s > 0) return false;
+      if (filters.stock === "slow" && !slowMoving.has(p.id)) return false;
     }
     if (filters.featured === "featured" && !p.featured) return false;
     if (filters.featured === "not" && p.featured) return false;
@@ -245,10 +270,33 @@ export default function AdminProducts() {
 
   const handleDuplicate = async (p) => {
     try {
-      const { id, created_date, updated_date, created_by_id, rating, num_reviews, archived_at, archived_by, ...rest } = p;
-      const dup = await base44.entities.Product.create({ ...rest, name: `${p.name || "Untitled product"} (copy)`, status: "draft", images: p.images || [], archived_at: null, archived_by: null });
+      const {
+        id, created_date, updated_date, created_by_id, rating, num_reviews,
+        archived_at, archived_by, archive_requested, archive_requested_at, archive_requested_by,
+        submitted_by, submitted_by_id, submitted_at, rejection_reason, approval_history,
+        completion_percentage, last_edited_at, sale_ends_at, compare_at_price, vendor_user_id,
+        ...rest
+      } = p;
+      const newBarcode = await generateUniqueBarcode("CODE128");
+      const dup = await base44.entities.Product.create({
+        ...rest,
+        name: `${p.name || "Untitled product"} (copy)`,
+        slug: "",
+        sku: genSku(),
+        barcode: newBarcode,
+        barcode_type: "CODE128",
+        status: "draft",
+        stock: 0,
+        featured: false,
+        is_new_arrival: false,
+        is_best_seller: false,
+        compare_at_price: null,
+        images: p.images || [],
+        vendor_user_id: "",
+        admin_notes: p.admin_notes || "",
+      });
       upsertProduct(dup);
-      toast({ title: "Duplicated as draft" });
+      toast({ title: "Duplicated as draft with a fresh SKU & barcode" });
     } catch {
       toast({ title: "Could not duplicate", variant: "destructive" });
     }
@@ -271,6 +319,19 @@ export default function AdminProducts() {
   };
 
   const selectedProducts = products.filter((p) => selected.has(p.id));
+
+  const deadStockDays = Number(store.dead_stock_days) || 60;
+  const defaultThreshold = Number(store.reorder_threshold_default) || 5;
+  const slowMoving = useMemo(() => {
+    const cutoff = Date.now() - deadStockDays * 86400000;
+    const s = new Set();
+    products.forEach((p) => {
+      if (!["active", "inactive"].includes(p.status)) return;
+      if (new Date(p.created_date || 0).getTime() >= cutoff) return;
+      if (!soldIds.has(p.id)) s.add(p.id);
+    });
+    return s;
+  }, [products, soldIds, deadStockDays]);
 
   const printBarcode = (p) => window.open(`/print/barcodes?ids=${p.id}`, "_blank", "noopener");
   const bulkPrintBarcodes = () => {
@@ -463,6 +524,7 @@ export default function AdminProducts() {
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-muted/40 px-4 py-3">
           <span className="text-sm font-medium">{selectedProducts.length} selected</span>
           <Button size="sm" onClick={bulkPublish}><Rocket className="mr-1.5 h-3.5 w-3.5" /> Submit for approval</Button>
+          <Button size="sm" variant="outline" onClick={() => setBulkEditOpen(true)}><Pencil className="mr-1.5 h-3.5 w-3.5" /> Bulk edit</Button>
           <Button size="sm" variant="outline" onClick={bulkArchive}><Archive className="mr-1.5 h-3.5 w-3.5" /> Archive</Button>
           <Button size="sm" variant="outline" onClick={bulkInactive}><EyeOff className="mr-1.5 h-3.5 w-3.5" /> Set inactive</Button>
           {selectedHasArchived && <Button size="sm" variant="outline" onClick={bulkRestore}><ArchiveRestore className="mr-1.5 h-3.5 w-3.5" /> Restore</Button>}
@@ -522,6 +584,9 @@ export default function AdminProducts() {
                 const isArchived = p.status === "archived";
                 const isDraft = p.status === "draft";
                 const completion = p.completion_percentage ?? productCompletion(p);
+                const threshold = Number(p.reorder_threshold) > 0 ? Number(p.reorder_threshold) : defaultThreshold;
+                const isLow = !isArchived && p.status !== "draft" && (Number(p.stock) || 0) <= threshold;
+                const isSlow = slowMoving.has(p.id);
                 return (
                   <tr key={p.id} className={`border-b border-border last:border-0 hover:bg-muted/30 ${isArchived ? "opacity-60 bg-zinc-50/60" : ""}`}>
                     <td className="px-4 py-3">
@@ -559,7 +624,15 @@ export default function AdminProducts() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={p.stock <= 5 ? "font-medium text-amber-600" : ""}>{p.stock}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className={isLow ? "font-medium text-amber-600" : ""}>{p.stock}</span>
+                        {isLow && <span className="h-1.5 w-1.5 rounded-full bg-amber-500" title={`Low stock (reorder at ${threshold})`} />}
+                        {isSlow && (
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-zinc-200 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600" title={`No sales in the last ${deadStockDays} days`}>
+                            <TrendingDown className="h-2.5 w-2.5" /> Slow
+                          </span>
+                        )}
+                      </div>
                       {(p.stock ?? 0) <= 0 && stockAlertCounts[p.id] > 0 && (
                         <span className="mt-0.5 block text-[10px] font-medium text-amber-600">{stockAlertCounts[p.id]} waiting</span>
                       )}
@@ -636,6 +709,9 @@ export default function AdminProducts() {
       )}
       {saleOpen && (
         <AdminSaleDialog products={selectedProducts} onClose={() => setSaleOpen(false)} onDone={() => { setSaleOpen(false); load(); }} />
+      )}
+      {bulkEditOpen && (
+        <AdminBulkEditDialog products={selectedProducts} onClose={() => setBulkEditOpen(false)} onDone={() => { setBulkEditOpen(false); load(); }} />
       )}
       {confirm && (
         <ConfirmDialog
