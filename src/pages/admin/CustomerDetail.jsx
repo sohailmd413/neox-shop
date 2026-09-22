@@ -36,17 +36,17 @@ export default function CustomerDetail() {
   const load = async () => {
     setLoading(true);
     try {
-      const [u, allOrders, addr, profs] = await Promise.all([
+      const [u, allOrdersRes, addr, profRes] = await Promise.all([
         base44.entities.User.list().catch(() => []),
-        base44.entities.Order.list("-created_date", 500).catch(() => []),
+        base44.functions.invoke("getOrdersForAdmin", { userId: id }).catch(() => ({ data: { orders: [] } })),
         base44.entities.Address.filter({ user_id: id }).catch(() => []),
-        base44.entities.CustomerProfile.filter({ user_id: id }).catch(() => []),
+        base44.functions.invoke("getCustomerProfileAdmin", { userId: id }).catch(() => ({ data: { profile: null } })),
       ]);
       setUser((u || []).find((x) => x.id === id) || null);
-      setOrders((allOrders || []).filter((o) => (o.user_id || o.created_by_id) === id));
+      setOrders(allOrdersRes?.data?.orders || []);
       setAddresses(addr || []);
-      setProfile((profs && profs[0]) || null);
-      setNotes((profs && profs[0]?.notes) || "");
+      setProfile(profRes?.data?.profile || null);
+      setNotes(profRes?.data?.profile?.notes || "");
     } catch {}
     setLoading(false);
   };
@@ -83,11 +83,8 @@ export default function CustomerDetail() {
   const saveNotes = async () => {
     setSavingNote(true);
     try {
-      if (profile) await base44.entities.CustomerProfile.update(profile.id, { notes });
-      else {
-        const created = await base44.entities.CustomerProfile.create({ user_id: id, notes });
-        setProfile(created);
-      }
+      const r = await base44.functions.invoke("saveCustomerNotes", { userId: id, notes });
+      if (r?.data?.profile) setProfile(r.data.profile);
       toast({ title: "Notes saved" });
     } catch {
       toast({ title: "Could not save notes", variant: "destructive" });

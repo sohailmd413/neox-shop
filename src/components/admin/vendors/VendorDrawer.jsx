@@ -7,7 +7,7 @@ import Dropdown from "@/components/admin/ui/Dropdown";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 
-const EMPTY = { name: "", contact_name: "", email: "", phone: "", address: "", payment_terms: "", status: "active", notes: "" };
+const EMPTY = { name: "", contact_name: "", email: "", phone: "", address: "", payment_terms: "", status: "active", bank_account_details: "", notes: "" };
 const input = "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/40";
 
 function Field({ label, children }) {
@@ -22,9 +22,20 @@ function Field({ label, children }) {
 export default function VendorDrawer({ vendor, open, onClose, onSaved }) {
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
+  const [me, setMe] = useState(null);
   const { toast } = useToast();
 
-  useEffect(() => { if (open) setForm(vendor ? { ...EMPTY, ...vendor } : EMPTY); }, [vendor, open]);
+  useEffect(() => { base44.auth.me().then((u) => setMe(u || null)).catch(() => {}); }, []);
+  useEffect(() => {
+    if (!open) return;
+    if (vendor?.id) {
+      base44.functions.invoke("getVendorAdmin", { id: vendor.id })
+        .then((r) => setForm({ ...EMPTY, ...(r?.data?.vendor || {}) }))
+        .catch(() => setForm({ ...EMPTY, ...vendor }));
+    } else {
+      setForm(EMPTY);
+    }
+  }, [vendor, open]);
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const setVal = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -42,8 +53,8 @@ export default function VendorDrawer({ vendor, open, onClose, onSaved }) {
         status: form.status || "active",
         notes: form.notes || "",
       };
-      if (vendor?.id) await base44.entities.Vendor.update(vendor.id, payload);
-      else await base44.entities.Vendor.create(payload);
+      if (me?.role === "admin") payload.bank_account_details = form.bank_account_details || "";
+      await base44.functions.invoke("saveVendor", { id: vendor?.id, data: payload });
       toast({ title: vendor ? "Vendor updated" : "Vendor created" });
       onSaved?.();
       onClose?.();
@@ -73,6 +84,9 @@ export default function VendorDrawer({ vendor, open, onClose, onSaved }) {
           </div>
           <Field label="Address"><input value={form.address} onChange={set("address")} className={input} /></Field>
           <Field label="Payment terms" hint="e.g. Net 30, COD, 50% advance"><input value={form.payment_terms} onChange={set("payment_terms")} className={input} /></Field>
+          {me?.role === "admin" && (
+            <Field label="Bank account / IBAN" hint="Encrypted at rest; masked everywhere it's displayed"><input value={form.bank_account_details || ""} onChange={set("bank_account_details")} className={input} dir="ltr" placeholder="SA00 0000 0000 0000" /></Field>
+          )}
           <Field label="Notes"><textarea value={form.notes} onChange={set("notes")} rows={3} className={input} /></Field>
         </div>
         <div className="flex shrink-0 justify-end gap-2 border-t border-border px-6 py-4">

@@ -34,7 +34,8 @@ export default function OrderDetail() {
   const load = async () => {
     setOrder(null);
     try {
-      const o = await base44.entities.Order.get(id);
+      const r = await base44.functions.invoke("getOrderForDisplay", { id });
+      const o = r?.data?.order;
       setOrder(o || false);
     } catch {
       setOrder(false);

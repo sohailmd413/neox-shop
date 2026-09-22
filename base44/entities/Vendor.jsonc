@@ -24,6 +24,10 @@
       "type": "string",
       "description": "Free-text payment terms, e.g. 'Net 30'."
     },
+    "bank_account_details": {
+      "type": "string",
+      "description": "Bank account / IBAN details for payouts to this vendor. STORED ENCRYPTED at the app layer (AES-256-GCM via the PII_ENCRYPTION_KEY secret) \u2014 the raw value never reaches the database in plaintext. Decrypted only server-side for admin viewing; masked to the last 4 characters everywhere it's displayed in the UI."
+    },
     "status": {
       "type": "string",
       "enum": [

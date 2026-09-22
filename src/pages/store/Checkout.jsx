@@ -113,8 +113,8 @@ export default function Checkout() {
         }
       } catch {}
       try {
-        const list = await base44.entities.Address.list("-created_date", 50);
-        const addrs = list || [];
+        const r = await base44.functions.invoke("getMyAddresses", {});
+        const addrs = r?.data?.addresses || [];
         setAddresses(addrs);
         const def = addrs.find((a) => a.is_default) || addrs[0];
         if (def) {
@@ -248,51 +248,50 @@ export default function Checkout() {
             phone: form.phone,
           };
 
-      const order = await base44.entities.Order.create({
-        status: "pending",
-        items: items.map((i) => ({
-          product_id: i.productId,
-          name: i.name,
-          image: i.image,
-          price: i.price,
-          quantity: i.quantity,
-        })),
-        subtotal,
-        tax,
-        shipping_fee: shipping,
-        discount,
-        loyalty_points_redeemed: loyaltyPointsUsed,
-        loyalty_discount: loyaltyDiscount,
-        total,
-        coupon_code: coupon?.code || "",
-        customer_email: form.email,
-        payment_method: paymentMethod,
-        timeline: [{ status: "pending", by: "system", at: new Date().toISOString() }],
-        shipping_address,
+      const orderRes = await base44.functions.invoke("placeOrder", {
+        order: {
+          status: "pending",
+          items: items.map((i) => ({
+            product_id: i.productId,
+            name: i.name,
+            image: i.image,
+            price: i.price,
+            quantity: i.quantity,
+          })),
+          subtotal,
+          tax,
+          shipping_fee: shipping,
+          discount,
+          loyalty_points_redeemed: loyaltyPointsUsed,
+          loyalty_discount: loyaltyDiscount,
+          total,
+          coupon_code: coupon?.code || "",
+          customer_email: form.email,
+          payment_method: paymentMethod,
+          timeline: [{ status: "pending", by: "system", at: new Date().toISOString() }],
+          shipping_address,
+        },
       });
+      const order = orderRes?.data?.order;
 
       // Persist address-book changes made at checkout (best-effort — the
       // order is already placed, so failures here don't block it).
       try {
         if (selectedId === "new" && saveNew) {
-          const created = await base44.entities.Address.create({
-            label: "Home",
-            full_name: form.name,
-            phone: form.phone,
-            line1: form.line1,
-            line2: form.line2 || "",
-            city: form.city,
-            state: form.state,
-            postal_code: form.postal_code,
-            country: form.country,
-            is_default: setDefault,
+          await base44.functions.invoke("saveAddress", {
+            data: {
+              label: "Home",
+              full_name: form.name,
+              phone: form.phone,
+              line1: form.line1,
+              line2: form.line2 || "",
+              city: form.city,
+              state: form.state,
+              postal_code: form.postal_code,
+              country: form.country,
+              is_default: setDefault,
+            },
           });
-          if (setDefault && created) {
-            const all = await base44.entities.Address.list("-created_date", 50);
-            await Promise.all(
-              (all || []).filter((a) => a.id !== created.id && a.is_default).map((a) => base44.entities.Address.update(a.id, { is_default: false }))
-            );
-          }
         } else if (selected && setDefault && !selected.is_default) {
           await base44.entities.Address.update(selected.id, { is_default: true });
           await Promise.all(

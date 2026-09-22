@@ -43,16 +43,7 @@ export default function AddressForm({ open, onClose, address, onSaved }) {
     }
     setSaving(true);
     try {
-      let saved;
-      if (address?.id) saved = await base44.entities.Address.update(address.id, form);
-      else saved = await base44.entities.Address.create(form);
-
-      if (form.is_default) {
-        const all = await base44.entities.Address.list("-created_date", 50);
-        await Promise.all(
-          (all || []).filter((a) => a.id !== saved.id && a.is_default).map((a) => base44.entities.Address.update(a.id, { is_default: false }))
-        );
-      }
+      await base44.functions.invoke("saveAddress", { id: address?.id, data: form });
       toast({ title: t("address.saved") });
       onSaved?.();
       onClose?.();

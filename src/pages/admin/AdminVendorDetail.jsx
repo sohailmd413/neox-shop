@@ -34,16 +34,21 @@ export default function AdminVendorDetail() {
   const [receive, setReceive] = useState(null);
   const [cancelPo, setCancelPo] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [me, setMe] = useState(null);
+  const [revealBank, setRevealBank] = useState(false);
 
   const load = async () => {
     setLoading(true);
     setError(false);
     try {
-      const [v, prods, pos] = await Promise.all([
-        base44.entities.Vendor.get(id).catch(() => null),
+      const [vRes, prods, pos, u] = await Promise.all([
+        base44.functions.invoke("getVendorAdmin", { id }).catch(() => ({ data: { vendor: null } })),
         base44.entities.Product.filter({ vendor_id: id }, "-updated_date", 500).catch(() => []),
         base44.entities.PurchaseOrder.filter({ vendor_id: id }, "-created_date", 500).catch(() => []),
+        base44.auth.me().catch(() => null),
       ]);
+      const v = vRes?.data?.vendor;
+      setMe(u || null);
       if (!v) { setVendor(null); setError(true); setLoading(false); return; }
       setVendor(v);
       setProducts(prods || []);
@@ -91,6 +96,19 @@ export default function AdminVendorDetail() {
             </div>
             {vendor.address && <p className="mt-1 text-sm text-muted-foreground">{vendor.address}</p>}
             {vendor.notes && <p className="mt-2 text-sm text-muted-foreground">{vendor.notes}</p>}
+            {vendor.bank_account_details && (
+              <p className="mt-2 inline-flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">Bank:</span>
+                <span dir="ltr" style={{ unicodeBidi: "isolate" }}>
+                  {me?.role === "admin" ? (revealBank ? vendor.bank_account_details : maskBankLocal(vendor.bank_account_details)) : vendor.bank_account_details}
+                </span>
+                {me?.role === "admin" && (
+                  <button type="button" onClick={() => setRevealBank((r) => !r)} className="text-xs text-foreground underline hover:opacity-70">
+                    {revealBank ? "Hide" : "Reveal"}
+                  </button>
+                )}
+              </p>
+            )}
           </div>
         </div>
         <div className="flex gap-2">
@@ -185,4 +203,11 @@ function Stat({ label, value, icon: Icon }) {
       </div>
     </div>
   );
+}
+
+function maskBankLocal(value) {
+  if (!value) return "";
+  const clean = String(value).replace(/\s+/g, "");
+  if (clean.length <= 4) return "••••";
+  return "•••• " + clean.slice(-4);
 }

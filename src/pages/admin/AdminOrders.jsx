@@ -41,8 +41,8 @@ export default function AdminOrders() {
     setLoading(true);
     setError(null);
     try {
-      const list = await base44.entities.Order.list("-created_date", 500);
-      setOrders(list || []);
+      const r = await base44.functions.invoke("getOrdersForAdmin", {});
+      setOrders(r?.data?.orders || []);
     } catch {
       setError(true);
     }

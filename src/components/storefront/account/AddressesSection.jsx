@@ -18,7 +18,7 @@ export default function AddressesSection() {
 
   const load = async () => {
     setAddresses(null);
-    try { const list = await base44.entities.Address.list("-created_date", 50); setAddresses(list || []); }
+    try { const r = await base44.functions.invoke("getMyAddresses", {}); setAddresses(r?.data?.addresses || []); }
     catch { setAddresses([]); }
   };
   useEffect(() => { load(); }, []);
