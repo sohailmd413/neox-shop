@@ -17,6 +17,7 @@ import AuthButton from "@/components/auth/AuthButton";
 import Shake from "@/components/auth/Shake";
 import { toast } from "@/components/ui/use-toast";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import { getStoredReferralCode, clearStoredReferralCode } from "@/lib/referral";
 import { springPop } from "@/lib/motion";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -90,6 +91,13 @@ export default function Register() {
             phone: fullPhone(),
             marketing_opt_in: marketing,
           });
+        }
+      } catch {}
+      try {
+        const refCode = getStoredReferralCode();
+        if (refCode) {
+          await base44.functions.invoke("registerReferral", { code: refCode });
+          clearStoredReferralCode();
         }
       } catch {}
       setSuccess(true);

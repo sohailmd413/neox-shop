@@ -1,0 +1,101 @@
+{
+  "name": "Referral",
+  "type": "object",
+  "properties": {
+    "referrer_customer_id": {
+      "type": "string",
+      "description": "App user id of the referrer (the existing customer who shared their code)."
+    },
+    "referred_customer_id": {
+      "type": "string",
+      "description": "App user id of the referred friend. Null until the friend actually registers through the link."
+    },
+    "referred_email": {
+      "type": "string",
+      "description": "Email of the invited friend, captured at invite time (lower-cased). Used to convert an 'invited' record to 'registered' when the friend signs up, and to prevent the same email from being referred twice."
+    },
+    "referral_code_used": {
+      "type": "string",
+      "description": "The referral code that was used (the referrer's code)."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "invited",
+        "registered",
+        "qualified",
+        "rewarded",
+        "expired"
+      ],
+      "default": "invited",
+      "description": "invited=friend emailed/shared-to but not signed up; registered=friend created an account (referred reward issued); qualified=friend's first delivered order meets the min value; rewarded=referrer reward issued at qualification; expired=qualifying window lapsed with no qualifying order."
+    },
+    "invited_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "registered_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "qualifying_order_id": {
+      "type": "string",
+      "description": "The order that triggered qualification (the referred friend's first delivered qualifying order)."
+    },
+    "rewarded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "referred_reward": {
+      "type": "string",
+      "description": "Description of the reward issued to the referred friend at registration, e.g. 'SAR 25 coupon WELCOME-AB12' or '50 points'."
+    },
+    "referrer_reward": {
+      "type": "string",
+      "description": "Description of the reward issued to the referrer at qualification."
+    },
+    "flagged": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the referral was auto-flagged for admin review (e.g. the referrer exceeded the high-volume threshold of 20+ referrals in a day). Flagged, not blocked \u2014 legitimate advocates may trigger this."
+    }
+  },
+  "required": [
+    "referrer_customer_id",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.referrer_customer_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

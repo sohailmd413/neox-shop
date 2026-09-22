@@ -27,6 +27,10 @@
       "type": "integer",
       "default": 0,
       "description": "Current loyalty points balance. Authoritative balance is maintained server-side by the loyalty backend functions; do not update directly from the client except via those functions."
+    },
+    "referral_code": {
+      "type": "string",
+      "description": "Unique referral code auto-generated per customer (e.g. AHMED-7K2P). Used in /r/{code} invite links. Generated lazily by the getMyReferral backend function on first access and stored here."
     }
   },
   "required": [

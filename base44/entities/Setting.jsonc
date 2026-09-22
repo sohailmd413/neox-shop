@@ -142,6 +142,46 @@
       "type": "number",
       "description": "If set, earned points expire this many days after they were earned. Leave blank/null to disable expiry. A daily workflow creates expired transactions for aged, unredeemed points."
     },
+    "referral_program_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Master toggle for the refer-a-friend program. When off, the account Referrals tab shows an inactive message and no referrals are created or rewarded."
+    },
+    "referrer_reward_type": {
+      "type": "string",
+      "enum": [
+        "loyalty_points",
+        "coupon"
+      ],
+      "default": "loyalty_points",
+      "description": "How the referrer is rewarded when their friend's first order qualifies. loyalty_points credits points to their balance; coupon generates a single-use fixed-amount coupon scoped to them."
+    },
+    "referrer_reward_value": {
+      "type": "number",
+      "description": "Magnitude of the referrer reward: number of points (if loyalty_points) or SAR amount (if coupon)."
+    },
+    "referred_reward_type": {
+      "type": "string",
+      "enum": [
+        "loyalty_points",
+        "coupon"
+      ],
+      "default": "coupon",
+      "description": "How the referred friend is rewarded at signup. coupon is the default since a fresh account has no points balance yet \u2014 it gives them a first-order discount."
+    },
+    "referred_reward_value": {
+      "type": "number",
+      "description": "Magnitude of the referred friend's reward: number of points (if loyalty_points) or SAR amount (if coupon)."
+    },
+    "min_qualifying_order_value": {
+      "type": "number",
+      "default": 0,
+      "description": "The referred friend's first delivered order must total at least this much (after discounts, before tax/shipping) to qualify the referral for the referrer reward."
+    },
+    "referral_code_expiry_days": {
+      "type": "number",
+      "description": "If set, a registered referral that has not produced a qualifying delivered order within this many days of registration is marked expired (no referrer reward). Blank/null disables expiry."
+    },
     "abandoned_cart_recovery_enabled": {
       "type": "boolean",
       "default": false,

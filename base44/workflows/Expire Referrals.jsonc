@@ -1,0 +1,43 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "expire_referrals",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "expire": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "expireReferrals"
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Expire stale referrals"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Daily sweep: marks registered referrals past their qualifying window as expired.",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 3 * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Riyadh",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "name": "Expire Referrals"
+}

@@ -24,6 +24,9 @@ export default async function(req) {
     const cp = Array.isArray(coupons) && coupons[0] ? coupons[0] : null;
     if (!cp) return Response.json({ valid: false, reason: 'Coupon not found.' });
     if (!cp.active) return Response.json({ valid: false, reason: 'This coupon is no longer active.' });
+    if (cp.owner_customer_id && cp.owner_customer_id !== user.id) {
+      return Response.json({ valid: false, reason: 'This coupon is not available for your account.' });
+    }
 
     const now = new Date();
     if (cp.starts_at && new Date(cp.starts_at) > now) {

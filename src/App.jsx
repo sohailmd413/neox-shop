@@ -53,6 +53,8 @@ import AdminFAQ from '@/pages/admin/AdminFAQ';
 import AdminCannedResponses from '@/pages/admin/AdminCannedResponses';
 import RecoverCart from '@/pages/store/RecoverCart';
 import SitemapRedirect from '@/components/SitemapRedirect';
+import ReferralRedirect from '@/pages/store/ReferralRedirect';
+import AdminReferrals from '@/pages/admin/AdminReferrals';
 // Add page imports here
 
 // Boot the singleton store Setting once so the currency formatter and
@@ -99,6 +101,7 @@ const AuthenticatedApp = () => {
           <Route path="/print/barcodes" element={<PrintBarcodes />} />
           {/* SEO: /sitemap.xml redirects to the dynamic backend function */}
           <Route path="/sitemap.xml" element={<SitemapRedirect />} />
+          <Route path="/r/:code" element={<ReferralRedirect />} />
           {/* Storefront */}
           <Route element={<StorefrontLayout />}>
             <Route path="/" element={<Home />} />
@@ -137,6 +140,7 @@ const AuthenticatedApp = () => {
             <Route path="roles" element={<AdminRoles />} />
             <Route path="users" element={<AdminUsers />} />
             <Route path="profile" element={<AdminProfile />} />
+            <Route path="referrals" element={<AdminReferrals />} />
           </Route>
           <Route path="*" element={<PageNotFound />} />
         </Routes>

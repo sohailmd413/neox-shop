@@ -68,6 +68,7 @@ export default function AdminOrders() {
       await base44.entities.Order.update(id, { status, timeline });
       patch(id, { status });
       base44.functions.invoke("syncOrderLoyalty", { orderId: id, status }).catch(() => {});
+      if (status === "delivered") base44.functions.invoke("processReferralReward", { orderId: id }).catch(() => {});
       toast({ title: "Order updated" });
     } catch {
       toast({ title: "Could not update", variant: "destructive" });
@@ -84,6 +85,7 @@ export default function AdminOrders() {
       }));
       setOrders((prev) => prev.map((o) => (selected.includes(o.id) ? { ...o, status } : o)));
       selected.forEach((oid) => base44.functions.invoke("syncOrderLoyalty", { orderId: oid, status }).catch(() => {}));
+      if (status === "delivered") selected.forEach((oid) => base44.functions.invoke("processReferralReward", { orderId: oid }).catch(() => {}));
       toast({ title: `${selected.length} order(s) updated` });
       setSelected([]);
     } catch {

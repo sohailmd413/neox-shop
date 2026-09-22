@@ -51,6 +51,10 @@
       },
       "description": "If set, the coupon only applies when the cart contains at least one product in these categories."
     },
+    "owner_customer_id": {
+      "type": "string",
+      "description": "When set (by the referral reward system), this coupon is scoped to a single customer and validateCoupon rejects it for anyone else. Blank/omit for public coupons."
+    },
     "times_used": {
       "type": "number",
       "default": 0

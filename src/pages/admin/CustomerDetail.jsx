@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
 import CustomerLoyaltyPanel from "@/components/admin/CustomerLoyaltyPanel";
+import CustomerReferralPanel from "@/components/admin/CustomerReferralPanel";
 import { useToast } from "@/components/ui/use-toast";
 import { formatPrice } from "@/lib/format";
 
-const TABS = ["Overview", "Orders", "Addresses", "Notes", "Loyalty"];
+const TABS = ["Overview", "Orders", "Addresses", "Notes", "Loyalty", "Referrals"];
 const STATUS_BADGE = { active: "bg-emerald-100 text-emerald-700", blocked: "bg-red-100 text-red-700" };
 const SEG_BADGE = { new: "bg-sky-100 text-sky-700", returning: "bg-blue-100 text-blue-700", vip: "bg-purple-100 text-purple-700" };
 const ORDER_STATUS_BADGE = {
@@ -224,6 +225,7 @@ export default function CustomerDetail() {
       )}
 
       {tab === "Loyalty" && <CustomerLoyaltyPanel userId={id} />}
+      {tab === "Referrals" && <CustomerReferralPanel userId={id} />}
 
       {confirm && (
         <ConfirmDialog

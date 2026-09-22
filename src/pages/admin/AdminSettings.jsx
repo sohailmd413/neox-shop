@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Store, CreditCard, Truck, Percent, FileText, Sparkles, ShoppingCart } from "lucide-react";
+import { Store, CreditCard, Truck, Percent, FileText, Sparkles, ShoppingCart, Gift } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { ensureStoreSetting, patchStoreSetting } from "@/lib/settings";
@@ -11,6 +11,7 @@ import TaxSettings from "@/components/admin/settings/TaxSettings";
 import PoliciesSettings from "@/components/admin/settings/PoliciesSettings";
 import LoyaltySettings from "@/components/admin/settings/LoyaltySettings";
 import AbandonedCartSettings from "@/components/admin/settings/AbandonedCartSettings";
+import ReferralSettings from "@/components/admin/settings/ReferralSettings";
 
 const TABS = [
   { id: "general", label: "General", icon: Store },
@@ -20,6 +21,7 @@ const TABS = [
   { id: "policies", label: "Policies", icon: FileText },
   { id: "loyalty", label: "Loyalty", icon: Sparkles },
   { id: "abandoned_carts", label: "Abandoned carts", icon: ShoppingCart },
+  { id: "referrals", label: "Referrals", icon: Gift },
 ];
 
 export default function AdminSettings() {
@@ -80,6 +82,7 @@ export default function AdminSettings() {
         {active === "policies" && <PoliciesSettings setting={setting} onSave={save} />}
         {active === "loyalty" && <LoyaltySettings setting={setting} onSave={save} />}
         {active === "abandoned_carts" && <AbandonedCartSettings setting={setting} onSave={save} />}
+        {active === "referrals" && <ReferralSettings setting={setting} onSave={save} />}
       </div>
     </div>
   );
