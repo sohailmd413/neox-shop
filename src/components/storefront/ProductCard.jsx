@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ShoppingBag, Star, Heart, Check, Sparkles, Flame, Scale } from "lucide-react";
 import { formatPrice, lf } from "@/lib/format";
 import ProductImage from "@/components/storefront/ProductImage";
+import StockBadge from "@/components/storefront/StockBadge";
 import { useLanguage } from "@/lib/i18n";
 import { motionPresets, springPress, springPop } from "@/lib/motion";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
@@ -28,7 +29,6 @@ function ProductCardBase({ product, index = 0, rank = null, tag = null, soldCoun
   const salePct = onSale ? Math.round((1 - product.price / product.compare_at_price) * 100) : 0;
   const display = lf(product, "name", lang);
   const shortDesc = lf(product, "short_description", lang);
-  const lowStock = !outOfStock && product.stock > 0 && product.stock <= 5;
   const hasSecond = product.images?.length > 1;
   const youSave = onSale ? product.compare_at_price - product.price : 0;
   const TAG_STYLES = {
@@ -181,12 +181,7 @@ function ProductCardBase({ product, index = 0, rank = null, tag = null, soldCoun
           {product.compare_at_price && product.compare_at_price > product.price && product.sale_ends_at && !outOfStock && (
             <SaleCountdown endsAt={product.sale_ends_at} />
           )}
-          {!outOfStock && (
-            <p className={`flex items-center gap-1 text-[11px] ${lowStock ? "text-amber-600" : "text-emerald-600"}`}>
-              <span className={`inline-block h-1.5 w-1.5 rounded-full ${lowStock ? "bg-amber-500" : "bg-emerald-500"}`} />
-              {lowStock ? t("card.lowStock") : t("card.inStock")}
-            </p>
-          )}
+          {!outOfStock && <StockBadge stock={product.stock} size="sm" />}
           {soldCount > 0 && (
             <p className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
               <Flame className="h-3 w-3 text-amber-500" />

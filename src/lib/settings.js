@@ -25,6 +25,7 @@ export const DEFAULT_SETTING = {
   return_policy: "",
   shipping_policy: "",
   in_grid_insert_every_n_products: 4,
+  low_stock_urgency_threshold: 5,
 };
 
 const KEY = "store";

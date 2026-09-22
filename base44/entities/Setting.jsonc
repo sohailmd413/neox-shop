@@ -196,6 +196,11 @@
       "default": 5,
       "description": "Minimum percentage a wishlisted product's price must drop (vs the last-notified or add-time price) to trigger a price-drop alert. Prevents trivial-drop notification spam."
     },
+    "low_stock_urgency_threshold": {
+      "type": "number",
+      "default": 5,
+      "description": "When a product's real inventory is at or below this number, its stock badge shows 'Only N left in stock' instead of the plain 'In stock' indicator. Driven solely by live stock_quantity \u2014 there is no manual urgency flag, since fabricated scarcity is a deceptive practice."
+    },
     "abandoned_cart_recovery_enabled": {
       "type": "boolean",
       "default": false

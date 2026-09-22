@@ -18,6 +18,7 @@ import ReviewSection from "@/components/storefront/reviews/ReviewSection";
 import QuestionSection from "@/components/storefront/qa/QuestionSection";
 import RecentlyViewedRow from "@/components/storefront/RecentlyViewedRow";
 import BackInStockButton from "@/components/storefront/BackInStockButton";
+import StockBadge from "@/components/storefront/StockBadge";
 import SizeGuideModal from "@/components/storefront/sizing/SizeGuideModal";
 import { getRelatedProducts } from "@/lib/relatedProducts";
 import Seo from "@/components/shared/Seo";
@@ -140,7 +141,6 @@ export default function ProductDetail() {
   const showCategoryCrumb = productCategory && productCategory.active !== false;
   const categoryName = productCategory ? lf(productCategory, "name", lang) : product.category;
   const wished = isInWishlist(product.id);
-  const lowStock = !outOfStock && effStock > 0 && effStock <= 5;
 
   const clampQty = (q) => Math.min(Math.max(q, 1), maxQty);
   const handleAdd = () => {
@@ -301,14 +301,8 @@ export default function ProductDetail() {
                 <span className="inline-flex items-center gap-1.5 text-sm font-medium text-destructive">
                   <span className="inline-block h-2 w-2 rounded-full bg-red-500" /> {t("product.outOfStock")}
                 </span>
-              ) : lowStock ? (
-                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-600">
-                  <span className="inline-block h-2 w-2 rounded-full bg-amber-500" /> {effStock} {t("product.lowStock")}
-                </span>
               ) : (
-                <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600">
-                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" /> {t("product.inStock")}
-                </span>
+                <StockBadge stock={effStock} size="md" />
               )}
             </div>
 
