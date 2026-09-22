@@ -15,6 +15,10 @@
     "sku": {
       "type": "string"
     },
+    "vendor_sku": {
+      "type": "string",
+      "description": "The vendor's own internal reference for this product, separate from the system SKU/barcode. Vendor-editable without triggering re-approval."
+    },
     "barcode": {
       "type": "string",
       "description": "Scannable barcode value. Auto-generated on create if left empty."
@@ -74,6 +78,10 @@
     "vendor_id": {
       "type": "string",
       "description": "The Vendor this product is sourced from. Nullable \u2014 products with no assigned vendor are sourced internally."
+    },
+    "vendor_user_id": {
+      "type": "string",
+      "description": "The user id of the owning vendor (mirrors Vendor.user_id). Set by saveVendorProduct on create so Product read RLS can scope vendor reads to their own products without a join. Null for first-party products."
     },
     "images": {
       "type": "array",
@@ -177,6 +185,20 @@
       "format": "date-time",
       "description": "When the current sale ends. Used to show a countdown; clearing it ends the sale."
     },
+    "archive_requested": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when a vendor requested archive of an active product. Surfaced in the admin Products 'Archive requests' tab for admin confirmation. Cleared when the admin archives or dismisses the request."
+    },
+    "archive_requested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the vendor requested archive."
+    },
+    "archive_requested_by": {
+      "type": "string",
+      "description": "Display name of the vendor who requested archive."
+    },
     "archived_at": {
       "type": "string",
       "format": "date-time",
@@ -243,7 +265,43 @@
     "price"
   ],
   "rls": {
-    "read": true,
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "product_manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "delivery_manager"
+          }
+        },
+        {
+          "$and": [
+            {
+              "user_condition": {
+                "role": "vendor"
+              }
+            },
+            {
+              "data.vendor_user_id": "{{user.id}}"
+            }
+          ]
+        },
+        {
+          "data.status": "active"
+        },
+        {
+          "data.status": "out_of_stock"
+        }
+      ]
+    },
     "create": {
       "$or": [
         {
