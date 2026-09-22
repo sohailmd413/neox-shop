@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { loadHistoryProducts } from "@/lib/recentlyViewed";
+import { displayName } from "@/lib/users";
 import { useLanguage } from "@/lib/i18n";
 
 // Personalized homepage greeting for logged-in customers. Shows "Welcome
@@ -16,7 +17,7 @@ export default function PersonalizedGreeting() {
 
   useEffect(() => {
     let mounted = true;
-    (async () => {
+    const run = async () => {
       try {
         const me = await base44.auth.me();
         if (!me) return; // guests get the standard hero
@@ -33,13 +34,20 @@ export default function PersonalizedGreeting() {
         const catName = top[0];
         const cat = (categories || []).find((c) => c.name === catName);
         const localName = cat ? (lang === "ar" ? (cat.name_ar || cat.name) : cat.name) : catName;
-        const firstName = (me.full_name || me.email || "").trim().split(/\s+/)[0];
+        // Use the editable display_name (set in the profile) — the built-in
+        // full_name is managed by sign-in and can lag behind profile edits.
+        const firstName = (displayName(me) || "").trim().split(/\s+/)[0];
         setState({ name: firstName, category: catName, categoryName: localName });
       } catch {
         /* never let personalization break the homepage */
       }
-    })();
-    return () => { mounted = false; };
+    };
+    run();
+    // Re-resolve when the customer saves a profile edit elsewhere, so the
+    // greeting name refreshes without a full page reload.
+    const onUpdate = () => run();
+    window.addEventListener("profile-updated", onUpdate);
+    return () => { mounted = false; window.removeEventListener("profile-updated", onUpdate); };
   }, [lang]);
 
   if (!state) return null;
