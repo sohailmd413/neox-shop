@@ -44,7 +44,7 @@ export default function PurchaseOrderDialog({ open, po, vendor, prefillProducts,
       setNotes(po.notes || "");
     } else {
       setVendorId(vendor?.id || "");
-      setItems((prefillProducts || []).map((p) => ({ product_id: p.id, name: p.name, sku: p.sku || "", quantity: 1, unit_cost: 0, received_quantity: 0 })));
+      setItems((prefillProducts || []).map((p) => ({ product_id: p.id, name: p.name, sku: p.sku || "", quantity: Number(p.quantity) || 1, unit_cost: 0, received_quantity: 0 })));
       setExpectedDate("");
       setNotes("");
     }

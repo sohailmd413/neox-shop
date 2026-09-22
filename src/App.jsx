@@ -61,6 +61,7 @@ import AdminReferrals from '@/pages/admin/AdminReferrals';
 import AdminReturns from '@/pages/admin/AdminReturns';
 import AdminVendors from '@/pages/admin/AdminVendors';
 import AdminVendorDetail from '@/pages/admin/AdminVendorDetail';
+import AdminLowStock from '@/pages/admin/AdminLowStock';
 // Add page imports here
 
 // Boot the singleton store Setting once so the currency formatter and
@@ -153,6 +154,7 @@ const AuthenticatedApp = () => {
             <Route path="returns" element={<AdminReturns />} />
             <Route path="vendors" element={<AdminVendors />} />
             <Route path="vendors/:id" element={<AdminVendorDetail />} />
+            <Route path="low-stock" element={<AdminLowStock />} />
           </Route>
           <Route path="*" element={<PageNotFound />} />
         </Routes>

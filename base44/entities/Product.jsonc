@@ -61,6 +61,10 @@
       ],
       "default": "in_stock"
     },
+    "reorder_threshold": {
+      "type": "number",
+      "description": "Per-product reorder point. When stock falls at or below this number the product appears in the Low-stock action view. Blank falls back to the store's reorder_threshold_default."
+    },
     "category": {
       "type": "string"
     },

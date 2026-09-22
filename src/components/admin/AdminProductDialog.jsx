@@ -17,7 +17,7 @@ import { submitForApproval } from "@/lib/approval";
 const EMPTY = {
   name: "", name_ar: "", sku: "", slug: "", barcode: "", barcode_type: "CODE128",
   description: "", description_ar: "", short_description: "", short_description_ar: "",
-  price: "", compare_at_price: "", stock: "", stock_status: "in_stock",
+  price: "", compare_at_price: "", stock: "", stock_status: "in_stock", reorder_threshold: "",
   category: "", brand: "", vendor_id: "", tags: [],
   images: [], status: "active",
   weight: "", dimensions: "", shipping_class: "", tax_class: "",
@@ -120,6 +120,7 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
     compare_at_price: form.compare_at_price ? Number(form.compare_at_price) : null,
     stock: Number(form.stock) || 0,
     stock_status: form.stock_status,
+    reorder_threshold: form.reorder_threshold ? Number(form.reorder_threshold) : null,
     category: form.category || "",
     brand: form.brand || "",
     vendor_id: form.vendor_id || "",
@@ -387,6 +388,10 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
                 <input type="checkbox" checked={form.stock_status === "preorder"} onChange={(e) => setVal("stock_status")(e.target.checked ? "preorder" : "in_stock")} className="h-4 w-4 rounded border-border" />
                 Allow backorders (customers can order even when stock is 0)
               </label>
+
+              <Field label="Reorder threshold (units)" hint="When stock falls to or below this number the product appears in the Low-stock action view. Leave blank to use the store default.">
+                <input type="number" min={0} value={form.reorder_threshold || ""} onChange={set("reorder_threshold")} className={baseInput} placeholder="store default" />
+              </Field>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Barcode" hint="Auto-generated on save if left empty">

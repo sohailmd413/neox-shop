@@ -1,0 +1,44 @@
+{
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 8 * * *",
+      "one_time_date": null,
+      "timezone": "Asia/Riyadh",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "low_stock_digest",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "digest": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "getLowStockDigest"
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Send low-stock digest",
+            "description": "Daily count + email to admins"
+          }
+        }
+      }
+    ]
+  },
+  "name": "Low Stock Digest",
+  "description": "Daily summary of products below the reorder threshold, notified to admin and product-manager staff (in-app + email)."
+}

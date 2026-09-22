@@ -18,6 +18,8 @@ export default function AlertsSettings({ setting, onSave }) {
       await onSave({
         price_drop_threshold_percent: Number(f.price_drop_threshold_percent) || 5,
         low_stock_urgency_threshold: Number(f.low_stock_urgency_threshold) || 5,
+        reorder_threshold_default: Number(f.reorder_threshold_default) || 5,
+        reorder_target_multiplier: Number(f.reorder_target_multiplier) || 2,
       });
     } catch { /* toast handled by parent */ } finally { setSaving(false); }
   };
@@ -37,6 +39,19 @@ export default function AlertsSettings({ setting, onSave }) {
       </Label>
       <p className="rounded-xl bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
         When a product's real inventory is at or below this number, its stock badge shows "Only N left in stock" instead of the plain "In stock" indicator. Reflects live inventory only — there is no manual urgency flag, since fabricated scarcity is a deceptive practice.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Label className="space-y-1.5">
+          <span className="text-xs font-medium text-muted-foreground">Reorder threshold (default units)</span>
+          <Input type="number" dir="ltr" min={0} value={num("reorder_threshold_default", 5)} onChange={(e) => setF((p) => ({ ...p, reorder_threshold_default: e.target.value }))} placeholder="5" />
+        </Label>
+        <Label className="space-y-1.5">
+          <span className="text-xs font-medium text-muted-foreground">Reorder target multiplier</span>
+          <Input type="number" dir="ltr" min={1} step="0.5" value={num("reorder_target_multiplier", 2)} onChange={(e) => setF((p) => ({ ...p, reorder_target_multiplier: e.target.value }))} placeholder="2" />
+        </Label>
+      </div>
+      <p className="rounded-xl bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
+        Products at or below the reorder threshold appear in Operations → Low stock. The suggested reorder quantity brings stock back up to threshold × multiplier (e.g. 5 × 2 = target 10). A per-product reorder threshold on the product's Inventory tab overrides this default.
       </p>
       <div className="flex justify-end pt-2">
         <Button onClick={save} disabled={saving}><Save className="mr-2 h-4 w-4" /> {saving ? "Saving…" : "Save alerts"}</Button>

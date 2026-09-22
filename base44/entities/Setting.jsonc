@@ -201,6 +201,16 @@
       "default": 5,
       "description": "When a product's real inventory is at or below this number, its stock badge shows 'Only N left in stock' instead of the plain 'In stock' indicator. Driven solely by live stock_quantity \u2014 there is no manual urgency flag, since fabricated scarcity is a deceptive practice."
     },
+    "reorder_threshold_default": {
+      "type": "number",
+      "default": 5,
+      "description": "Default reorder point used when a product has no per-product reorder_threshold. Products at or below this stock level appear in the Low-stock action view."
+    },
+    "reorder_target_multiplier": {
+      "type": "number",
+      "default": 2,
+      "description": "Suggested reorder quantity brings stock back up to reorder threshold times this multiplier. E.g. threshold 5 x 2 = target 10."
+    },
     "abandoned_cart_recovery_enabled": {
       "type": "boolean",
       "default": false

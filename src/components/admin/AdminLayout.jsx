@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon, ClipboardCheck, FileX, Languages,   LayoutList, Compass, Search, ShoppingCart as CartIcon, MessageSquare, HelpCircle, Bookmark, Gift, RotateCcw, Ruler, Building2 } from "lucide-react";
+import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon, ClipboardCheck, FileX, Languages,   LayoutList, Compass, Search, ShoppingCart as CartIcon, MessageSquare, HelpCircle, Bookmark, Gift, RotateCcw, Ruler, Building2, AlertTriangle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { canAccess } from "@/lib/adminPermissions";
 import { loadPendingCounts, loadRejectedCounts } from "@/lib/approval";
 import { loadSupportUnread } from "@/lib/supportBadge";
 import { loadReturnsPending } from "@/lib/returns";
+import { loadLowStockCount } from "@/lib/lowStock";
 import NotificationsBell from "@/components/admin/NotificationsBell";
 import AccountMenu from "@/components/admin/AccountMenu";
 
@@ -16,6 +17,7 @@ const SECTION_META = {
   categories: { label: "Categories", path: "/admin/categories", icon: Layers },
   size_charts: { label: "Size charts", path: "/admin/size-charts", icon: Ruler },
   vendors: { label: "Vendors", path: "/admin/vendors", icon: Building2 },
+  low_stock: { label: "Low stock", path: "/admin/low-stock", icon: AlertTriangle },
   home_sections: { label: "Home sections", path: "/admin/home-sections", icon: LayoutList },
   navigation: { label: "Navigation", path: "/admin/navigation", icon: Compass },
   approvals: { label: "Approvals", path: "/admin/approvals", icon: ClipboardCheck },
@@ -42,7 +44,7 @@ const SECTION_META = {
 // group, matching the existing Staff members pattern.
 const GROUPS = [
   { id: "catalog", label: "Catalog", sections: ["products", "categories", "size_charts", "home_sections", "navigation"] },
-  { id: "operations", label: "Operations", sections: ["vendors"] },
+  { id: "operations", label: "Operations", sections: ["vendors", "low_stock"] },
   { id: "moderation", label: "Moderation", sections: ["approvals", "rejected", "translations"] },
   { id: "sales", label: "Sales", sections: ["orders", "customers", "coupons", "abandoned_carts", "referrals", "returns"] },
   { id: "content", label: "Content", sections: ["reviews", "posters"] },
@@ -67,6 +69,7 @@ export default function AdminLayout() {
   const [rejectedCount, setRejectedCount] = useState(0);
   const [supportUnread, setSupportUnread] = useState(0);
   const [returnsPending, setReturnsPending] = useState(0);
+  const [lowStockCount, setLowStockCount] = useState(0);
   const [query, setQuery] = useState("");
   const location = useLocation();
 
@@ -105,6 +108,7 @@ export default function AdminLayout() {
   const refreshCounts = () => {
     loadPendingCounts().then((c) => setPendingCount((c.products || 0) + (c.categories || 0)));
     loadRejectedCounts().then((c) => setRejectedCount((c.products || 0) + (c.categories || 0)));
+    loadLowStockCount().then(setLowStockCount);
   };
   useEffect(() => {
     refreshCounts();
@@ -257,7 +261,7 @@ export default function AdminLayout() {
             </div>
           ) : (
             <>
-              {accessibleGroups.map((g) => renderGroup(g, g.id === "moderation" && (pendingCount + rejectedCount) > 0 ? pendingCount + rejectedCount : g.id === "support" && supportUnread > 0 ? supportUnread : g.id === "sales" && returnsPending > 0 ? returnsPending : null))}
+              {accessibleGroups.map((g) => renderGroup(g, g.id === "moderation" && (pendingCount + rejectedCount) > 0 ? pendingCount + rejectedCount : g.id === "support" && supportUnread > 0 ? supportUnread : g.id === "sales" && returnsPending > 0 ? returnsPending : g.id === "operations" && lowStockCount > 0 ? lowStockCount : null))}
               {staffItems.length > 0 && renderGroup({ id: STAFF_GROUP.id, label: STAFF_GROUP.label, items: staffItems })}
             </>
           )}
