@@ -26,6 +26,8 @@ export default function Login() {
     setLoading(true);
     try {
       await base44.auth.loginViaEmailPassword(email, password);
+      const me = await base44.auth.me().catch(() => null);
+      if (me?.role === "vendor") { window.location.href = "/vendor/dashboard"; return; }
       window.location.href = returnTo;
     } catch (err) {
       setError(err.message || "Invalid email or password");

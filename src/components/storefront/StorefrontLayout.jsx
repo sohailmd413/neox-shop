@@ -108,6 +108,16 @@ export default function StorefrontLayout() {
                 </ul>
               </div>
             </div>
+            {/* Vendor recruitment */}
+            <div className="lg:col-span-3">
+              <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-white">
+                {t("footer.sellWithUs") || "Sell with us"}
+              </h4>
+              <ul className="mt-4 space-y-3 text-sm">
+                <li><Link to="/vendor/register" className="text-slate-400 transition-colors hover:text-white">Become a vendor</Link></li>
+                <li><Link to="/vendor/login" className="text-slate-400 transition-colors hover:text-white">Vendor sign in</Link></li>
+              </ul>
+            </div>
             {/* Newsletter */}
             <div className="lg:col-span-3">
               <h4 className="text-xs font-semibold uppercase tracking-[0.18em] text-white">

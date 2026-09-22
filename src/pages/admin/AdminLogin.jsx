@@ -19,9 +19,10 @@ export default function AdminLogin() {
     try {
       await base44.auth.loginViaEmailPassword(email, password);
       const me = await base44.auth.me();
-      if (!me?.role || me.role === "user") {
+      const STAFF = ["admin", "product_manager", "delivery_manager", "marketing_manager"];
+      if (!STAFF.includes(me?.role)) {
         await base44.auth.logout();
-        setError("This account does not have staff access. Only staff accounts can sign in here.");
+        setError(me?.role === "vendor" ? "This is a vendor account. Vendors sign in at the vendor portal." : "This account does not have staff access. Only staff accounts can sign in here.");
         return;
       }
       window.location.href = "/admin";

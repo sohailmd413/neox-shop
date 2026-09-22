@@ -64,6 +64,12 @@ import AdminVendorDetail from '@/pages/admin/AdminVendorDetail';
 import AdminLowStock from '@/pages/admin/AdminLowStock';
 import AdminCampaigns from '@/pages/admin/AdminCampaigns';
 import AdminCampaignDetail from '@/pages/admin/AdminCampaignDetail';
+import VendorLayout from '@/components/vendor/VendorLayout';
+import VendorLogin from '@/pages/vendor/VendorLogin';
+import VendorRegister from '@/pages/vendor/VendorRegister';
+import VendorDashboard from '@/pages/vendor/VendorDashboard';
+import VendorProducts from '@/pages/vendor/VendorProducts';
+import VendorProfile from '@/pages/vendor/VendorProfile';
 // Add page imports here
 
 // Boot the singleton store Setting once so the currency formatter and
@@ -159,6 +165,14 @@ const AuthenticatedApp = () => {
             <Route path="low-stock" element={<AdminLowStock />} />
             <Route path="campaigns" element={<AdminCampaigns />} />
             <Route path="campaigns/:id" element={<AdminCampaignDetail />} />
+          </Route>
+          {/* Vendor portal (isolated from admin; VendorLayout gates by vendor role + status) */}
+          <Route path="/vendor/login" element={<VendorLogin />} />
+          <Route path="/vendor/register" element={<VendorRegister />} />
+          <Route path="/vendor" element={<VendorLayout />}>
+            <Route path="dashboard" element={<VendorDashboard />} />
+            <Route path="products" element={<VendorProducts />} />
+            <Route path="profile" element={<VendorProfile />} />
           </Route>
           <Route path="*" element={<PageNotFound />} />
         </Routes>

@@ -4,42 +4,92 @@
   "properties": {
     "name": {
       "type": "string",
-      "description": "Vendor / supplier display name."
+      "description": "Business / vendor display name (English). Primary label shown in admin, the vendor portal, and (future) the public storefront."
+    },
+    "name_ar": {
+      "type": "string",
+      "description": "Arabic business display name shown when Arabic is selected."
     },
     "contact_name": {
       "type": "string",
       "description": "Primary contact person at the vendor."
     },
     "email": {
-      "type": "string"
+      "type": "string",
+      "description": "Vendor contact + login email. Unique per vendor. Matches the email of the linked auth User (user_id)."
     },
     "phone": {
       "type": "string"
     },
     "address": {
       "type": "string",
-      "description": "Full postal address."
+      "description": "Full postal address (English)."
     },
     "payment_terms": {
       "type": "string",
-      "description": "Free-text payment terms, e.g. 'Net 30'."
+      "description": "Free-text payment terms for purchase orders, e.g. 'Net 30'. Admin-managed (PO system)."
     },
     "bank_account_details": {
       "type": "string",
-      "description": "Bank account / IBAN details for payouts to this vendor. STORED ENCRYPTED at the app layer (AES-256-GCM via the PII_ENCRYPTION_KEY secret) \u2014 the raw value never reaches the database in plaintext. Decrypted only server-side for admin viewing; masked to the last 4 characters everywhere it's displayed in the UI."
+      "description": "Bank account / IBAN details for payouts to this vendor. STORED ENCRYPTED at the app layer (AES-256-GCM via the PII_ENCRYPTION_KEY secret). Collected only in the future Payouts phase \u2014 not surfaced in the vendor portal yet. Decrypted only server-side for admin viewing; masked to the last 4 characters everywhere it's displayed in the UI."
     },
     "status": {
       "type": "string",
       "enum": [
+        "pending_verification",
         "active",
-        "inactive"
+        "inactive",
+        "suspended",
+        "rejected"
       ],
       "default": "active",
-      "description": "inactive vendors are hidden from the product vendor dropdown and new POs."
+      "description": "pending_verification=vendor registered, awaiting admin approval (cannot list products); active=approved, full portal access; inactive=admin-paused (hidden from product vendor dropdown + new POs); suspended=admin-blocked from portal; rejected=application declined. Admin-created supply-chain vendors default to active; self-registered vendors are created as pending_verification by the registerVendor function."
     },
     "notes": {
       "type": "string",
-      "description": "Internal notes about this vendor (admin-visible only)."
+      "description": "Internal admin notes about this vendor (admin-visible only)."
+    },
+    "user_id": {
+      "type": "string",
+      "description": "The auth User id linked to this vendor account (role=vendor). Set on registration. Used to scope vendor-portal reads to a vendor's own record. Null for admin-created supply-chain vendors with no portal account."
+    },
+    "commercial_registration_number": {
+      "type": "string",
+      "description": "Commercial registration (CR) number."
+    },
+    "vat_number": {
+      "type": "string",
+      "description": "VAT registration number."
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "Vendor store logo image URL."
+    },
+    "banner_url": {
+      "type": "string",
+      "description": "Vendor store banner image URL (used by the future public storefront)."
+    },
+    "store_description_en": {
+      "type": "string",
+      "description": "English store description (future public storefront)."
+    },
+    "store_description_ar": {
+      "type": "string",
+      "description": "Arabic store description (future public storefront)."
+    },
+    "joined_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the vendor application was submitted (registration)."
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When an admin approved the vendor (status moved to active). Cleared if later suspended/rejected."
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "Display name of the admin who approved the vendor."
     }
   },
   "required": [
@@ -62,6 +112,9 @@
           "user_condition": {
             "role": "delivery_manager"
           }
+        },
+        {
+          "data.user_id": "{{user.id}}"
         }
       ]
     },
