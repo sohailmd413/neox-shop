@@ -58,12 +58,21 @@ export default async function(req) {
     const categoryIds = (cp.applicable_category_ids || []).filter(Boolean);
     if (productIds.length || categoryIds.length) {
       const cartProductIds = cartItems.map((i) => i.product_id).filter(Boolean);
+      // Product.category stores the category NAME, while applicable_category_ids
+      // holds category IDs — resolve the IDs to names once so the comparison is
+      // apples-to-apples (a name-vs-id check would never match).
+      let categoryNameSet = null;
+      if (categoryIds.length) {
+        const cats = await base44.asServiceRole.entities.Category.list('sort_order', 500).catch(() => []);
+        const idSet = new Set(categoryIds);
+        categoryNameSet = new Set((Array.isArray(cats) ? cats : []).filter((c) => idSet.has(c.id)).map((c) => c.name));
+      }
       let applicable = false;
       for (const pid of cartProductIds) {
         if (productIds.includes(pid)) { applicable = true; break; }
-        if (categoryIds.length) {
+        if (categoryNameSet) {
           const p = await base44.asServiceRole.entities.Product.get(pid).catch(() => null);
-          if (p && p.category && categoryIds.includes(p.category)) { applicable = true; break; }
+          if (p && p.category && categoryNameSet.has(p.category)) { applicable = true; break; }
         }
       }
       if (!applicable) {

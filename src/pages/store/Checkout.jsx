@@ -503,6 +503,12 @@ export default function Checkout() {
                     <input
                       value={couponInput}
                       onChange={(e) => setCouponInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          applyCoupon();
+                        }
+                      }}
                       placeholder={t("checkout.couponPlaceholder")}
                       className="h-9 flex-1 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-foreground/40"
                     />
