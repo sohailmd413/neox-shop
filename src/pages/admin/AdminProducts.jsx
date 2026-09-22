@@ -520,10 +520,7 @@ export default function AdminProducts() {
                           <div className="h-10 w-9 rounded-md bg-muted/50" />
                         )}
                         <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="line-clamp-1 font-medium">{p.name || "Untitled product"}</span>
-                            <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${STATUS_BADGE[p.status]}`}>{STATUS_LABEL[p.status]}</span>
-                          </div>
+                          <span className="line-clamp-1 font-medium">{p.name || "Untitled product"}</span>
                           {isDraft && (
                             <div className="mt-1 flex items-center gap-1.5">
                               <div className="h-1 w-20 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-foreground transition-[width] duration-500" style={{ width: `${completion}%` }} /></div>
