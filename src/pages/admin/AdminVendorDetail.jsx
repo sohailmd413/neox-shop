@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Building2, Pencil, Plus, Package, ClipboardList, Send, PackageCheck, Ban, Eye } from "lucide-react";
+import { ArrowLeft, Building2, Pencil, Plus, Package, ClipboardList, Send, PackageCheck, Ban, Eye, Check, XCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,15 @@ const PO_STATUS_BADGE = {
 };
 const PO_STATUS_LABEL = { draft: "Draft", sent: "Sent", partially_received: "Partially received", received: "Received", cancelled: "Cancelled" };
 
+const V_STATUS_BADGE = {
+  pending_verification: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+  active: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+  inactive: "bg-muted text-muted-foreground",
+  suspended: "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300",
+  rejected: "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300",
+};
+const V_STATUS_LABEL = { pending_verification: "Pending review", active: "Active", inactive: "Inactive", suspended: "Suspended", rejected: "Rejected" };
+
 export default function AdminVendorDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -36,6 +45,8 @@ export default function AdminVendorDetail() {
   const [busy, setBusy] = useState(false);
   const [me, setMe] = useState(null);
   const [revealBank, setRevealBank] = useState(false);
+  const [toApprove, setToApprove] = useState(false);
+  const [toReject, setToReject] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -74,6 +85,19 @@ export default function AdminVendorDetail() {
     finally { setBusy(false); }
   };
 
+  const approve = async () => {
+    setBusy(true);
+    try { await base44.functions.invoke("saveVendor", { id: vendor.id, data: { status: "active" } }); toast({ title: "Vendor approved" }); setToApprove(false); load(); }
+    catch { toast({ title: "Could not approve vendor", variant: "destructive" }); }
+    finally { setBusy(false); }
+  };
+  const reject = async (reason) => {
+    setBusy(true);
+    try { await base44.functions.invoke("saveVendor", { id: vendor.id, data: { status: "rejected", rejection_reason: reason } }); toast({ title: "Vendor rejected" }); setToReject(false); load(); }
+    catch { toast({ title: "Could not reject vendor", variant: "destructive" }); }
+    finally { setBusy(false); }
+  };
+
   if (loading) return <TableSkeleton rows={6} cols={5} />;
   if (error || !vendor) return <ErrorState title="Vendor not found" onRetry={() => navigate("/admin/vendors")} />;
 
@@ -88,13 +112,20 @@ export default function AdminVendorDetail() {
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-muted"><Building2 className="h-5 w-5" /></div>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{vendor.name}</h1>
-            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-sm text-muted-foreground">
+            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-0.5 text-sm text-muted-foreground">
+              <span className={`rounded-full px-2 py-0.5 text-xs ${V_STATUS_BADGE[vendor.status] || "bg-muted text-muted-foreground"}`}>{V_STATUS_LABEL[vendor.status] || vendor.status}</span>
               {vendor.contact_name && <span>{vendor.contact_name}</span>}
               {vendor.email && <span>{vendor.email}</span>}
               {vendor.phone && <span dir="ltr">{vendor.phone}</span>}
               {vendor.payment_terms && <span>· {vendor.payment_terms}</span>}
             </div>
             {vendor.address && <p className="mt-1 text-sm text-muted-foreground">{vendor.address}</p>}
+            {vendor.status === "rejected" && vendor.rejection_reason && (
+              <p className="mt-2 text-sm text-destructive">Rejection reason: {vendor.rejection_reason}</p>
+            )}
+            {vendor.approved_by && (
+              <p className="mt-1 text-xs text-muted-foreground">Approved by {vendor.approved_by}{vendor.approved_at ? ` on ${new Date(vendor.approved_at).toLocaleDateString()}` : ""}</p>
+            )}
             {vendor.notes && <p className="mt-2 text-sm text-muted-foreground">{vendor.notes}</p>}
             {vendor.bank_account_details && (
               <p className="mt-2 inline-flex items-center gap-2 text-sm text-muted-foreground">
@@ -111,7 +142,19 @@ export default function AdminVendorDetail() {
             )}
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {vendor.status === "pending_verification" && (
+            <>
+              <Button onClick={() => setToApprove(true)} disabled={busy} className="gap-1.5 bg-emerald-600 hover:bg-emerald-600/90"><Check className="h-4 w-4" /> Approve</Button>
+              <Button variant="outline" onClick={() => setToReject(true)} disabled={busy} className="gap-1.5 border-destructive text-destructive hover:bg-destructive/5"><XCircle className="h-4 w-4" /> Reject</Button>
+            </>
+          )}
+          {vendor.status === "rejected" && (
+            <Button onClick={() => setToApprove(true)} disabled={busy} className="gap-1.5"><Check className="h-4 w-4" /> Approve</Button>
+          )}
+          {vendor.status === "suspended" && (
+            <Button onClick={() => setToApprove(true)} disabled={busy} className="gap-1.5"><Check className="h-4 w-4" /> Reactivate</Button>
+          )}
           <Button variant="outline" onClick={() => setEditDrawer(true)} className="gap-1.5"><Pencil className="h-4 w-4" /> Edit</Button>
           <Button onClick={() => setPoDialog({ open: true, po: null })} className="gap-1.5"><Plus className="h-4 w-4" /> New purchase order</Button>
         </div>
@@ -189,6 +232,8 @@ export default function AdminVendorDetail() {
       <PurchaseOrderDialog open={poDialog.open} po={poDialog.po} vendor={vendor} onClose={() => setPoDialog({ open: false, po: null })} onSaved={load} />
       <ReceivePurchaseOrderDialog open={!!receive} po={receive} onClose={() => setReceive(null)} onSaved={load} />
       <ConfirmDialog open={!!cancelPo} onClose={() => setCancelPo(null)} variant="delete" title="Cancel this purchase order?" description="Cancelled POs are kept for history but can no longer be received." confirmLabel="Cancel PO" onConfirm={cancelOrder} />
+      <ConfirmDialog open={toApprove} onClose={() => setToApprove(false)} variant="default" title={`Approve ${vendor.name}?`} description="The vendor will gain access to their portal dashboard and can start listing products for approval." confirmLabel="Approve vendor" onConfirm={approve} />
+      <ConfirmDialog open={toReject} onClose={() => setToReject(false)} variant="danger" title={`Reject ${vendor.name}?`} description="The vendor will be blocked from the portal and shown the reason below." confirmLabel="Reject vendor" requireReason reasonLabel="Rejection reason (shown to the vendor)" reasonPlaceholder="e.g. Missing commercial registration documents" onConfirm={reject} />
     </div>
   );
 }

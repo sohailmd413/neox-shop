@@ -50,6 +50,9 @@ export default function ConfirmDialog({
   requireTypeName = null,
   requireCheckbox = false,
   checkboxLabel = "I understand this cannot be undone",
+  requireReason = false,
+  reasonLabel = "Reason",
+  reasonPlaceholder = "",
   disableDelayMs,
 }) {
   const v = resolveVariant(variant);
@@ -57,6 +60,7 @@ export default function ConfirmDialog({
   const [busy, setBusy] = useState(false);
   const [typed, setTyped] = useState("");
   const [checked, setChecked] = useState(false);
+  const [reason, setReason] = useState("");
   const [armed, setArmed] = useState(false);
   const delay = disableDelayMs ?? DEFAULT_DELAY;
 
@@ -68,6 +72,7 @@ export default function ConfirmDialog({
       setBusy(false);
       setTyped("");
       setChecked(false);
+      setReason("");
       setArmed(false);
       return;
     }
@@ -78,13 +83,14 @@ export default function ConfirmDialog({
 
   const typeOk = !needType || (!!typed && typed.trim() === matchText);
   const checkOk = !requireCheckbox || checked;
-  const canConfirm = armed && typeOk && checkOk && !busy;
+  const reasonOk = !requireReason || reason.trim().length > 0;
+  const canConfirm = armed && typeOk && checkOk && reasonOk && !busy;
 
   const handleConfirm = async () => {
     if (!canConfirm) return;
     setBusy(true);
     try {
-      await onConfirm?.();
+      await onConfirm?.(requireReason ? reason.trim() : undefined);
     } finally {
       setBusy(false);
       onClose?.();
@@ -136,6 +142,20 @@ export default function ConfirmDialog({
               <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} className="h-4 w-4 rounded border-border" />
               {checkboxLabel}
             </label>
+          )}
+
+          {requireReason && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">{reasonLabel}</label>
+              <textarea
+                autoFocus
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder={reasonPlaceholder}
+                rows={3}
+                className="w-full resize-none rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus:border-foreground/40"
+              />
+            </div>
           )}
 
           <DialogFooter>
