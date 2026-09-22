@@ -66,7 +66,7 @@ export default function RoleDialog({ role, onClose, onSaved, builtin }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-foreground/30 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg rounded-2xl border border-border bg-background p-6 shadow-lg">
+      <div className="relative w-full max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-border bg-background p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">{editing || builtin ? "Edit role" : "Create role"}</h2>
           <button onClick={onClose} className="rounded-full p-1.5 hover:bg-muted">
