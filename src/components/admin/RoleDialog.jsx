@@ -99,7 +99,7 @@ export default function RoleDialog({ role, onClose, onSaved, builtin }) {
           <div>
             <Label className="mb-2 block">Permission</Label>
             <p className="mb-2 text-xs text-muted-foreground">Pick the modules this role can access.</p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3">
               {ADMIN_SECTIONS.filter((s) => s.id !== 'settings').map((s) => {
                 const eff = permissions[s.id] === "allow";
                 return (
@@ -107,7 +107,7 @@ export default function RoleDialog({ role, onClose, onSaved, builtin }) {
                     key={s.id}
                     type="button"
                     onClick={() => setPerm(s.id, eff ? "inherit" : "allow")}
-                    className="flex w-full items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-left transition-colors hover:bg-muted/50"
+                    className="flex w-full items-center gap-3 rounded-lg border border-border px-3.5 py-3 text-left transition-colors hover:bg-muted/50"
                   >
                     <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
                       eff ? "border-foreground bg-foreground text-background" : "border-border bg-background text-transparent"
