@@ -12,6 +12,7 @@ import { useLanguage } from "@/lib/i18n";
 import BackBar from "@/components/storefront/BackBar";
 import PageHeader from "@/components/storefront/PageHeader";
 import OrderMiniProgress from "@/components/storefront/orders/OrderMiniProgress";
+import ReorderButton from "@/components/storefront/reorder/ReorderButton";
 
 export default function Orders() {
   const { t, lang } = useLanguage();
@@ -112,8 +113,11 @@ export default function Orders() {
                     ))}
                   </div>
 
-                  <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
-                    <span className="text-sm text-muted-foreground">{t("order.grandTotal")}</span>
+                  <div className="mt-5 flex items-center justify-between gap-3 border-t border-border pt-4">
+                    <div className="flex items-center gap-3">
+                      <ReorderButton order={order} />
+                      <span className="text-sm text-muted-foreground">{t("order.grandTotal")}</span>
+                    </div>
                     <span className="font-semibold">{formatPrice(order.total)}</span>
                   </div>
 

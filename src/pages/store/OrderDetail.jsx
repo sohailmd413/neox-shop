@@ -13,6 +13,7 @@ import OrderTimeline from "@/components/storefront/orders/OrderTimeline";
 import { downloadInvoicePDF } from "@/lib/invoice";
 import ReturnRequestForm from "@/components/storefront/returns/ReturnRequestForm";
 import { getReturnsConfig } from "@/lib/returns";
+import ReorderButton from "@/components/storefront/reorder/ReorderButton";
 
 const METHOD_LABEL = {
   card: "Card",
@@ -121,7 +122,10 @@ export default function OrderDetail() {
 
         {/* Items + totals */}
         <section>
-          <h2 className="mb-4 text-lg font-semibold">{t("order.items")}</h2>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold">{t("order.items")}</h2>
+            <ReorderButton order={order} />
+          </div>
           <div className="space-y-3">
             {(order.items || []).map((item, idx) => (
               <div key={idx} className="flex items-center gap-4 rounded-xl border border-border p-3">
