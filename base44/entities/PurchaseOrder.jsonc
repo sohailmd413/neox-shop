@@ -1,0 +1,147 @@
+{
+  "name": "PurchaseOrder",
+  "type": "object",
+  "properties": {
+    "po_number": {
+      "type": "string",
+      "description": "Human-readable PO reference, e.g. PO-2026-000123. Generated client-side on create."
+    },
+    "vendor_id": {
+      "type": "string",
+      "description": "The Vendor this order is placed with."
+    },
+    "vendor_name": {
+      "type": "string",
+      "description": "Vendor name snapshot at creation, for display without a join."
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "description": "Product name snapshot."
+          },
+          "sku": {
+            "type": "string",
+            "description": "Product SKU snapshot."
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Ordered quantity."
+          },
+          "unit_cost": {
+            "type": "number",
+            "description": "Per-unit cost from the vendor."
+          },
+          "received_quantity": {
+            "type": "number",
+            "default": 0,
+            "description": "Cumulative quantity received against this line so far."
+          }
+        }
+      },
+      "default": [],
+      "description": "Ordered line items with quantities and per-unit costs."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "sent",
+        "partially_received",
+        "received",
+        "cancelled"
+      ],
+      "default": "draft",
+      "description": "draft=created not yet sent; sent=issued to the vendor; partially_received=some lines partially delivered; received=all lines fully delivered; cancelled."
+    },
+    "expected_delivery_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "total_cost": {
+      "type": "number",
+      "default": 0,
+      "description": "Sum of quantity \u00d7 unit_cost across all lines, in SAR."
+    },
+    "notes": {
+      "type": "string"
+    },
+    "created_by_name": {
+      "type": "string",
+      "description": "Display name of the staff member who created the PO. created_by_id is auto-stamped."
+    }
+  },
+  "required": [
+    "vendor_id",
+    "status"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "product_manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "delivery_manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "product_manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "product_manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "product_manager"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "name": "Vendor",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Vendor / supplier display name."
+    },
+    "contact_name": {
+      "type": "string",
+      "description": "Primary contact person at the vendor."
+    },
+    "email": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string",
+      "description": "Full postal address."
+    },
+    "payment_terms": {
+      "type": "string",
+      "description": "Free-text payment terms, e.g. 'Net 30'."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active",
+      "description": "inactive vendors are hidden from the product vendor dropdown and new POs."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Internal notes about this vendor (admin-visible only)."
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "product_manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "delivery_manager"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "product_manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "product_manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "product_manager"
+          }
+        }
+      ]
+    }
+  }
+}

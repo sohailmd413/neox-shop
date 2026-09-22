@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon, ClipboardCheck, FileX, Languages,   LayoutList, Compass, Search, ShoppingCart as CartIcon, MessageSquare, HelpCircle, Bookmark, Gift, RotateCcw, Ruler } from "lucide-react";
+import { LayoutDashboard, Package, ClipboardList, Star, ArrowLeft, ShieldAlert, Layers, Image as ImageIcon, Users as UsersIcon, ShieldCheck, ChevronDown, BarChart3, Contact, TicketPercent, Settings as SettingsIcon, ClipboardCheck, FileX, Languages,   LayoutList, Compass, Search, ShoppingCart as CartIcon, MessageSquare, HelpCircle, Bookmark, Gift, RotateCcw, Ruler, Building2 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { canAccess } from "@/lib/adminPermissions";
 import { loadPendingCounts, loadRejectedCounts } from "@/lib/approval";
@@ -15,6 +15,7 @@ const SECTION_META = {
   products: { label: "Products", path: "/admin/products", icon: Package },
   categories: { label: "Categories", path: "/admin/categories", icon: Layers },
   size_charts: { label: "Size charts", path: "/admin/size-charts", icon: Ruler },
+  vendors: { label: "Vendors", path: "/admin/vendors", icon: Building2 },
   home_sections: { label: "Home sections", path: "/admin/home-sections", icon: LayoutList },
   navigation: { label: "Navigation", path: "/admin/navigation", icon: Compass },
   approvals: { label: "Approvals", path: "/admin/approvals", icon: ClipboardCheck },
@@ -41,6 +42,7 @@ const SECTION_META = {
 // group, matching the existing Staff members pattern.
 const GROUPS = [
   { id: "catalog", label: "Catalog", sections: ["products", "categories", "size_charts", "home_sections", "navigation"] },
+  { id: "operations", label: "Operations", sections: ["vendors"] },
   { id: "moderation", label: "Moderation", sections: ["approvals", "rejected", "translations"] },
   { id: "sales", label: "Sales", sections: ["orders", "customers", "coupons", "abandoned_carts", "referrals", "returns"] },
   { id: "content", label: "Content", sections: ["reviews", "posters"] },

@@ -18,7 +18,7 @@ const EMPTY = {
   name: "", name_ar: "", sku: "", slug: "", barcode: "", barcode_type: "CODE128",
   description: "", description_ar: "", short_description: "", short_description_ar: "",
   price: "", compare_at_price: "", stock: "", stock_status: "in_stock",
-  category: "", brand: "", tags: [],
+  category: "", brand: "", vendor_id: "", tags: [],
   images: [], status: "active",
   weight: "", dimensions: "", shipping_class: "", tax_class: "",
   meta_title: "", meta_description: "",
@@ -67,10 +67,12 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
   const persistedIdRef = useRef(product?.id || null);
   const [currentUser, setCurrentUser] = useState(null);
   const [sizeCharts, setSizeCharts] = useState([]);
+  const [vendors, setVendors] = useState([]);
   const { toast } = useToast();
 
   useEffect(() => { base44.auth.me().then(setCurrentUser).catch(() => {}); }, []);
   useEffect(() => { base44.entities.SizeChart.list("-updated_date", 200).then(setSizeCharts).catch(() => {}); }, []);
+  useEffect(() => { base44.entities.Vendor.list("-created_date", 500).then((v) => setVendors((v || []).filter((x) => x.status !== "inactive"))).catch(() => {}); }, []);
 
   const set = (k) => (e) => {
     const val = e.target.type === "checkbox" ? e.target.checked : e.target.value;
@@ -120,6 +122,7 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
     stock_status: form.stock_status,
     category: form.category || "",
     brand: form.brand || "",
+    vendor_id: form.vendor_id || "",
     tags: form.tags || [],
     images: form.images || [],
     status,
@@ -333,6 +336,9 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
                 </Field>
                 <Field label="Brand"><input value={form.brand} onChange={set("brand")} className={baseInput} /></Field>
               </div>
+              <Field label="Vendor / supplier" hint="Where this product is sourced from. Manage vendors under Operations → Vendors.">
+                <Dropdown type="search" options={[{ label: "None", value: "" }, ...vendors.map((v) => ({ label: v.name, value: v.id }))]} value={form.vendor_id || ""} onChange={setVal("vendor_id")} placeholder="Select vendor" />
+              </Field>
               <Field label="Short description"><input value={form.short_description} onChange={set("short_description")} className={baseInput} placeholder="One-line summary" /></Field>
               <Field label="Description (English)" required error={errors.description?.msg} fieldKey="description" hint={`${(form.description || "").trim().length}/50 characters`}>
                 <textarea value={form.description} onChange={set("description")} rows={3} className={fldCls("description")} />

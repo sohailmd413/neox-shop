@@ -67,6 +67,10 @@
     "brand": {
       "type": "string"
     },
+    "vendor_id": {
+      "type": "string",
+      "description": "The Vendor this product is sourced from. Nullable \u2014 products with no assigned vendor are sourced internally."
+    },
     "images": {
       "type": "array",
       "items": {
