@@ -62,7 +62,7 @@ export default function CartDrawer() {
                 <div className="flex-1 overflow-y-auto px-6 py-4">
                   <ul className="space-y-5">
                     {items.map((item) => (
-                      <li key={item.productId} className="flex gap-4">
+                      <li key={item.variantId ? `${item.productId}::${item.variantId}` : item.productId} className="flex gap-4">
                         <div className="h-20 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-muted/40">
                           <ProductImage
                             src={item.image}
@@ -81,8 +81,13 @@ export default function CartDrawer() {
                             >
                               {lf(item, "name", lang) || item.name}
                             </Link>
+                            {item.variantName && (
+                              <span className="mt-0.5 inline-block rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                {item.variantName}
+                              </span>
+                            )}
                             <button
-                              onClick={() => removeItem(item.productId)}
+                              onClick={() => removeItem(item.productId, item.variantId)}
                               className="text-muted-foreground transition-colors hover:text-destructive"
                               aria-label="Remove item"
                             >

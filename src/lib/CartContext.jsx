@@ -5,6 +5,13 @@ import { syncCart } from "@/lib/abandonedCart";
 const CartContext = createContext(null);
 const STORAGE_KEY = "ecom_cart_v1";
 
+// Composite key so a product with variants is stored as distinct line items
+// (e.g. 2× Size M and 1× Size L of the same product). Products without a
+// variant keep the plain productId key, so existing localStorage carts and
+// all product_id-based consumers keep working unchanged.
+const cartKey = (productId, variantId) =>
+  variantId ? `${productId}::${variantId}` : productId;
+
 export function CartProvider({ children }) {
   const [items, setItems] = useState(() => {
     try {
@@ -30,26 +37,38 @@ export function CartProvider({ children }) {
     syncCart(items);
   }, [items, tracked]);
 
-  const addItem = useCallback((product, quantity = 1) => {
-    const maxStock = Number.isFinite(product.stock) ? product.stock : Infinity;
+  // variant: optional { id, name, stock, price_override }. When provided, the
+  // item is keyed by productId::variantId so different variants of the same
+  // product are independent cart lines (Amazon/Noon behavior).
+  const addItem = useCallback((product, quantity = 1, variant = null) => {
+    const variantId = variant?.id || null;
+    const variantName = variant?.name || null;
+    const effPrice = variant?.price_override != null ? variant.price_override : product.price;
+    const effStock = variant?.stock != null ? variant.stock : product.stock;
+    const maxStock = Number.isFinite(effStock) ? effStock : Infinity;
+    const key = cartKey(product.id, variantId);
     setItems((prev) => {
-      const existing = prev.find((i) => i.productId === product.id);
+      const existing = prev.find((i) => cartKey(i.productId, i.variantId) === key);
       if (existing) {
         const nextQty = Math.min(existing.quantity + quantity, maxStock);
         return prev.map((i) =>
-          i.productId === product.id ? { ...i, quantity: nextQty, stock: product.stock ?? i.stock } : i
+          cartKey(i.productId, i.variantId) === key
+            ? { ...i, quantity: nextQty, stock: effStock, price: effPrice }
+            : i
         );
       }
       return [
         ...prev,
         {
           productId: product.id,
+          variantId,
+          variantName,
           name: product.name,
           name_ar: product.name_ar,
-          price: product.price,
+          price: effPrice,
           image: product.images?.[0] || "",
           quantity: Math.min(quantity, maxStock),
-          stock: product.stock,
+          stock: effStock,
         },
       ];
     });
@@ -57,22 +76,25 @@ export function CartProvider({ children }) {
   }, []);
 
   const getItem = useCallback(
-    (productId) => items.find((i) => i.productId === productId),
+    (productId, variantId = null) =>
+      items.find((i) => cartKey(i.productId, i.variantId) === cartKey(productId, variantId)),
     [items]
   );
 
-  const removeItem = useCallback((productId) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+  const removeItem = useCallback((productId, variantId = null) => {
+    const key = cartKey(productId, variantId);
+    setItems((prev) => prev.filter((i) => cartKey(i.productId, i.variantId) !== key));
   }, []);
 
-  const updateQuantity = useCallback((productId, quantity) => {
+  const updateQuantity = useCallback((productId, quantity, variantId = null) => {
+    const key = cartKey(productId, variantId);
     if (quantity <= 0) {
-      setItems((prev) => prev.filter((i) => i.productId !== productId));
+      setItems((prev) => prev.filter((i) => cartKey(i.productId, i.variantId) !== key));
       return;
     }
     setItems((prev) =>
       prev.map((i) => {
-        if (i.productId !== productId) return i;
+        if (cartKey(i.productId, i.variantId) !== key) return i;
         const maxStock = Number.isFinite(i.stock) ? i.stock : Infinity;
         return { ...i, quantity: Math.min(quantity, maxStock) };
       })

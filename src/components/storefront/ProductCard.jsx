@@ -9,6 +9,8 @@ import { useLanguage } from "@/lib/i18n";
 import { motionPresets, springPress, springPop } from "@/lib/motion";
 import { useWishlistToggle } from "@/hooks/useWishlistToggle";
 import { useAddToCart } from "@/hooks/useAddToCart";
+import { useCart } from "@/lib/CartContext";
+import CartStepper from "@/components/storefront/CartStepper";
 import { useCompare } from "@/lib/CompareContext";
 import SaleCountdown from "@/components/admin/SaleCountdown";
 import WishlistBurst from "@/components/storefront/WishlistBurst";
@@ -23,6 +25,8 @@ function ProductCardBase({ product, index = 0, rank = null, tag = null, soldCoun
   const reduce = useReducedMotion();
   const { wished, toggle: toggleWish } = useWishlistToggle(product.id, product.price);
   const { add: handleAdd, imgRef, justAdded, outOfStock } = useAddToCart(product);
+  const { getItem } = useCart();
+  const inCartQty = getItem(product.id, null)?.quantity || 0;
   const { isAdded, toggle: toggleCompare } = useCompare();
   const inCompare = isAdded(product.id);
 
@@ -114,32 +118,50 @@ function ProductCardBase({ product, index = 0, rank = null, tag = null, soldCoun
             </motion.span>
           </motion.button>
 
-          {/* Add-to-cart bar — slides up on hover (desktop) */}
+          {/* Add-to-cart bar — slides up on hover (desktop). Switches to a live
+              quantity stepper once the item is in the cart (single CartContext
+              source of truth), so the card reflects real cart contents. */}
           <div className="absolute inset-x-2 bottom-2 transition-all duration-300 opacity-100 translate-y-0 lg:translate-y-2 lg:opacity-0 lg:group-hover:translate-y-0 lg:group-hover:opacity-100">
-            <motion.button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                handleAdd(1);
-              }}
-              disabled={outOfStock}
-              whileTap={reduce ? undefined : { scale: 0.97 }}
-              transition={springPress}
-              className="flex w-full items-center justify-center gap-1.5 rounded-full bg-foreground/95 py-2.5 text-xs font-semibold text-background backdrop-blur transition-colors hover:bg-foreground disabled:opacity-40"
-              aria-label="Add to cart"
-            >
-              <AnimatePresence mode="wait" initial={false}>
-                {justAdded ? (
-                  <motion.span key="added" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }} transition={springPop} className="inline-flex items-center gap-1.5">
-                    <Check className="h-3.5 w-3.5" /> Added
-                  </motion.span>
-                ) : (
-                  <motion.span key="add" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }} transition={springPop} className="inline-flex items-center gap-1.5">
-                    <ShoppingBag className="h-3.5 w-3.5" /> Add to cart
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </motion.button>
+            <AnimatePresence mode="wait" initial={false}>
+              {inCartQty > 0 && !outOfStock ? (
+                <motion.div
+                  key="stepper"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.18 }}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                >
+                  <CartStepper product={product} size="card" />
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="add"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleAdd(1);
+                  }}
+                  disabled={outOfStock}
+                  whileTap={reduce ? undefined : { scale: 0.97 }}
+                  transition={springPress}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-full bg-foreground/95 py-2.5 text-xs font-semibold text-background backdrop-blur transition-colors hover:bg-foreground disabled:opacity-40"
+                  aria-label="Add to cart"
+                >
+                  <AnimatePresence mode="wait" initial={false}>
+                    {justAdded ? (
+                      <motion.span key="added" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }} transition={springPop} className="inline-flex items-center gap-1.5">
+                        <Check className="h-3.5 w-3.5" /> Added
+                      </motion.span>
+                    ) : (
+                      <motion.span key="add" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }} transition={springPop} className="inline-flex items-center gap-1.5">
+                        <ShoppingBag className="h-3.5 w-3.5" /> Add to cart
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
