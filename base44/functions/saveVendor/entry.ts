@@ -56,6 +56,15 @@ export default async function(req) {
       const dec = await decryptPII(saved.bank_account_details);
       saved.bank_account_details = user.role === "admin" ? (dec || "") : maskBank(dec);
     }
+    // Audit-log vendor application decisions (who approved/rejected, when, which vendor).
+    if (id && payload.status && payload.status !== "inactive" && payload.status !== "suspended") {
+      const action = payload.status === "active" ? "vendor_approved" : payload.status === "rejected" ? "vendor_rejected" : null;
+      if (action) {
+        await base44.asServiceRole.entities.AuditLog.create({
+          admin_id: user.id, action, target_type: "Vendor", target_id: id,
+        }).catch(() => {});
+      }
+    }
     return Response.json({ vendor: saved });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

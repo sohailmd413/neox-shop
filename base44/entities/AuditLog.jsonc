@@ -6,10 +6,12 @@
       "type": "string"
     },
     "action": {
-      "type": "string"
+      "type": "string",
+      "description": "What the staff member did, e.g. vendor_approved, vendor_rejected, product_approved, product_rejected."
     },
     "target_type": {
-      "type": "string"
+      "type": "string",
+      "description": "Entity type acted on, e.g. Vendor, Product, Category."
     },
     "target_id": {
       "type": "string"
@@ -27,9 +29,23 @@
       }
     },
     "create": {
-      "user_condition": {
-        "role": "admin"
-      }
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "product_manager"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
     }
   }
 }

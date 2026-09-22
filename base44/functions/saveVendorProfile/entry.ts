@@ -4,8 +4,9 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 // (matched by user_id) can be edited, and only the safe business fields —
 // status, approval fields, user_id, email, and bank_account_details are never
 // accepted from the vendor. This prevents a vendor from self-approving
-// (setting status=active) or tampering with admin-only/payout data. Uses the
-// service role because Vendor update is admin/pm-only by RLS.
+// (setting status=active) or tampering with admin-only/payout data. The
+// built-in updated_date stamps the change automatically. Uses the service role
+// because Vendor update is admin/pm-only by RLS.
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -27,6 +28,10 @@ export default async function(req) {
     ];
     for (const f of ALLOWED) {
       if (b[f] !== undefined) patch[f] = clean(b[f]);
+    }
+    // Notification preference toggles (booleans, not string-cleaned).
+    for (const f of ['notify_product_approved', 'notify_product_rejected', 'notify_admin_message']) {
+      if (b[f] !== undefined) patch[f] = !!b[f];
     }
     if (patch.name === '') return Response.json({ error: 'Business name cannot be empty.' }, { status: 400 });
 

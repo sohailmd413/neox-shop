@@ -5,12 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { CheckCircle2, Loader2 } from "lucide-react";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 // Vendor self-service profile editor. Submits through the saveVendorProfile
-// backend function, which only accepts safe business fields (status, approval
-// fields, email, user_id, and bank details are server-rejected). Email is
-// read-only here because it is the login identity.
+// backend function, which only accepts safe business fields + notification
+// prefs (status, approval fields, email, user_id, and bank details are
+// server-rejected). Email is read-only here because it is the login identity.
+// Profile edits do NOT require admin re-approval — the built-in updated_date
+// stamps the change.
+const NOTIFY_TOGGLES = [
+  { key: "notify_product_approved", label: "Product approved", desc: "Email me when one of my products is approved." },
+  { key: "notify_product_rejected", label: "Product rejected", desc: "Email me when one of my products is rejected." },
+  { key: "notify_admin_message", label: "Admin messages", desc: "Email me when an admin sends me a message." },
+];
+
 export default function VendorProfile() {
   const { vendor, setVendor } = useOutletContext();
   const [form, setForm] = useState(null);
@@ -32,12 +42,17 @@ export default function VendorProfile() {
         banner_url: vendor.banner_url || "",
         store_description_en: vendor.store_description_en || "",
         store_description_ar: vendor.store_description_ar || "",
+        notify_product_approved: vendor.notify_product_approved !== false,
+        notify_product_rejected: vendor.notify_product_rejected !== false,
+        notify_admin_message: vendor.notify_admin_message !== false,
       });
     }
   }, [vendor]);
 
   if (!form) return null;
   const set = (k) => (e) => { setForm((f) => ({ ...f, [k]: e.target.value })); setSaved(false); };
+  const setImg = (k) => (v) => { setForm((f) => ({ ...f, [k]: v })); setSaved(false); };
+  const setToggle = (k) => (v) => { setForm((f) => ({ ...f, [k]: v })); setSaved(false); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,7 +83,7 @@ export default function VendorProfile() {
         <p className="mt-1 text-xs text-muted-foreground">Email is your login identity and can't be changed here. Contact the store admin to update it.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-border bg-background p-6">
+      <form onSubmit={handleSubmit} className="space-y-6 rounded-2xl border border-border bg-background p-6">
         {error && <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
         {saved && <div className="flex items-center gap-2 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"><CheckCircle2 className="h-4 w-4" /> Profile saved.</div>}
 
@@ -83,13 +98,39 @@ export default function VendorProfile() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Logo URL" value={form.logo_url} onChange={set("logo_url")} />
-          <Field label="Banner URL" value={form.banner_url} onChange={set("banner_url")} />
+          <div className="space-y-2">
+            <Label>Logo</Label>
+            <ImageUpload value={form.logo_url} onChange={setImg("logo_url")} />
+            <p className="text-xs text-muted-foreground">Square image recommended (e.g. 512×512px). PNG with transparency works best.</p>
+          </div>
+          <div className="space-y-2">
+            <Label>Banner</Label>
+            <ImageUpload value={form.banner_url} onChange={setImg("banner_url")} />
+            <p className="text-xs text-muted-foreground">Wide image recommended (e.g. 1600×400px).</p>
+          </div>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2"><Label>Store description (English)</Label><Textarea rows={4} value={form.store_description_en} onChange={set("store_description_en")} /></div>
           <div className="space-y-2"><Label>Store description (Arabic)</Label><Textarea rows={4} value={form.store_description_ar} onChange={set("store_description_ar")} dir="rtl" /></div>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-sm font-medium">Notification preferences</h2>
+            <p className="text-xs text-muted-foreground">Choose which updates we email to {vendor.email}.</p>
+          </div>
+          <div className="overflow-hidden rounded-2xl border border-border divide-y divide-border">
+            {NOTIFY_TOGGLES.map((t) => (
+              <label key={t.key} className="flex items-center justify-between gap-4 px-4 py-3.5">
+                <div>
+                  <p className="text-sm font-medium">{t.label}</p>
+                  <p className="text-xs text-muted-foreground">{t.desc}</p>
+                </div>
+                <Switch checked={form[t.key]} onCheckedChange={setToggle(t.key)} />
+              </label>
+            ))}
+          </div>
         </div>
 
         <div className="flex justify-end">

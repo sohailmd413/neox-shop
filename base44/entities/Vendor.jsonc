@@ -53,6 +53,21 @@
       "type": "string",
       "description": "Reason entered by the admin when rejecting a vendor application. Shown to the vendor on the rejected status screen. Cleared when the vendor is approved or re-submitted."
     },
+    "notify_product_approved": {
+      "type": "boolean",
+      "default": true,
+      "description": "Vendor email preference: receive an email when one of their products is approved."
+    },
+    "notify_product_rejected": {
+      "type": "boolean",
+      "default": true,
+      "description": "Vendor email preference: receive an email when one of their products is rejected."
+    },
+    "notify_admin_message": {
+      "type": "boolean",
+      "default": true,
+      "description": "Vendor email preference: receive an email when an admin sends them a message. Reserved for the future admin\u2192vendor messaging feature."
+    },
     "user_id": {
       "type": "string",
       "description": "The auth User id linked to this vendor account (role=vendor). Set on registration. Used to scope vendor-portal reads to a vendor's own record. Null for admin-created supply-chain vendors with no portal account."

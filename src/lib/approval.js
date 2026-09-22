@@ -94,6 +94,10 @@ export async function approveItem(entityName, record, user) {
       ref_name: record.name,
     });
   }
+  audit(user, entityName === "Product" ? "product_approved" : "category_approved", entityName, record.id);
+  if (entityName === "Product" && record.vendor_id) {
+    try { await base44.functions.invoke("notifyVendorProductDecision", { vendor_id: record.vendor_id, decision: "approved", product_name: record.name }); } catch {}
+  }
   return updated;
 }
 
@@ -124,6 +128,10 @@ export async function rejectItem(entityName, record, user, reason) {
       reason,
     });
   }
+  audit(user, entityName === "Product" ? "product_rejected" : "category_rejected", entityName, record.id);
+  if (entityName === "Product" && record.vendor_id) {
+    try { await base44.functions.invoke("notifyVendorProductDecision", { vendor_id: record.vendor_id, decision: "rejected", product_name: record.name, reason }); } catch {}
+  }
   return updated;
 }
 
@@ -136,6 +144,17 @@ async function notify(recipientId, payload) {
     await base44.entities.Notification.create({ recipient_id: recipientId, read: false, ...payload });
   } catch {
     /* notifications are best-effort */
+  }
+}
+
+// Best-effort audit trail. Every vendor application + product/category
+// approval/rejection decision is recorded in the AuditLog with the acting staff
+// member, the action, and the target — visible to admins.
+function audit(user, action, targetType, targetId) {
+  try {
+    base44.entities.AuditLog.create({ admin_id: user.id, action, target_type: targetType, target_id: targetId });
+  } catch {
+    /* audit is best-effort; must never block the approval */
   }
 }
 
