@@ -60,7 +60,7 @@ export default function AdminSettings() {
       </div>
 
       <div className="border-b border-border">
-        <nav className="flex gap-1 overflow-x-auto">
+        <nav className="flex flex-wrap gap-1 no-scrollbar">
           {TABS.map((t) => {
             const Icon = t.icon;
             const on = active === t.id;
@@ -68,10 +68,9 @@ export default function AdminSettings() {
               <button
                 key={t.id}
                 onClick={() => setActive(t.id)}
-                className={`relative flex items-center gap-2 whitespace-nowrap px-4 py-3 text-sm font-medium transition-colors ${on ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                className={`relative flex items-center gap-2 whitespace-nowrap rounded-md px-4 py-2.5 text-sm font-medium transition-colors ${on ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"}`}
               >
                 <Icon className="h-4 w-4" /> {t.label}
-                {on && <motion.span layoutId="settingsTabUnderline" className="absolute inset-x-0 -bottom-px h-0.5 bg-foreground" />}
               </button>
             );
           })}
