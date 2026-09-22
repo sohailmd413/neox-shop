@@ -1,0 +1,91 @@
+{
+  "name": "PushSubscription",
+  "type": "object",
+  "properties": {
+    "customer_id": {
+      "type": "string",
+      "description": "App user id of a logged-in customer. Null for guests (subscription keyed by endpoint per browser/device)."
+    },
+    "endpoint": {
+      "type": "string",
+      "description": "The push service endpoint URL for this browser/device. Unique per subscription; used as the upsert key."
+    },
+    "p256dh": {
+      "type": "string",
+      "description": "Subscriber P-256 public key (base64url), used to encrypt the push payload (RFC 8291)."
+    },
+    "auth": {
+      "type": "string",
+      "description": "Subscriber auth secret (base64url), used as the HKDF salt for payload encryption."
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "en",
+        "ar"
+      ],
+      "default": "en",
+      "description": "Snapshot of the subscriber's preferred language so pushes are localized."
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "Browser/device user agent snapshot, for display in any future subscription management UI."
+    }
+  },
+  "required": [
+    "endpoint",
+    "p256dh",
+    "auth"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.customer_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "create": true,
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.customer_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "marketing_manager"
+          }
+        }
+      ]
+    }
+  }
+}

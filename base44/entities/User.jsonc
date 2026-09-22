@@ -63,11 +63,11 @@
     "marketing_opt_in": {
       "type": "boolean",
       "default": false,
-      "description": "Consent to receive promotional emails/SMS. Toggled from the customer Notification preferences."
+      "description": "Consent to receive promotional emails/SMS/push. Toggled from the customer Notification preferences."
     },
     "customer_notifications": {
       "type": "object",
-      "description": "Per-customer notification toggles. Promo consent lives in marketing_opt_in.",
+      "description": "Per-customer email notification toggles. Promo consent lives in marketing_opt_in.",
       "properties": {
         "order_updates": {
           "type": "boolean",
@@ -80,6 +80,34 @@
         "new_arrivals": {
           "type": "boolean",
           "default": false
+        }
+      }
+    },
+    "push_preferences": {
+      "type": "object",
+      "description": "Per-customer browser push notification toggles. Granular per notification type (not all-or-nothing). Broadcasts are promotional and additionally require marketing_opt_in. Defaults to all enabled.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Master push toggle. When false, no pushes are sent regardless of the per-type toggles."
+        },
+        "order_updates": {
+          "type": "boolean",
+          "default": true
+        },
+        "price_drops": {
+          "type": "boolean",
+          "default": true
+        },
+        "restocks": {
+          "type": "boolean",
+          "default": true
+        },
+        "broadcasts": {
+          "type": "boolean",
+          "default": true,
+          "description": "Promotional campaign pushes. Additionally requires marketing_opt_in."
         }
       }
     },

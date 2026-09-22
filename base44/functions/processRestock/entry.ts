@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { productLink } from "../../shared/alerts.ts";
+import { sendPushToCustomer } from "../../shared/push.ts";
 
 // Triggered when a Product is updated (entity trigger). Only processes pending
 // (notified=false) StockAlerts for the product, so it's a no-op on unrelated
@@ -33,6 +34,14 @@ export default async function(req) {
             recipient_id: a.customer_id, type: 'info',
             message: `Back in stock — ${product.name || 'your item'}.`,
             ref_type: 'product', ref_id: product.id, ref_name: product.name || '',
+          });
+        } catch {}
+        try {
+          await sendPushToCustomer(base44, a.customer_id, "restocks", {
+            title: "Back in stock",
+            body: `${product.name || "Your item"} is back in stock.`,
+            url: `/product/${product.id}`,
+            tag: `restock-${product.id}`,
           });
         } catch {}
       }

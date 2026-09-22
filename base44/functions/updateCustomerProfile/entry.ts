@@ -24,6 +24,7 @@ export default async function(req) {
       language,
       marketing_opt_in,
       customer_notifications,
+      push_preferences,
     } = body || {};
 
     // Phone uniqueness (customer-wide).
@@ -57,6 +58,7 @@ export default async function(req) {
     if (language !== undefined) patch.language = language || "en";
     if (marketing_opt_in !== undefined) patch.marketing_opt_in = !!marketing_opt_in;
     if (customer_notifications !== undefined) patch.customer_notifications = customer_notifications;
+    if (push_preferences !== undefined) patch.push_preferences = push_preferences;
 
     const updated = await base44.asServiceRole.entities.User.update(user.id, patch);
     return Response.json({ available: true, user: updated });

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { syncPriceAlert } from "@/lib/alerts";
+import { maybePromptPush } from "@/lib/push";
 
 const WishlistContext = createContext(null);
 const STORAGE_KEY = "ecom_wishlist_v1";
@@ -27,6 +28,7 @@ export function WishlistProvider({ children }) {
       setIds([...ids, productId]);
       if (price != null) setPrices((p) => ({ ...p, [productId]: Number(price) }));
       syncPriceAlert(productId, true);
+      maybePromptPush("wishlist_add");
     } else {
       setIds(ids.filter((id) => id !== productId));
       setPrices((p) => { const n = { ...p }; delete n[productId]; return n; });

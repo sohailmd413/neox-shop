@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.44';
 import { getAlertConfig, productLink } from "../../shared/alerts.ts";
+import { sendPushToCustomer } from "../../shared/push.ts";
 
 // Scheduled job (every few hours). For each PriceAlert, compare the product's
 // current price to the baseline (last_notified_price if set, else price_at_added).
@@ -58,6 +59,16 @@ export default async function(req) {
             body: `Good news, ${name} — "${productName}" on your wishlist just dropped to ${current.toFixed(2)} SAR (was ${baseline.toFixed(2)} SAR).\n\nSee it here: ${link}\n\nTo stop price alerts for this item, remove it from your wishlist.`,
           });
         } catch {}
+      }
+      if (a.customer_id) {
+        try {
+          await sendPushToCustomer(base44, a.customer_id, "price_drops", {
+            title: "Price drop",
+            body: `${productName} is now ${current.toFixed(2)} SAR (was ${baseline.toFixed(2)} SAR).`,
+            url: `/product/${product.id}`,
+            tag: `price-${product.id}`,
+          });
+        } catch (e) {}
       }
       await base44.asServiceRole.entities.PriceAlert.update(a.id, { last_notified_price: current, last_notified_at: new Date().toISOString() });
       notified++;

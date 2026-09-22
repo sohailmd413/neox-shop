@@ -1,6 +1,8 @@
 // Shared campaign send logic, used by the sendCampaign (manual/test) and
 // processScheduledCampaigns (scheduled job) backend functions. Server-side only.
 
+import { sendPushToCustomer } from "./push.ts";
+
 const STAFF_ROLES = ["admin", "product_manager", "delivery_manager", "marketing_manager"];
 const INACTIVE_DAYS = 90;
 
@@ -39,7 +41,7 @@ function wrapHtml(lang, html, storeName) {
 export async function resolveRecipients(base44, campaign) {
   const users = await base44.asServiceRole.entities.User.list("-created_date", 2000) || [];
   const optedIn = users.filter((u) => u && u.id && !STAFF_ROLES.includes(u.role) && u.marketing_opt_in === true && u.email);
-  const toRecip = (u) => ({ email: u.email, language: u.language === "ar" ? "ar" : "en", name: u.display_name || u.full_name || "" });
+  const toRecip = (u) => ({ id: u.id, email: u.email, language: u.language === "ar" ? "ar" : "en", name: u.display_name || u.full_name || "" });
 
   const seg = campaign.target_segment;
   if (seg === "all_opted_in") return optedIn.map(toRecip);
@@ -115,6 +117,18 @@ export async function sendCampaignNow(base44, campaign) {
       sent++;
     } catch {
       failed++;
+    }
+    // Push broadcast channel: also push opted-in customers with a subscription
+    // and the broadcasts preference (broadcasts additionally require
+    // marketing_opt_in, already true for resolved recipients). Best-effort.
+    if (r.id) {
+      try {
+        await sendPushToCustomer(base44, r.id, "broadcasts", {
+          title: storeName,
+          body: subject,
+          url: "/shop",
+        });
+      } catch (e) {}
     }
   }
   await base44.asServiceRole.entities.Campaign.update(campaign.id, {

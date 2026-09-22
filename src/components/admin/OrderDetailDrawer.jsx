@@ -60,6 +60,7 @@ export default function OrderDetailDrawer({ order, onClose, onChanged, adminName
       });
       if (order.status !== draft.status) {
         base44.functions.invoke("syncOrderLoyalty", { orderId: order.id, status: draft.status }).catch(() => {});
+        base44.functions.invoke("notifyOrderUpdate", { orderId: order.id, status: draft.status }).catch(() => {});
       }
       toast({ title: "Order updated" });
       onChanged();
