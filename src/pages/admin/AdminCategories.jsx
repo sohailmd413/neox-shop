@@ -12,6 +12,8 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BulkAddGrid from "@/components/admin/categories/BulkAddGrid";
 import MergeDialog from "@/components/admin/categories/MergeDialog";
+import CategoryBulkImageDialog from "@/components/admin/categories/CategoryBulkImageDialog";
+import CategoryHealthCheck from "@/components/admin/categories/CategoryHealthCheck";
 import ConfirmDialog from "@/components/admin/ui/ConfirmDialog";
 import { showUndoToast } from "@/components/admin/ui/UndoToast";
 import { EmptyState, ErrorState } from "@/components/shared/StateViews";
@@ -28,6 +30,8 @@ export default function AdminCategories() {
   const [saving, setSaving] = useState(false);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [mergeSrc, setMergeSrc] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [bulkImgOpen, setBulkImgOpen] = useState(false);
   const [confirm, setConfirm] = useState(null);
   const [user, setUser] = useState(null);
   const { toast } = useToast();
@@ -40,12 +44,14 @@ export default function AdminCategories() {
     setLoading(true);
     setError(null);
     try {
-      const [c, p] = await Promise.all([
+      const [c, p, o] = await Promise.all([
         base44.entities.Category.list("sort_order", 500),
         base44.entities.Product.list("-created_date", 1000),
+        base44.entities.Order.list("-created_date", 500).catch(() => []),
       ]);
       setCategories(c || []);
       setProducts(p || []);
+      setOrders(o || []);
     } catch {
       setError(true);
       toast({ title: "Could not load categories", variant: "destructive" });
@@ -329,6 +335,7 @@ export default function AdminCategories() {
       </div>
 
       <CategoryStats categories={categories} products={products} />
+      <CategoryHealthCheck categories={categories} products={products} />
 
       <div className="grid gap-6 lg:grid-cols-10">
         {/* Left panel: tree */}
@@ -367,6 +374,8 @@ export default function AdminCategories() {
               onBulkActivate={bulkActivate}
               onBulkDeactivate={bulkDeactivate}
               onBulkDelete={bulkDelete}
+              orders={orders}
+              onBulkImage={() => setBulkImgOpen(true)}
             />
           )}
         </div>
@@ -390,6 +399,14 @@ export default function AdminCategories() {
 
       {mergeSrc && (
         <MergeDialog source={mergeSrc} categories={categories} products={products} onClose={() => setMergeSrc(null)} onDone={load} />
+      )}
+
+      {bulkImgOpen && (
+        <CategoryBulkImageDialog
+          categories={categories.filter((c) => selected.has(c.id))}
+          onClose={() => setBulkImgOpen(false)}
+          onDone={() => { setBulkImgOpen(false); setSelected(new Set()); load(); }}
+        />
       )}
 
       {confirm && (

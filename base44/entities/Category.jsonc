@@ -70,6 +70,34 @@
       "default": true,
       "description": "Show this category in the storefront navigation menu."
     },
+    "attribute_templates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Stable machine key, auto-derived from the English label."
+          },
+          "label": {
+            "type": "string"
+          },
+          "label_ar": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "number",
+              "select"
+            ],
+            "default": "text"
+          }
+        }
+      },
+      "description": "Category-specific product attributes (e.g. Electronics: Screen size, Battery life; Apparel: Material, Fit type). When a product is added under this category, the product form dynamically shows these attribute fields instead of a generic form. Powers structured comparison and the fit finder."
+    },
     "focus_keyword": {
       "type": "string",
       "description": "SEO focus keyword for the category page."

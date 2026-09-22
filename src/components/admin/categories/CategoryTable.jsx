@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { formatPrice } from "@/lib/format";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -29,6 +30,8 @@ export default function CategoryTable({
   onBulkActivate,
   onBulkDeactivate,
   onBulkDelete,
+  orders,
+  onBulkImage,
 }) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("all");
@@ -38,6 +41,35 @@ export default function CategoryTable({
 
   const count = (cat) => products.filter((p) => p.category === cat.name).length;
   const nameOf = (id) => categories.find((c) => c.id === id)?.name;
+
+  // Per-category revenue (last 30d vs previous 30d) and weighted avg rating,
+  // computed from order items + product ratings. Surfaced as inline analytics
+  // columns so admins see category performance without jumping to Reports.
+  const analytics = useMemo(() => {
+    const now = Date.now();
+    const curStart = now - 30 * 86400000;
+    const prevStart = now - 60 * 86400000;
+    const prodCat = new Map((products || []).map((p) => [p.id, p.category]));
+    const rev = {};
+    const prev = {};
+    (orders || []).forEach((o) => {
+      const t = new Date(o.created_date || 0).getTime();
+      (o.items || []).forEach((it) => {
+        const cat = prodCat.get(it.product_id);
+        if (!cat) return;
+        const amt = (Number(it.price) || 0) * (Number(it.quantity) || 0);
+        if (t >= curStart) rev[cat] = (rev[cat] || 0) + amt;
+        else if (t >= prevStart) prev[cat] = (prev[cat] || 0) + amt;
+      });
+    });
+    const rating = {};
+    (products || []).forEach((p) => {
+      if (!p.category) return;
+      if (!rating[p.category]) rating[p.category] = { sum: 0, n: 0 };
+      if (p.rating && p.num_reviews > 0) { rating[p.category].sum += p.rating * p.num_reviews; rating[p.category].n += p.num_reviews; }
+    });
+    return { rev, prev, rating };
+  }, [orders, products]);
 
   const filtered = useMemo(() => {
     return categories.filter((c) => {
@@ -108,6 +140,7 @@ export default function CategoryTable({
           <span className="font-medium">{selected.size} selected</span>
           <Button size="sm" variant="outline" onClick={onBulkActivate}>Activate</Button>
           <Button size="sm" variant="outline" onClick={onBulkDeactivate}>Archive</Button>
+          {onBulkImage && <Button size="sm" variant="outline" onClick={onBulkImage}>Refresh image</Button>}
           <Button size="sm" variant="destructive" onClick={onBulkDelete}>Delete</Button>
           <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>Clear</Button>
         </div>
@@ -122,6 +155,8 @@ export default function CategoryTable({
               <th className="px-3 py-3 font-medium">Name</th>
               <th className="hidden px-3 py-3 font-medium md:table-cell">Parent</th>
               <th className="w-20 px-3 py-3 text-right font-medium">Products</th>
+              <th className="hidden px-3 py-3 text-right font-medium xl:table-cell">Revenue (30d)</th>
+              <th className="hidden px-3 py-3 text-right font-medium xl:table-cell">Avg rating</th>
               <th className="hidden px-3 py-3 font-medium lg:table-cell">Featured</th>
               <th className="w-24 px-3 py-3 font-medium">Status</th>
               <th className="hidden px-3 py-3 font-medium xl:table-cell">Sort</th>
@@ -163,6 +198,22 @@ export default function CategoryTable({
                 </td>
                 <td className="hidden px-3 py-3 align-middle text-muted-foreground md:table-cell">{c.parent_id ? nameOf(c.parent_id) || "—" : "—"}</td>
                 <td className="px-3 py-3 text-right align-middle tabular-nums">{count(c)}</td>
+                <td className="hidden px-3 py-3 text-right align-middle tabular-nums xl:table-cell">
+                  {(() => {
+                    const cur = analytics.rev[c.name] || 0;
+                    const pr = analytics.prev[c.name] || 0;
+                    const trend = pr > 0 ? Math.round(((cur - pr) / pr) * 100) : null;
+                    return (
+                      <span className="flex items-center justify-end gap-1">
+                        <span>{cur > 0 ? formatPrice(cur) : "—"}</span>
+                        {trend !== null && <span className={trend >= 0 ? "text-emerald-600" : "text-red-500"}>{trend >= 0 ? "▲" : "▼"}{Math.abs(trend)}%</span>}
+                      </span>
+                    );
+                  })()}
+                </td>
+                <td className="hidden px-3 py-3 text-right align-middle tabular-nums xl:table-cell">
+                  {(() => { const r = analytics.rating[c.name]; return r && r.n ? (r.sum / r.n).toFixed(1) : "—"; })()}
+                </td>
                 <td className="hidden px-3 py-3 align-middle lg:table-cell">
                   <span className={`rounded-full px-2 py-0.5 text-xs ${c.featured ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300" : "bg-muted text-muted-foreground"}`}>
                     {c.featured ? "Yes" : "No"}

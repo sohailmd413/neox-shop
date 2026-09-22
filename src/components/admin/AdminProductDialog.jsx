@@ -27,6 +27,8 @@ const EMPTY = {
   return_days: "", warranty: "", sale_ends_at: "",
   size_chart_id: "", fit_notes: "", fit_notes_ar: "",
   admin_notes: "",
+  secondary_category_ids: [],
+  specifications: [],
 };
 
 const TABS = [
@@ -44,6 +46,8 @@ const TABS = [
 const baseInput = "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/40";
 const errInput = " !border-red-500 focus:border-red-500 ring-1 ring-red-200";
 
+const upsertSpec = (specs, key, value) => [...specs.filter((s) => s.key !== key), { key, value }];
+
 export default function AdminProductDialog({ product, categories, onClose, onSaved, onDraftUpsert, vendorMode = false }) {
   const [tab, setTab] = useState("general");
   const [form, setForm] = useState(() => {
@@ -58,6 +62,8 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
       return_days: product.return_days ?? "",
       tags: product.tags || [],
       admin_notes: product?.admin_notes || "",
+      secondary_category_ids: product?.secondary_category_ids || [],
+      specifications: product?.specifications || [],
       images: product.images || [],
       sale_ends_at: product.sale_ends_at ? product.sale_ends_at.slice(0, 16) : "",
     };
@@ -164,6 +170,8 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
     fit_notes_ar: form.fit_notes_ar || "",
     sale_ends_at: form.sale_ends_at ? new Date(form.sale_ends_at).toISOString() : null,
     admin_notes: form.admin_notes || "",
+    secondary_category_ids: form.secondary_category_ids || [],
+    specifications: (form.specifications || []).filter((s) => String(s.value).trim() !== ""),
     completion_percentage: productCompletion(form),
     last_edited_at: new Date().toISOString(),
   });
@@ -394,6 +402,46 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
                   <Dropdown type="search" options={[{ label: "None", value: "" }, ...vendors.map((v) => ({ label: v.name, value: v.id }))]} value={form.vendor_id || ""} onChange={setVal("vendor_id")} placeholder="Select vendor" />
                 </Field>
               )}
+              {(() => {
+                const cat = categories.find((c) => c.name === form.category);
+                const templates = cat?.attribute_templates || [];
+                if (!templates.length) return null;
+                return (
+                  <div className="rounded-lg border border-border p-3">
+                    <p className="mb-2 text-xs font-medium text-muted-foreground">Specifications — {cat.name}</p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {templates.map((tm) => (
+                        <Field key={tm.key} label={tm.label + (tm.label_ar ? ` / ${tm.label_ar}` : "")}>
+                          <input
+                            value={(form.specifications || []).find((s) => s.key === tm.key)?.value || ""}
+                            onChange={(e) => setVal("specifications", upsertSpec(form.specifications || [], tm.key, e.target.value))}
+                            className={baseInput}
+                          />
+                        </Field>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+              <details className="rounded-lg border border-border p-3">
+                <summary className="cursor-pointer text-xs font-medium text-muted-foreground">Secondary categories ({(form.secondary_category_ids || []).length}) — appear under more than one category</summary>
+                <div className="mt-2 max-h-40 space-y-1 overflow-y-auto">
+                  {categories.filter((c) => c.name !== form.category).map((c) => {
+                    const checked = (form.secondary_category_ids || []).includes(c.id);
+                    return (
+                      <label key={c.id} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => setVal("secondary_category_ids", e.target.checked ? [...(form.secondary_category_ids || []), c.id] : (form.secondary_category_ids || []).filter((id) => id !== c.id))}
+                          className="h-4 w-4 rounded border-border"
+                        />
+                        {c.name}
+                      </label>
+                    );
+                  })}
+                </div>
+              </details>
               <Field label="Short description"><input value={form.short_description} onChange={set("short_description")} className={baseInput} placeholder="One-line summary" /></Field>
               <Field label="Description (English)" required error={errors.description?.msg} fieldKey="description" hint={`${(form.description || "").trim().length}/50 characters`}>
                 <textarea value={form.description} onChange={set("description")} rows={3} className={fldCls("description")} />

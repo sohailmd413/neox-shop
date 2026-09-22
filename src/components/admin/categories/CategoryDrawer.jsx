@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import ReactQuill from "react-quill-new";
 import "quill/dist/quill.snow.css";
-import { Save, Send, ChevronDown } from "lucide-react";
+import { Save, Send, ChevronDown, Plus, Trash2 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import Dropzone from "@/components/admin/ui/Dropzone";
+import { SelectNative } from "@/components/ui/select-native";
 import ParentCombobox from "./ParentCombobox";
 import { slugify } from "@/lib/format";
 import ApprovalHistory from "@/components/admin/ApprovalHistory";
@@ -19,6 +20,7 @@ const blank = () => ({
   description: "", description_ar: "", short_description: "", short_description_ar: "",
   sort_order: 0, active: false, status: "draft", featured: false, show_in_nav: true,
   meta_title: "", meta_description: "", focus_keyword: "",
+  attribute_templates: [],
 });
 
 // Right-side slide-over used for both Add and Edit category. The form fields
@@ -28,6 +30,7 @@ export default function CategoryDrawer({ open, initial, isAdd, categories, onSub
   const [form, setForm] = useState(blank());
   const [errors, setErrors] = useState({});
   const [seoOpen, setSeoOpen] = useState(false);
+  const [attrOpen, setAttrOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -40,6 +43,9 @@ export default function CategoryDrawer({ open, initial, isAdd, categories, onSub
     setForm((f) => ({ ...f, [k]: v }));
     setErrors((prev) => { if (!prev[k]) return prev; const n = { ...prev }; delete n[k]; return n; });
   };
+  const addAttr = () => set("attribute_templates", [...(form.attribute_templates || []), { label: "", label_ar: "", type: "text" }]);
+  const updAttr = (i, patch) => set("attribute_templates", (form.attribute_templates || []).map((t, idx) => (idx === i ? { ...t, ...patch } : t)));
+  const rmAttr = (i) => set("attribute_templates", (form.attribute_templates || []).filter((_, idx) => idx !== i));
   const slugPreview = (form.slug?.trim() || slugify(form.name)) || "";
 
   const doSubmit = (mode) => {
@@ -62,6 +68,9 @@ export default function CategoryDrawer({ open, initial, isAdd, categories, onSub
         slug: form.slug?.trim() || slugify(form.name),
         parent_id: form.parent_id || null,
         sort_order: Number(form.sort_order) || 0,
+        attribute_templates: (form.attribute_templates || [])
+          .filter((t) => (t.label || "").trim())
+          .map((t, i) => ({ key: slugify(t.label) || `attr_${i}`, label: t.label.trim(), label_ar: (t.label_ar || "").trim(), type: t.type || "text" })),
       },
       mode
     );
@@ -158,6 +167,35 @@ export default function CategoryDrawer({ open, initial, isAdd, categories, onSub
           <div className="flex flex-wrap gap-5">
             <Toggle label="Featured on homepage" checked={form.featured} onChange={(v) => set("featured", v)} />
             <Toggle label="Show in navigation" checked={form.show_in_nav} onChange={(v) => set("show_in_nav", v)} />
+          </div>
+
+          <div className="rounded-xl border border-border">
+            <button type="button" onClick={() => setAttrOpen((v) => !v)} className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium hover:bg-muted/40">
+              <span>Attribute template ({(form.attribute_templates || []).length})</span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${attrOpen ? "rotate-180" : ""}`} />
+            </button>
+            {attrOpen && (
+              <div className="space-y-3 border-t border-border p-4">
+                <p className="text-xs text-muted-foreground">Define the product attributes shown in the form when a product is added under this category (e.g. Screen size, Battery life). Leave empty for a generic form.</p>
+                {(form.attribute_templates || []).map((t, i) => (
+                  <div key={i} className="grid items-end gap-2 sm:grid-cols-12">
+                    <div className="sm:col-span-4"><Input value={t.label || ""} onChange={(e) => updAttr(i, { label: e.target.value })} placeholder="Label (EN)" /></div>
+                    <div className="sm:col-span-4"><Input dir="rtl" value={t.label_ar || ""} onChange={(e) => updAttr(i, { label_ar: e.target.value })} placeholder="Label (AR)" /></div>
+                    <div className="sm:col-span-3">
+                      <SelectNative value={t.type || "text"} onChange={(e) => updAttr(i, { type: e.target.value })} className="!h-9">
+                        <option value="text">Text</option>
+                        <option value="number">Number</option>
+                        <option value="select">Select</option>
+                      </SelectNative>
+                    </div>
+                    <div className="flex justify-end sm:col-span-1">
+                      <button type="button" onClick={() => rmAttr(i)} className="rounded-md p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label="Remove attribute"><Trash2 className="h-4 w-4" /></button>
+                    </div>
+                  </div>
+                ))}
+                <Button type="button" size="sm" variant="outline" onClick={addAttr}><Plus className="h-4 w-4" /> Add attribute</Button>
+              </div>
+            )}
           </div>
 
           <div className="rounded-xl border border-border">

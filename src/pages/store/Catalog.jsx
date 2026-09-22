@@ -110,7 +110,8 @@ export default function Catalog() {
       // descendants so clicking a parent shows its whole subtree.
       if (category) {
         const names = descendantNames(categories, category);
-        list = list.filter((p) => p.category && names.has(p.category));
+        const idToName = new Map(categories.map((c) => [c.id, c.name]));
+        list = list.filter((p) => (p.category && names.has(p.category)) || (p.secondary_category_ids || []).some((id) => names.has(idToName.get(id))));
       }
 
       switch (effectiveSort) {
@@ -190,10 +191,11 @@ export default function Catalog() {
   // search/sale/price), parent counts including descendants.
   const counts = useMemo(() => {
     const desc = new Map(categories.map((c) => [c.name, descendantNames(categories, c.name)]));
+    const idToName = new Map(categories.map((c) => [c.id, c.name]));
     const map = {};
     for (const c of categories) {
       const names = desc.get(c.name);
-      map[c.name] = countsBase.reduce((n, p) => n + (p.category && names.has(p.category) ? 1 : 0), 0);
+      map[c.name] = countsBase.reduce((n, p) => n + (((p.category && names.has(p.category)) || (p.secondary_category_ids || []).some((id) => names.has(idToName.get(id)))) ? 1 : 0), 0);
     }
     return map;
   }, [categories, countsBase]);

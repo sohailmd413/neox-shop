@@ -72,6 +72,13 @@
     "category": {
       "type": "string"
     },
+    "secondary_category_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Optional secondary categories this product also appears under on the storefront (category ids). Lets a product surface under more than one relevant category (e.g. a yoga mat under both Sports Equipment and Home Fitness) without duplicating the record."
+    },
     "brand": {
       "type": "string"
     },
@@ -150,6 +157,21 @@
       "items": {
         "type": "string"
       }
+    },
+    "specifications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Category-specific structured attributes (e.g. Screen size, Material) as {key, value} pairs. Driven by the selected category's attribute_templates so the form adapts per category. Powers structured product comparison."
     },
     "rating": {
       "type": "number",
