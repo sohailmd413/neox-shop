@@ -40,6 +40,7 @@ import AdminProfile from '@/pages/admin/AdminProfile';
 import AdminLogin from '@/pages/admin/AdminLogin';
 import PrintBarcodes from '@/pages/admin/PrintBarcodes';
 import AdminCategories from '@/pages/admin/AdminCategories';
+import AdminSizeCharts from '@/pages/admin/AdminSizeCharts';
 import AdminReports from '@/pages/admin/AdminReports';
 import PolicyPage from '@/pages/store/PolicyPage';
 import Account from '@/pages/store/Account';
@@ -126,6 +127,7 @@ const AuthenticatedApp = () => {
             <Route path="translations" element={<AdminTranslations />} />
             <Route path="products" element={<AdminProducts />} />
             <Route path="categories" element={<AdminCategories />} />
+            <Route path="size-charts" element={<AdminSizeCharts />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="customers" element={<AdminCustomers />} />
             <Route path="customers/:id" element={<CustomerDetail />} />

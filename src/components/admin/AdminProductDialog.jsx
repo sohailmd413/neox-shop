@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Info, Image, Tag, Truck, Search, Box, Flag } from "lucide-react";
+import { Info, Image, Tag, Truck, Search, Box, Flag, Ruler } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -24,6 +24,7 @@ const EMPTY = {
   meta_title: "", meta_description: "",
   featured: false, is_new_arrival: false, is_best_seller: false,
   return_days: "", warranty: "", sale_ends_at: "",
+  size_chart_id: "", fit_notes: "", fit_notes_ar: "",
 };
 
 const TABS = [
@@ -34,6 +35,7 @@ const TABS = [
   { id: "shipping", label: "Shipping", icon: Truck },
   { id: "seo", label: "SEO", icon: Search },
   { id: "flags", label: "Flags", icon: Flag },
+  { id: "sizing", label: "Sizing", icon: Ruler },
 ];
 
 const baseInput = "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-foreground/40";
@@ -64,9 +66,11 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
   const [publishConfirm, setPublishConfirm] = useState(false);
   const persistedIdRef = useRef(product?.id || null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [sizeCharts, setSizeCharts] = useState([]);
   const { toast } = useToast();
 
   useEffect(() => { base44.auth.me().then(setCurrentUser).catch(() => {}); }, []);
+  useEffect(() => { base44.entities.SizeChart.list("-updated_date", 200).then(setSizeCharts).catch(() => {}); }, []);
 
   const set = (k) => (e) => {
     const val = e.target.type === "checkbox" ? e.target.checked : e.target.value;
@@ -130,6 +134,9 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
     is_best_seller: !!form.is_best_seller,
     return_days: form.return_days === "" || form.return_days === null ? 0 : Number(form.return_days),
     warranty: form.warranty || "",
+    size_chart_id: form.size_chart_id || "",
+    fit_notes: form.fit_notes || "",
+    fit_notes_ar: form.fit_notes_ar || "",
     sale_ends_at: form.sale_ends_at ? new Date(form.sale_ends_at).toISOString() : null,
     completion_percentage: productCompletion(form),
     last_edited_at: new Date().toISOString(),
@@ -418,6 +425,26 @@ export default function AdminProductDialog({ product, categories, onClose, onSav
                 <Field label="Return window (days)"><input type="number" min="0" value={form.return_days} onChange={set("return_days")} className={baseInput} placeholder="0 = no returns" /></Field>
                 <Field label="Warranty"><input value={form.warranty} onChange={set("warranty")} className={baseInput} placeholder="e.g. 2-year manufacturer" /></Field>
               </div>
+            </div>
+          )}
+
+          {tab === "sizing" && (
+            <div className="space-y-4">
+              <Field label="Size chart" hint="Pick a reusable size-chart template. Manage templates under Catalog → Size charts.">
+                <Dropdown
+                  type="select"
+                  options={[{ label: "None", value: "" }, ...sizeCharts.map((c) => ({ label: c.name, value: c.id }))]}
+                  value={form.size_chart_id || ""}
+                  onChange={setVal("size_chart_id")}
+                  placeholder="Select a size chart"
+                />
+              </Field>
+              <Field label="Fit notes (English)" hint="e.g. 'Runs small — order one size up'. Shown in the size guide modal.">
+                <input value={form.fit_notes || ""} onChange={set("fit_notes")} className={baseInput} placeholder="Runs small — order one size up" />
+              </Field>
+              <Field label="Fit notes (Arabic)">
+                <input dir="rtl" value={form.fit_notes_ar || ""} onChange={set("fit_notes_ar")} className={baseInput} placeholder="مقاسه صغير — اطلب مقاسًا أكبر" />
+              </Field>
             </div>
           )}
 

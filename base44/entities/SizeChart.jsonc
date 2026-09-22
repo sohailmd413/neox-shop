@@ -1,0 +1,117 @@
+{
+  "name": "SizeChart",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Template name, e.g. 'Standard Men's Apparel'."
+    },
+    "name_ar": {
+      "type": "string",
+      "description": "Arabic template name shown to admins."
+    },
+    "chart_type": {
+      "type": "string",
+      "enum": [
+        "apparel",
+        "footwear"
+      ],
+      "default": "apparel",
+      "description": "apparel=body-measurement chart (chest/waist\u2026); footwear=size-system chart (EU/UK/US + foot length)."
+    },
+    "columns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Stable machine key used in each row object, e.g. 'chest_cm'."
+          },
+          "label": {
+            "type": "string"
+          },
+          "label_ar": {
+            "type": "string"
+          },
+          "is_size_column": {
+            "type": "boolean",
+            "default": false,
+            "description": "True for the column whose value is the size label (the 'Size' column). Exactly one column should be marked."
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "",
+              "cm",
+              "inch",
+              "eu",
+              "uk",
+              "us"
+            ],
+            "default": "",
+            "description": "Measurement unit for this column. cm/inch for body measurements; eu/uk/us for footwear size systems; empty for a plain label column."
+          }
+        }
+      },
+      "default": []
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "default": [],
+      "description": "Each row is an object keyed by column.key. Numeric cells are stored as numbers; the size column is stored as a string."
+    }
+  },
+  "required": [
+    "name",
+    "chart_type"
+  ],
+  "rls": {
+    "read": true,
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "product_manager"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "product_manager"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "product_manager"
+          }
+        }
+      ]
+    }
+  }
+}

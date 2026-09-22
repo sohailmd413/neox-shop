@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ShoppingBag, Star, Minus, Plus, ChevronRight, Truck, RefreshCw, ShieldCheck, Heart } from "lucide-react";
+import { ShoppingBag, Star, Minus, Plus, ChevronRight, Truck, RefreshCw, ShieldCheck, Heart, Ruler } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useCart } from "@/lib/CartContext";
 import { useWishlist } from "@/lib/WishlistContext";
@@ -18,6 +18,7 @@ import ReviewSection from "@/components/storefront/reviews/ReviewSection";
 import QuestionSection from "@/components/storefront/qa/QuestionSection";
 import RecentlyViewedRow from "@/components/storefront/RecentlyViewedRow";
 import BackInStockButton from "@/components/storefront/BackInStockButton";
+import SizeGuideModal from "@/components/storefront/sizing/SizeGuideModal";
 import { getRelatedProducts } from "@/lib/relatedProducts";
 import Seo from "@/components/shared/Seo";
 import { productUrl } from "@/lib/productUrl";
@@ -38,6 +39,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [variantId, setVariantId] = useState(null);
   const [categories, setCategories] = useState([]);
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const reviewsRef = useRef(null);
 
   useEffect(() => {
@@ -317,32 +319,45 @@ export default function ProductDetail() {
               </p>
             )}
 
-            {/* Variants as pills */}
-            {variants.length > 0 && (
+            {/* Variants as pills (+ Size guide link) */}
+            {(variants.length > 0 || product.size_chart_id) && (
               <div className="mt-5">
-                <p className="mb-2 text-xs font-medium text-muted-foreground">Options</p>
-                <div className="flex flex-wrap gap-2">
-                  {variants.map((v) => (
-                    <motion.button
-                      key={v.id}
-                      whileTap={{ scale: 0.95 }}
-                      transition={springPress}
-                      onClick={() => setVariantId(v.id)}
-                      disabled={v.stock != null && v.stock <= 0}
-                      className={cn(
-                        "rounded-full border px-3.5 py-1.5 text-sm transition-colors disabled:opacity-40",
-                        variantId === v.id
-                          ? "border-foreground bg-foreground text-background"
-                          : "border-border hover:border-foreground/40"
-                      )}
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-xs font-medium text-muted-foreground">Options</p>
+                  {product.size_chart_id && (
+                    <button
+                      type="button"
+                      onClick={() => setSizeGuideOpen(true)}
+                      className="flex items-center gap-1 text-xs font-medium text-foreground underline-offset-2 hover:underline"
                     >
-                      {v.name}
-                      {v.price_override != null && v.price_override !== product.price && (
-                        <span className="ms-1.5 text-xs opacity-70">· {formatPrice(v.price_override)}</span>
-                      )}
-                    </motion.button>
-                  ))}
+                      <Ruler className="h-3.5 w-3.5" /> {t("sizing.sizeGuide")}
+                    </button>
+                  )}
                 </div>
+                {variants.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {variants.map((v) => (
+                      <motion.button
+                        key={v.id}
+                        whileTap={{ scale: 0.95 }}
+                        transition={springPress}
+                        onClick={() => setVariantId(v.id)}
+                        disabled={v.stock != null && v.stock <= 0}
+                        className={cn(
+                          "rounded-full border px-3.5 py-1.5 text-sm transition-colors disabled:opacity-40",
+                          variantId === v.id
+                            ? "border-foreground bg-foreground text-background"
+                            : "border-border hover:border-foreground/40"
+                        )}
+                      >
+                        {v.name}
+                        {v.price_override != null && v.price_override !== product.price && (
+                          <span className="ms-1.5 text-xs opacity-70">· {formatPrice(v.price_override)}</span>
+                        )}
+                      </motion.button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -461,6 +476,17 @@ export default function ProductDetail() {
         {/* Recently viewed — excludes this product, hidden when empty */}
         <RecentlyViewedRow excludeId={product.id} />
       </div>
+
+      <SizeGuideModal
+        open={sizeGuideOpen}
+        onClose={() => setSizeGuideOpen(false)}
+        product={product}
+        variants={variants}
+        onSelectSize={(size) => {
+          const v = variants.find((x) => String(x.name).trim().toLowerCase() === String(size).trim().toLowerCase());
+          if (v) setVariantId(v.id);
+        }}
+      />
     </div>
   );
 }

@@ -152,6 +152,18 @@
       "type": "string",
       "description": "Warranty terms set by admin, e.g. '2-year manufacturer warranty'."
     },
+    "size_chart_id": {
+      "type": "string",
+      "description": "Reference to a SizeChart template used for this product's size guide. Blank = no size guide shown."
+    },
+    "fit_notes": {
+      "type": "string",
+      "description": "Optional fit guidance shown in the size guide, e.g. 'Runs small \u2014 order one size up'."
+    },
+    "fit_notes_ar": {
+      "type": "string",
+      "description": "Arabic fit notes shown in the size guide when Arabic is selected."
+    },
     "sale_ends_at": {
       "type": "string",
       "format": "date-time",
